@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ question.exam_name }} Q{{ question.question_number }}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <a class="back-link" href="{{ url_for('index') }}">&larr; Back to search</a>
+
+        <div class="detail-shell">
+            <section class="question-card hero-card">
+                <div class="detail-header">
+                    <div>
+                        <p class="eyebrow">Question View</p>
+                        <h2>{{ question.exam_name }} | Q{{ question.question_number }}</h2>
+                    </div>
+                    <div class="meta-chip">{{ question.year }} | {{ question.level }}</div>
+                </div>
+
+                <img src="{{ url_for('question_image', question_id=question.id) }}" class="question-img">
+            </section>
+
+            <div class="detail-grid">
+                <section class="detail-panel">
+                    <h3>Question Prompt</h3>
+                    {% if question.question_text %}
+                        <pre class="content-block">{{ question.question_text }}</pre>
+                    {% else %}
+                        <p class="muted">No parsed prompt text available.</p>
+                    {% endif %}
+                </section>
+
+                <section class="detail-panel">
+                    <h3>Code Snippet</h3>
+                    {% if question.code_block %}
+                        <pre class="content-block code-surface">{{ question.code_block }}</pre>
+                    {% else %}
+                        <p class="muted">No parsed code snippet for this question.</p>
+                    {% endif %}
+                </section>
+            </div>
+
+            <section class="question-card answer-panel">
+                <h3>Answer Choices</h3>
+
+                {% if question.parsed_choices %}
+                    <div class="choice-buttons">
+                        {% for choice in question.parsed_choices %}
+                            <button
+                                class="choice-btn"
+                                onclick="checkAnswer('{{ choice.letter }}', '{{ question.answer|trim|upper }}', this)"
+                            >
+                                <strong>{{ choice.letter }}.</strong> {{ choice.text }}
+                            </button>
+                        {% endfor %}
+                    </div>
+                {% elif question.choices %}
+                    <pre class="content-block">{{ question.choices }}</pre>
+                {% endif %}
+
+                <div id="result-box" class="result-box" style="display:none;"></div>
+            </section>
+        </div>
+    </div>
+
+    <script>
+        function checkAnswer(selected, correct, btn) {
+            const buttons = document.querySelectorAll(".choice-btn");
+            const resultBox = document.getElementById("result-box");
+
+            buttons.forEach(button => {
+                button.disabled = true;
+                button.classList.remove("correct-btn", "incorrect-btn");
+            });
+
+            const normalizedSelected = selected.trim().toUpperCase();
+            const normalizedCorrect = correct.trim().toUpperCase();
+
+            if (normalizedSelected === normalizedCorrect) {
+                btn.classList.add("correct-btn");
+                resultBox.textContent = "Correct.";
+                resultBox.className = "result-box correct";
+            } else {
+                btn.classList.add("incorrect-btn");
+
+                buttons.forEach(button => {
+                    if (button.textContent.trim().startsWith(normalizedCorrect)) {
+                        button.classList.add("correct-btn");
+                    }
+                });
+
+                resultBox.textContent = "Incorrect. Correct answer: " + normalizedCorrect;
+                resultBox.className = "result-box incorrect";
+            }
+
+            resultBox.style.display = "block";
+        }
+    </script>
+</body>
+</html>

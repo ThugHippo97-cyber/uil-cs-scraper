@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UIL CS Question Search</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <section class="hero">
+            <div class="hero-copy">
+                <p class="eyebrow">UIL Computer Science Archive</p>
+                <h1>Find questions by topic, year, and exam style.</h1>
+                <p class="hero-text">Search parsed UIL CS questions, then jump into source images, code snippets, and grouped shared-context problems.</p>
+            </div>
+
+            <form method="get" class="search-form search-panel">
+                <input type="text" name="keyword" placeholder="Try recursion, lambda, stack, inheritance..." value="{{ keyword }}">
+                <input type="text" name="year" placeholder="Year" value="{{ year }}">
+                <input type="text" name="level" placeholder="Level" value="{{ level }}">
+                <input type="text" name="exam_name" placeholder="Exam name" value="{{ exam_name }}">
+                <button type="submit">Search</button>
+            </form>
+        </section>
+
+        {% if results %}
+            <div class="results-head">
+                <p class="results-count">{{ results|length }} result(s)</p>
+                {% if keyword %}
+                    <p class="results-subtitle">Showing matches for <strong>{{ keyword }}</strong>{% if year %} in {{ year }}{% endif %}.</p>
+                {% endif %}
+            </div>
+            <div class="results">
+                {% for q in results %}
+                    <a class="result-card" href="{{ url_for('question_detail', question_id=q.id) }}">
+                        <div class="result-topline">
+                            <div class="meta">{{ q.exam_name }} | {{ q.year }} | {{ q.level }} | Q{{ q.question_number }}</div>
+                            <div class="result-badges">
+                                <span class="pill confidence-pill confidence-{{ q.confidence_label|lower }}">
+                                    {{ q.confidence_label }} {{ q.confidence_score }}
+                                </span>
+                                {% if q.group_type != "single" %}
+                                    <span class="pill">Shared Context</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="preview">{{ q.preview }}</div>
+                        <p class="match-summary">{{ q.match_summary }}</p>
+                        {% if q.tags %}
+                            <div class="tag-row">
+                                {% for tag in q.tags %}
+                                    <span class="tag">{{ tag }}</span>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </a>
+                {% endfor %}
+            </div>
+        {% elif keyword %}
+            <div class="empty-state">
+                <p class="results-count">No results found.</p>
+                <p class="results-subtitle">Try a broader topic like <code>recursion</code>, <code>lambda</code>, <code>class</code>, or remove a filter.</p>
+            </div>
+        {% endif %}
+    </div>
+</body>
+</html>

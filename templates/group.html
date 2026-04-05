@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Question Group</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <a class="back-link" href="{{ url_for('index') }}">&larr; Back to search</a>
+
+        <div class="detail-shell">
+            <section class="question-card hero-card">
+                <div class="detail-header">
+                    <div>
+                        <p class="eyebrow">Shared Context</p>
+                        <h2>{{ group_type.replace('_', ' ').title() }}</h2>
+                    </div>
+                    <div class="meta-chip">{{ questions|length }} question(s)</div>
+                </div>
+
+                <img src="{{ url_for('group_image', group_id=group_id) }}" class="question-img">
+
+                {% if shared_context %}
+                    <div class="detail-panel shared-panel">
+                        <h3>Shared Code / Context</h3>
+                        <pre class="content-block code-surface">{{ shared_context }}</pre>
+                    </div>
+                {% endif %}
+            </section>
+
+            {% for question in questions %}
+                <section class="question-card grouped-question">
+                    <div class="detail-header compact-header">
+                        <h3>Question {{ question.question_number }}</h3>
+                    </div>
+
+                    {% if question.question_text %}
+                        <div class="detail-panel">
+                            <h4>Prompt</h4>
+                            <pre class="content-block">{{ question.question_text }}</pre>
+                        </div>
+                    {% endif %}
+
+                    <div class="detail-panel answer-panel">
+                        <h4>Answer Choices</h4>
+                        {% if question.parsed_choices %}
+                            <div class="choice-buttons">
+                                {% for choice in question.parsed_choices %}
+                                    <button
+                                        class="choice-btn q{{ question.id }}"
+                                        onclick="checkAnswer('q{{ question.id }}', '{{ choice.letter }}', '{{ question.answer|trim|upper }}', this)">
+                                        <strong>{{ choice.letter }}.</strong> {{ choice.text }}
+                                    </button>
+                                {% endfor %}
+                            </div>
+                            <div id="result-q{{ question.id }}" class="result-box" style="display:none;"></div>
+                        {% elif question.choices %}
+                            <pre class="content-block">{{ question.choices }}</pre>
+                        {% endif %}
+                    </div>
+                </section>
+            {% endfor %}
+        </div>
+    </div>
+
+    <script>
+        function checkAnswer(questionKey, selected, correct, btn) {
+            const buttons = document.querySelectorAll('.' + questionKey);
+            const resultBox = document.getElementById('result-' + questionKey);
+
+            buttons.forEach(button => {
+                button.disabled = true;
+                button.classList.remove('correct-btn', 'incorrect-btn');
+            });
+
+            const normalizedSelected = selected.trim().toUpperCase();
+            const normalizedCorrect = correct.trim().toUpperCase();
+
+            if (normalizedSelected === normalizedCorrect) {
+                btn.classList.add('correct-btn');
+                resultBox.textContent = 'Correct.';
+                resultBox.className = 'result-box correct';
+            } else {
+                btn.classList.add('incorrect-btn');
+
+                buttons.forEach(button => {
+                    const text = button.textContent.trim().toUpperCase();
+                    if (text.startsWith(normalizedCorrect + '.') || text.startsWith(normalizedCorrect + ')') || text.startsWith(normalizedCorrect + ' ')) {
+                        button.classList.add('correct-btn');
+                    }
+                });
+
+                resultBox.textContent = 'Incorrect. Correct answer: ' + normalizedCorrect;
+                resultBox.className = 'result-box incorrect';
+            }
+
+            resultBox.style.display = 'block';
+        }
+    </script>
+</body>
+</html>
