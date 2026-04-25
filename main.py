@@ -8,7 +8,7 @@ import io
 import json
 import zipfile
 import shutil
-from datetime import datetime
+from datetime import UTC, datetime
 import subprocess
 import tempfile
 
@@ -175,6 +175,14 @@ def should_attempt_ocr(extracted_text: str):
 def extract_text_with_tesseract_ocr(file_path: str, max_pages=14, dpi=220):
     global _OCR_UNAVAILABLE_WARNED
     tesseract_cmd = shutil.which("tesseract")
+    if not tesseract_cmd and os.name == "nt":
+        for candidate in (
+            r"C:\Program Files\Tesseract-OCR\tesseract.exe",
+            r"C:\Program Files (x86)\Tesseract-OCR\tesseract.exe",
+        ):
+            if os.path.exists(candidate):
+                tesseract_cmd = candidate
+                break
     if not tesseract_cmd:
         if not _OCR_UNAVAILABLE_WARNED:
             print("OCR fallback unavailable: install 'tesseract' and ensure it is on PATH.")
@@ -763,8 +771,18 @@ def print_archive_report(report):
             )
 
 
+QUESTION_HEADER_PREFIX = r"^\s*[\(\[\|I\.\-_BE]*\s*"
+QUESTION_HEADER_PATTERN = QUESTION_HEADER_PREFIX + r"Question\s*(\d+)"
+OCR_QUESTION_HEADER_PATTERN = (
+    QUESTION_HEADER_PREFIX
+    + r"(?:Question|[A-Za-z_]*uestion\w*|[A-Za-z_]*uissidtern\w*|Guiesitan\w*|auesien|ee\s+uestionss)\s*([0-9]+|[iIl]|ss)?"
+)
+
+
 def extract_question_section(full_text: str):
-    start_match = re.search(r"(?im)^\s*Question\s*1(?:\D|$)", full_text)
+    start_match = re.search(rf"(?im){QUESTION_HEADER_PREFIX}Question\s*1(?:\D|$)", full_text)
+    if not start_match:
+        start_match = re.search(rf"(?im){QUESTION_HEADER_PREFIX}\S*uestion\w*\s*1(?:\D|$)", full_text)
     if not start_match:
         raise ValueError("Could not find start of question section ('Question 1').")
 
@@ -789,17 +807,56 @@ def validate_question_sequence(parsed_questions, source_name):
 
 
 def split_questions(question_text: str):
-    matches = list(re.finditer(r"(?im)^\s*Question\s*(\d+)", question_text))
-    questions = []
+    matches = []
+    for match in re.finditer(rf"(?im){OCR_QUESTION_HEADER_PATTERN}", question_text):
+        raw_num = (match.group(1) or "").lower()
+        if raw_num.isdigit():
+            qnum = int(raw_num)
+        elif raw_num == "ss":
+            qnum = None
+        else:
+            qnum = None
+        matches.append({"start": match.start(), "end": match.end(), "qnum": qnum})
+
+    for pattern in (
+        r"(?im)_2uestion\s*(\d+)",
+        r"(?im)^\s*In the code to the right,\s*what is output on line #2\?",
+        r"(?im)^\s*in the code to the right,\s*what is output on line #3\?",
+    ):
+        for match in re.finditer(pattern, question_text):
+            raw_num = match.group(1) if match.lastindex else ""
+            qnum = int(raw_num) if raw_num.isdigit() else None
+            matches.append({"start": match.start(), "end": match.end(), "qnum": qnum})
+
+    matches.sort(key=lambda item: item["start"])
+
+    for idx, match in enumerate(matches):
+        if match["qnum"] is not None:
+            continue
+        previous_num = next((m["qnum"] for m in reversed(matches[:idx]) if m["qnum"] is not None), None)
+        next_num = next((m["qnum"] for m in matches[idx + 1:] if m["qnum"] is not None), None)
+        if previous_num is not None and (next_num is None or previous_num + 1 < next_num):
+            match["qnum"] = previous_num + 1
+
+    raw_questions = []
 
     for i, match in enumerate(matches):
-        qnum = int(match.group(1))
-        start = match.start()
-        end = matches[i + 1].start() if i + 1 < len(matches) else len(question_text)
+        if match["qnum"] is None:
+            continue
+        qnum = match["qnum"]
+        start = match["start"]
+        end = matches[i + 1]["start"] if i + 1 < len(matches) else len(question_text)
         block = question_text[start:end].strip()
-        questions.append((qnum, block))
+        raw_questions.append((qnum, block))
 
-    return questions
+    if len(raw_questions) == 40 and raw_questions[0][0] == 1:
+        nums = [qnum for qnum, _ in raw_questions]
+        expected = list(range(1, 41))
+        mismatches = sum(1 for actual, expected_num in zip(nums, expected) if actual != expected_num)
+        if mismatches <= 4:
+            return [(idx, block) for idx, (_, block) in enumerate(raw_questions, start=1)]
+
+    return raw_questions
 
 
 def looks_like_shared_reference(text):
@@ -1729,8 +1786,39 @@ def evaluate_answer_sanity(question_text: str, choices_text: str, answer: str):
 def append_answer_sanity_findings(entries):
     if not entries:
         return
-    with open(ANSWER_SANITY_FILE, "a", encoding="utf-8") as f:
-        for entry in entries:
+    keyed_entries = {}
+
+    if os.path.exists(ANSWER_SANITY_FILE):
+        with open(ANSWER_SANITY_FILE, "r", encoding="utf-8") as f:
+            for line in f:
+                line = line.strip()
+                if not line:
+                    continue
+                try:
+                    entry = json.loads(line)
+                except json.JSONDecodeError:
+                    continue
+                key = (
+                    entry.get("exam_name"),
+                    entry.get("source_test_pdf"),
+                    entry.get("question_number"),
+                    tuple(entry.get("issues", [])),
+                    entry.get("answer"),
+                )
+                keyed_entries[key] = entry
+
+    for entry in entries:
+        key = (
+            entry.get("exam_name"),
+            entry.get("source_test_pdf"),
+            entry.get("question_number"),
+            tuple(entry.get("issues", [])),
+            entry.get("answer"),
+        )
+        keyed_entries[key] = entry
+
+    with open(ANSWER_SANITY_FILE, "w", encoding="utf-8") as f:
+        for entry in keyed_entries.values():
             f.write(json.dumps(entry) + "\n")
 
 
@@ -1865,6 +1953,7 @@ def insert_questions(rows):
 
 def clear_questions_table():
     c.execute("DELETE FROM questions")
+    c.execute("DELETE FROM sqlite_sequence WHERE name = 'questions'")
     conn.commit()
 
 
@@ -1891,7 +1980,7 @@ def ingest_exam_pair(exam_name, test_pdf, key_pdf, year=None, level=None, source
         )
         if sanity_issues:
             sanity_findings.append({
-                "reported_at": datetime.utcnow().isoformat(timespec="seconds") + "Z",
+                "reported_at": datetime.now(UTC).isoformat(timespec="seconds").replace("+00:00", "Z"),
                 "exam_name": exam_name,
                 "source_test_pdf": test_source,
                 "source_key_pdf": key_source,
@@ -1988,6 +2077,8 @@ def ingest_safe_archive(source_path, rebuild=True):
 
     if rebuild:
         clear_questions_table()
+        if os.path.exists(ANSWER_SANITY_FILE):
+            os.remove(ANSWER_SANITY_FILE)
 
     total_parsed = 0
     total_inserted = 0
