@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ exam_name }} Test Mode</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <a class="back-link" href="{{ url_for('index') }}">&larr; Back to home</a>
+
+        <section class="hero test-hero">
+            <div class="hero-copy">
+                <p class="eyebrow">Digital Test Mode</p>
+                <h1>{{ year }} {{ level }} | {{ exam_name }}</h1>
+                <p class="hero-text">Answer one question at a time. Your progress is saved in this browser.</p>
+            </div>
+            <div class="test-status-row">
+                <span class="pill" id="progress-pill">Question 1 / {{ total_questions }}</span>
+                <span class="pill" id="answered-pill">Answered 0 / {{ total_questions }}</span>
+                <span class="pill" id="score-pill">Score --</span>
+            </div>
+        </section>
+
+        <section class="question-card test-shell">
+            <div class="detail-header compact-header">
+                <h3 id="question-title">Question</h3>
+                <div class="test-nav">
+                    <button class="response-submit" id="prev-btn" type="button">Previous</button>
+                    <button class="response-submit" id="next-btn" type="button">Next</button>
+                </div>
+            </div>
+
+            <img id="test-question-image" class="question-img" alt="Question snippet">
+
+            <details id="shared-context-panel" class="detail-panel shared-panel collapsible-panel" style="display:none;">
+                <summary class="collapsible-summary">
+                    <span>Shared Context (shown once for this group)</span>
+                    <span class="collapsible-hint">Show</span>
+                </summary>
+                <pre id="shared-context-text" class="content-block code-surface collapsible-content"></pre>
+            </details>
+
+            <section class="detail-panel answer-panel">
+                <h4 id="answer-heading">Answer Choices</h4>
+                <div id="answer-body"></div>
+                <div id="result-box" class="result-box" style="display:none;"></div>
+            </section>
+
+            <div class="test-footer-actions">
+                <button class="response-submit" id="finish-btn" type="button">Finish Test</button>
+                <button class="report-btn" id="reset-btn" type="button">Reset Session</button>
+            </div>
+        </section>
+
+        <section class="detail-panel" id="summary-panel" style="display:none;">
+            <h3>Final Results</h3>
+            <p class="hero-text" id="summary-text"></p>
+        </section>
+    </div>
+
+    <script>
+        const questions = {{ questions|tojson }};
+        const examKey = {{ exam_key|tojson }};
+        const totalQuestions = questions.length;
+        const storageKey = `uil_test_session::${examKey}`;
+
+        const titleEl = document.getElementById("question-title");
+        const imageEl = document.getElementById("test-question-image");
+        const answerHeadingEl = document.getElementById("answer-heading");
+        const answerBodyEl = document.getElementById("answer-body");
+        const resultBoxEl = document.getElementById("result-box");
+        const progressPillEl = document.getElementById("progress-pill");
+        const answeredPillEl = document.getElementById("answered-pill");
+        const scorePillEl = document.getElementById("score-pill");
+        const sharedPanelEl = document.getElementById("shared-context-panel");
+        const sharedContextTextEl = document.getElementById("shared-context-text");
+        const summaryPanelEl = document.getElementById("summary-panel");
+        const summaryTextEl = document.getElementById("summary-text");
+
+        const prevBtn = document.getElementById("prev-btn");
+        const nextBtn = document.getElementById("next-btn");
+        const finishBtn = document.getElementById("finish-btn");
+        const resetBtn = document.getElementById("reset-btn");
+
+        const state = {
+            currentIndex: 0,
+            answers: {},
+            finished: false
+        };
+
+        function normalizeOpenResponse(value) {
+            let text = (value || "").toString().trim().toUpperCase();
+            text = text.replace(/[,\s]+/g, "");
+            text = text.replace(/[.;:!?]+$/g, "");
+
+            if (/^[+-]?\d+(\.0+)?$/.test(text)) {
+                return String(parseInt(Number(text), 10));
+            }
+
+            if (/^[+-]?\d+\.\d+$/.test(text)) {
+                text = text.replace(/0+$/g, "").replace(/\.$/g, "");
+            }
+
+            return text.replace(/[^A-Z0-9+\-*/.=]/g, "");
+        }
+
+        function getQuestionStateKey(question) {
+            return String(question.question_number);
+        }
+
+        function loadState() {
+            try {
+                const raw = localStorage.getItem(storageKey);
+                if (!raw) return;
+                const parsed = JSON.parse(raw);
+                if (!parsed || typeof parsed !== "object") return;
+                if (typeof parsed.currentIndex === "number" && parsed.currentIndex >= 0 && parsed.currentIndex < totalQuestions) {
+                    state.currentIndex = parsed.currentIndex;
+                }
+                if (parsed.answers && typeof parsed.answers === "object") {
+                    state.answers = parsed.answers;
+                }
+                state.finished = Boolean(parsed.finished);
+            } catch (_) {
+                // Ignore malformed local state.
+            }
+        }
+
+        function saveState() {
+            localStorage.setItem(storageKey, JSON.stringify(state));
+        }
+
+        function computeSummary() {
+            let answered = 0;
+            let correct = 0;
+            for (const question of questions) {
+                const entry = state.answers[getQuestionStateKey(question)];
+                if (!entry) continue;
+                answered += 1;
+                if (entry.correct) correct += 1;
+            }
+            const pct = totalQuestions ? Math.round((correct / totalQuestions) * 100) : 0;
+            return { answered, correct, pct };
+        }
+
+        function updateHeaderStats() {
+            const summary = computeSummary();
+            const currentDisplay = state.currentIndex + 1;
+            progressPillEl.textContent = `Question ${currentDisplay} / ${totalQuestions}`;
+            answeredPillEl.textContent = `Answered ${summary.answered} / ${totalQuestions}`;
+            scorePillEl.textContent = `Score ${summary.correct}/${totalQuestions} (${summary.pct}%)`;
+        }
+
+        function showResult(message, isCorrect) {
+            resultBoxEl.textContent = message;
+            resultBoxEl.className = `result-box ${isCorrect ? "correct" : "incorrect"}`;
+            resultBoxEl.style.display = "block";
+        }
+
+        function clearResult() {
+            resultBoxEl.style.display = "none";
+            resultBoxEl.textContent = "";
+            resultBoxEl.className = "result-box";
+        }
+
+        function renderChoiceQuestion(question, existingAnswer) {
+            answerHeadingEl.textContent = "Answer Choices";
+            answerBodyEl.innerHTML = "";
+            const wrap = document.createElement("div");
+            wrap.className = "choice-buttons choice-label-only";
+
+            for (const letter of question.choice_letters) {
+                const btn = document.createElement("button");
+                btn.className = "choice-btn";
+                btn.type = "button";
+                btn.dataset.choiceLetter = letter;
+                btn.innerHTML = `<strong>${letter}.</strong>`;
+                btn.addEventListener("click", () => {
+                    const selected = letter.toUpperCase();
+                    const correctLetter = (question.answer || "").toUpperCase();
+                    const isCorrect = selected === correctLetter;
+                    state.answers[getQuestionStateKey(question)] = {
+                        type: "mc",
+                        selected,
+                        correct: isCorrect
+                    };
+                    saveState();
+                    renderQuestion();
+                });
+                wrap.appendChild(btn);
+            }
+            answerBodyEl.appendChild(wrap);
+
+            if (!existingAnswer) {
+                clearResult();
+                return;
+            }
+
+            const buttons = Array.from(answerBodyEl.querySelectorAll(".choice-btn"));
+            buttons.forEach(btn => {
+                const letter = (btn.dataset.choiceLetter || "").toUpperCase();
+                btn.disabled = true;
+                if (letter === existingAnswer.selected) {
+                    btn.classList.add(existingAnswer.correct ? "correct-btn" : "incorrect-btn");
+                }
+                if (letter === (question.answer || "").toUpperCase()) {
+                    btn.classList.add("correct-btn");
+                }
+            });
+
+            if (existingAnswer.correct) {
+                showResult("Correct.", true);
+            } else {
+                showResult(`Incorrect. Correct answer: ${(question.answer || "").toUpperCase()}`, false);
+            }
+        }
+
+        function renderOpenResponseQuestion(question, existingAnswer) {
+            answerHeadingEl.textContent = "Answer Response";
+            answerBodyEl.innerHTML = `
+                <div class="response-form">
+                    <label class="response-label" for="open-response-input">Enter your answer</label>
+                    <input id="open-response-input" class="response-input" type="text" autocomplete="off" spellcheck="false">
+                    <button class="response-submit" id="open-response-submit" type="button">Check Answer</button>
+                </div>
+            `;
+            const input = document.getElementById("open-response-input");
+            const submit = document.getElementById("open-response-submit");
+            const expected = question.normalized_open_response_answer || normalizeOpenResponse(question.answer);
+
+            submit.addEventListener("click", () => {
+                const typed = input.value || "";
+                const normalizedTyped = normalizeOpenResponse(typed);
+                if (!normalizedTyped) {
+                    showResult("Enter an answer first.", false);
+                    return;
+                }
+
+                const isCorrect = normalizedTyped === expected;
+                state.answers[getQuestionStateKey(question)] = {
+                    type: "open",
+                    typed,
+                    normalizedTyped,
+                    correct: isCorrect
+                };
+                saveState();
+                renderQuestion();
+            });
+
+            if (!existingAnswer) {
+                clearResult();
+                return;
+            }
+
+            input.value = existingAnswer.typed || "";
+            input.disabled = true;
+            submit.disabled = true;
+            if (existingAnswer.correct) {
+                showResult("Correct.", true);
+            } else {
+                showResult(`Incorrect. Correct answer: ${question.answer}`, false);
+            }
+        }
+
+        function renderSharedContext(question) {
+            if (question.is_shared_group && question.is_group_anchor && question.shared_context) {
+                sharedPanelEl.style.display = "block";
+                sharedContextTextEl.textContent = question.shared_context;
+            } else {
+                sharedPanelEl.style.display = "none";
+                sharedContextTextEl.textContent = "";
+            }
+        }
+
+        function renderQuestion() {
+            const question = questions[state.currentIndex];
+            const answerEntry = state.answers[getQuestionStateKey(question)] || null;
+
+            titleEl.textContent = `Question ${question.question_number}`;
+            renderSharedContext(question);
+
+            const imageUrl = question.is_shared_group && question.is_group_anchor
+                ? `/group_image/${encodeURIComponent(question.group_id)}`
+                : `/question_image/${question.id}`;
+            imageEl.src = imageUrl;
+
+            if (question.is_open_response) {
+                renderOpenResponseQuestion(question, answerEntry);
+            } else {
+                renderChoiceQuestion(question, answerEntry);
+            }
+
+            prevBtn.disabled = state.currentIndex <= 0;
+            nextBtn.disabled = state.currentIndex >= totalQuestions - 1;
+            updateHeaderStats();
+            renderSummary();
+        }
+
+        function renderSummary() {
+            if (!state.finished) {
+                summaryPanelEl.style.display = "none";
+                return;
+            }
+
+            const summary = computeSummary();
+            summaryTextEl.textContent = `You answered ${summary.answered} of ${totalQuestions} questions. Correct: ${summary.correct}. Final score: ${summary.pct}%.`;
+            summaryPanelEl.style.display = "block";
+        }
+
+        prevBtn.addEventListener("click", () => {
+            if (state.currentIndex <= 0) return;
+            state.currentIndex -= 1;
+            saveState();
+            renderQuestion();
+        });
+
+        nextBtn.addEventListener("click", () => {
+            if (state.currentIndex >= totalQuestions - 1) return;
+            state.currentIndex += 1;
+            saveState();
+            renderQuestion();
+        });
+
+        finishBtn.addEventListener("click", () => {
+            state.finished = true;
+            saveState();
+            renderSummary();
+            window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" });
+        });
+
+        resetBtn.addEventListener("click", () => {
+            localStorage.removeItem(storageKey);
+            state.currentIndex = 0;
+            state.answers = {};
+            state.finished = false;
+            renderQuestion();
+        });
+
+        loadState();
+        renderQuestion();
+    </script>
+</body>
+</html>

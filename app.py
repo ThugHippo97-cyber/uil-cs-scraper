@@ -4,9 +4,16 @@ import re
 import pdfplumber
 import io
 import os
+import json
+import random
+from datetime import datetime
 
 app = Flask(__name__)
 DB_FILE = "uil_cs_questions_v2.db"
+QUESTION_OVERRIDE_FILE = "question_overrides.json"
+PARSE_FEEDBACK_FILE = "parse_feedback.jsonl"
+_QUESTION_OVERRIDES_CACHE = None
+_CROP_TEXT_CACHE = {}
 
 TOPIC_SYNONYMS = {
     "primitive": ["primitive", "int", "double", "boolean", "short", "long", "byte", "char", "float", "casting"],
@@ -37,6 +44,17 @@ TOPIC_SYNONYMS = {
     "enum": ["enum", "enumerated type", "enumeration"],
     "enums": ["enum", "enumerated type", "enumeration"],
     "collections": ["collection", "collections", "ArrayList", "LinkedList", "HashMap", "TreeMap", "Set", "Queue", "Stack"],
+    "queue": ["queue", "fifo", "first in first out", "deque", "priority queue", "linkedlist"],
+    "queues": ["queue", "fifo", "first in first out", "deque", "priority queue", "linkedlist"],
+    "stack": ["stack", "lifo", "last in first out", "push", "pop", "peek"],
+    "stacks": ["stack", "lifo", "last in first out", "push", "pop", "peek"],
+    "linked list": ["linked list", "linkedlist", "node", "next", "prev"],
+    "linked lists": ["linked list", "linkedlist", "node", "next", "prev"],
+    "hashmap": ["hashmap", "hash map", "map", "key", "value", "put", "get"],
+    "hashset": ["hashset", "hash set", "set", "contains", "add", "remove"],
+    "arraylist": ["arraylist", "list", "add", "remove", "get", "size"],
+    "priority queue": ["priority queue", "heap", "poll", "offer", "peek"],
+    "priorityqueue": ["priority queue", "priorityqueue", "heap", "poll", "offer", "peek"],
     "generic collections": ["collection", "collections", "List", "Set", "Map", "Stack", "Queue", "PriorityQueue", "ArrayList", "LinkedList", "HashSet", "TreeSet", "HashMap", "TreeMap"],
     "generics": ["generic", "generics", "<T>", "Comparable<T>", "Collection", "List", "Set", "Map"],
     "array": ["array", "arrays", "[]"],
@@ -48,6 +66,14 @@ TOPIC_SYNONYMS = {
     "regular expressions": ["regex", "regular expression", "Pattern", "Matcher", "matches", "replaceAll"],
     "sorting": ["sort", "sorted", "selection sort", "insertion sort", "merge sort", "quicksort"],
     "sorts": ["sort", "sorted", "selection sort", "insertion sort", "merge sort", "quicksort", "bubble sort", "radix sort"],
+    "selection sort": ["selection sort", "minimum", "swap", "unsorted portion"],
+    "insertion sort": ["insertion sort", "insert", "shift", "sorted portion"],
+    "merge sort": ["merge sort", "divide and conquer", "merge", "halves"],
+    "quick sort": ["quick sort", "quicksort", "pivot", "partition"],
+    "quicksort": ["quick sort", "quicksort", "pivot", "partition"],
+    "binary search": ["binary search", "middle", "sorted array", "half"],
+    "linear search": ["linear search", "sequential search", "scan"],
+    "sequential search": ["sequential search", "linear search", "scan"],
     "searching": ["search", "binary search", "linear search"],
     "searches": ["search", "binary search", "linear search", "sequential search"],
     "math": ["Math.random", "Math.pow", "Math.sqrt", "Math.abs", "Math.min", "Math.max", "random"],
@@ -62,6 +88,17 @@ TOPIC_SYNONYMS = {
     "base conversion": ["base conversion", "binary", "octal", "hex", "hexadecimal", "decimal", "base 2", "base 8", "base 10", "base 16"],
     "two's complement": ["two's complement", "2's complement", "negative 8-bit integer", "8 bits"],
     "twos complement": ["two's complement", "2's complement", "negative 8-bit integer", "8 bits"],
+    "binary tree": ["binary tree", "tree", "root", "leaf", "inorder", "preorder", "postorder"],
+    "tree traversal": ["inorder", "preorder", "postorder", "level order", "traversal"],
+    "preorder": ["preorder", "tree traversal", "root left right"],
+    "inorder": ["inorder", "tree traversal", "left root right"],
+    "postorder": ["postorder", "tree traversal", "left right root"],
+    "prefix": ["prefix", "prefix notation", "polish notation"],
+    "postfix": ["postfix", "postfix notation", "reverse polish notation"],
+    "big o": ["big o", "runtime", "time complexity", "space complexity", "worst case", "average case"],
+    "time complexity": ["time complexity", "runtime", "big o", "worst case", "average case", "best case"],
+    "space complexity": ["space complexity", "memory", "big o", "runtime"],
+    "bst traversal": ["binary search tree", "bst", "preorder", "inorder", "postorder"],
     "polish notation": ["prefix notation", "postfix notation", "infix", "prefix", "postfix"],
     "finite state machine": ["finite state machine", "fsm", "state machine"],
     "fsm": ["finite state machine", "fsm", "state machine"],
@@ -85,6 +122,19 @@ TOPIC_SYNONYMS = {
 }
 
 STRICT_TOPIC_MATCHES = {"class", "math", "oop", "inheritance", "polymorphism", "encapsulation"}
+CHOICE_ONLY_NOISE_TOPICS = {
+    "stack",
+    "stacks",
+    "queue",
+    "queues",
+    "linked list",
+    "linked lists",
+    "linkedlist",
+    "priority queue",
+    "priorityqueue",
+    "deque",
+    "vector",
+}
 
 
 def remove_noise_lines(text):
@@ -93,8 +143,17 @@ def remove_noise_lines(text):
 
     noise_patterns = [
         r"^written test",
-        r"^test\s+[–-]",
+        r"^test\s+[Ã¢â‚¬â€œ-]",
         r"^uil computer science\b",
+        r"^\(?c\)?\s*a\+",
+        r"^Ã‚Â©\s*a\+",
+        r"^copyright\b",
+        r"^page\s+\d+\b",
+        r"^www\.",
+        r"^questions$",
+        r"^free response$",
+        r"^your answers\b",
+        r"^double-check\b",
     ]
 
     cleaned_lines = []
@@ -116,6 +175,40 @@ def get_connection():
     conn.execute("PRAGMA temp_store=MEMORY")
     conn.row_factory = sqlite3.Row
     return conn
+
+
+def load_question_overrides():
+    global _QUESTION_OVERRIDES_CACHE
+    if _QUESTION_OVERRIDES_CACHE is not None:
+        return _QUESTION_OVERRIDES_CACHE
+
+    if not os.path.exists(QUESTION_OVERRIDE_FILE):
+        _QUESTION_OVERRIDES_CACHE = {}
+        return _QUESTION_OVERRIDES_CACHE
+
+    try:
+        with open(QUESTION_OVERRIDE_FILE, "r", encoding="utf-8") as f:
+            data = json.load(f)
+    except Exception:
+        data = {}
+
+    _QUESTION_OVERRIDES_CACHE = data if isinstance(data, dict) else {}
+    return _QUESTION_OVERRIDES_CACHE
+
+
+def get_question_override(row):
+    exam_name = str(row["exam_name"] or "")
+    question_number = row["question_number"]
+    override_key = f"{exam_name}#{question_number}"
+    return load_question_overrides().get(override_key, {})
+
+
+def row_value(row, key, default=""):
+    try:
+        value = row[key]
+    except Exception:
+        return default
+    return default if value is None else value
 
 
 def resolve_pdf_path(stored_path):
@@ -183,12 +276,29 @@ def clean_text_for_display(text):
         return ""
 
     text = remove_noise_lines(text)
-    text = text.replace("\r", "\n")
+    text = text.replace(chr(8722), "-").replace(chr(8211), "-").replace(chr(8212), "-")
     lines = [line.strip() for line in text.splitlines() if line.strip()]
     cleaned = "\n".join(lines)
     cleaned = re.sub(r"[ \t]+", " ", cleaned)
     cleaned = re.sub(r"\n{3,}", "\n\n", cleaned)
     return cleaned.strip()
+
+
+def looks_like_code_line(line):
+    normalized = (line or "").strip()
+    if not normalized:
+        return False
+
+    code_patterns = [
+        r"\b(?:if|else|for|while|switch|case|return|do)\b",
+        r"\b(?:public|private|protected|class|static|void|int|double|boolean|char|String)\b",
+        r"\b(?:out\.print|out\.println|Arrays\.toString)\b",
+        r"[{};]",
+        r"->",
+        r"\b[A-Za-z_]\w*\s*(?:\+\+|--|[+\-*/%]?=)",
+        r"\b[A-Za-z_]\w*(?:\.[A-Za-z_]\w*)*\s*\(",
+    ]
+    return any(re.search(pattern, normalized) for pattern in code_patterns)
 
 
 def extract_inline_code_fragments(text):
@@ -244,6 +354,31 @@ def extract_code_from_choices(choices_text):
     return working.strip(), "\n".join(extracted_code).strip()
 
 
+def normalize_choice_fragment(text):
+    return re.sub(r"\s+", " ", (text or "").strip()).strip()
+
+
+def parse_choice_label_sequence(text):
+    return [label.upper() for label in re.findall(r"(?i)\b([A-E])[\.)](?=\s|$)", text or "")]
+
+
+def split_choice_prefix_from_code_line(line):
+    match = re.match(
+        r"^\s*(-?\d+(?:\.\d+)?)\s+(?=(?:for\s*\(|while\s*\(|if\s*\(|do\{?|return\b|out\.|case\b|[A-Za-z_]\w*\s*(?:\+\+|--|[+\-*/%]?=)|[A-Za-z_]\w*(?:\.[A-Za-z_]\w*)*\s*\())",
+        line or "",
+        re.IGNORECASE,
+    )
+    if not match:
+        return "", line
+
+    choice_text = normalize_choice_fragment(match.group(1))
+    remainder = (line or "")[match.end(1):].strip()
+    if not choice_text or not remainder:
+        return "", line
+
+    return choice_text, remainder
+
+
 def explode_inline_choice_labels(text):
     if not text:
         return ""
@@ -260,11 +395,151 @@ def trim_to_first_choice_label(text):
     if not text:
         return ""
 
-    lines = explode_inline_choice_labels(text).replace("\r", "\n").splitlines()
-    for idx, line in enumerate(lines):
-        if re.match(r"^\s*(?:[A-E]|TRUE|FALSE|T|F)[\.)]\s+", line, re.IGNORECASE):
-            return "\n".join(lines[idx:]).strip()
-    return text.strip()
+    normalized = text.replace("\r", "\n")
+    match = re.search(r"(?im)^\s*((?:[A-E]|TRUE|FALSE|T|F)[\.)]\s+)", normalized)
+    if match:
+        return normalized[match.start(1):].strip()
+    return normalized.strip()
+
+
+def extract_question_crop_text(row):
+    source_test_pdf = row_value(row, "source_test_pdf", "")
+    if not source_test_pdf:
+        return ""
+
+    cache_key = (
+        source_test_pdf,
+        row_value(row, "page_number", 0),
+        round(float(row_value(row, "top_y", 0) or 0), 2),
+        round(float(row_value(row, "bottom_y", 0) or 0), 2),
+        row_value(row, "question_number", 0),
+    )
+    if cache_key in _CROP_TEXT_CACHE:
+        return _CROP_TEXT_CACHE[cache_key]
+
+    pdf_path = resolve_pdf_path(source_test_pdf)
+    if not pdf_path or not os.path.exists(pdf_path):
+        _CROP_TEXT_CACHE[cache_key] = ""
+        return ""
+
+    try:
+        with pdfplumber.open(pdf_path) as pdf:
+            page = pdf.pages[row_value(row, "page_number", 0)]
+            top = max(0, (row_value(row, "top_y", 0) or 0) - 22)
+            bottom = min(page.height, (row_value(row, "bottom_y", page.height) or page.height) + 24)
+            cropped = page.within_bbox((0, top, page.width, bottom))
+            text = cropped.extract_text(x_tolerance=1, y_tolerance=3) or ""
+    except Exception:
+        text = ""
+
+    _CROP_TEXT_CACHE[cache_key] = text
+    return text
+
+
+def extract_choice_block_from_crop_text(crop_text, question_number):
+    if not crop_text:
+        return ""
+
+    block = crop_text
+    question_word = r"Q\s*u\s*e\s*s\s*t\s*i\s*o\s*n"
+    start_match = re.search(rf"(?im)^\s*{question_word}\s*{question_number}\.?\s*$", block)
+    if start_match:
+        block = block[start_match.end():]
+
+    next_question_match = re.search(rf"(?im)^\s*{question_word}\s*\d+\.?\s*$", block)
+    if next_question_match:
+        block = block[:next_question_match.start()]
+
+    label_match = re.search(r"(?im)^\s*((?:[A-E]|TRUE|FALSE|T|F)[\.)]\s+)", block)
+    if not label_match:
+        return ""
+
+    return block[label_match.start(1):].strip()
+
+
+def maybe_recover_choice_text(row, question_text, code_block, choices_text, answer):
+    normalized_choices = trim_to_first_choice_label(choices_text).strip()
+    parsed = parse_choices(normalized_choices)
+    answer_is_letter = bool(re.fullmatch(r"[A-E]", answer or "", re.IGNORECASE))
+
+    needs_recovery = (
+        answer_is_letter and (
+            not parsed
+            or len(parsed) < 5
+            or any(not choice["text"].strip() for choice in parsed)
+        )
+    )
+    if not needs_recovery:
+        return question_text, code_block, normalized_choices
+
+    question_lines = [line for line in (question_text or "").splitlines() if line.strip()]
+    trailing_question_choices = []
+    while question_lines and re.match(r"(?i)^\s*[A-E][\.)]\s*", question_lines[-1]):
+        trailing_question_choices.insert(0, question_lines.pop())
+    if trailing_question_choices:
+        normalized_choices = "\n".join(trailing_question_choices + ([normalized_choices] if normalized_choices else [])).strip()
+        question_text = "\n".join(question_lines).strip()
+
+    parsed = parse_choices(normalized_choices)
+    parsed_by_letter = {choice["letter"]: choice["text"].strip() for choice in parsed}
+    missing_letters = [
+        letter
+        for letter in ["A", "B", "C", "D", "E"]
+        if not parsed_by_letter.get(letter)
+    ]
+    code_lines = []
+    recovered_choice_lines = []
+    for line in (code_block or "").splitlines():
+        recovered_choice, remainder = split_choice_prefix_from_code_line(line)
+        if recovered_choice and missing_letters:
+            recovered_label = missing_letters.pop(0)
+            blank_label_pattern = rf"(?im){re.escape(recovered_label)}[\.)]\s*$"
+            if re.search(blank_label_pattern, normalized_choices):
+                normalized_choices = re.sub(
+                    blank_label_pattern,
+                    f"{recovered_label}. {recovered_choice}",
+                    normalized_choices,
+                )
+            else:
+                recovered_choice_lines.append(f"{recovered_label}. {recovered_choice}")
+            code_lines.append(remainder)
+        else:
+            code_lines.append(line)
+
+    if recovered_choice_lines:
+        normalized_choices = "\n".join([part for part in [normalized_choices, *recovered_choice_lines] if part]).strip()
+        code_block = "\n".join(code_lines).strip()
+
+    parsed = parse_choices(normalized_choices)
+    if not parsed or len(parsed) < 5 or any(not choice["text"].strip() for choice in parsed):
+        crop_choices = extract_choice_block_from_crop_text(extract_question_crop_text(row), row["question_number"])
+        if crop_choices:
+            normalized_choices = trim_to_first_choice_label(crop_choices)
+
+    return question_text, code_block, normalized_choices
+
+
+def infer_visual_choice_labels(answer):
+    if re.fullmatch(r"[A-E]", answer or "", re.IGNORECASE):
+        return ["A", "B", "C", "D", "E"]
+    if re.fullmatch(r"[TF]", answer or "", re.IGNORECASE):
+        return ["T", "F"]
+    return []
+
+
+def infer_display_issues(question_text, code_block, parsed_choices, answer, is_open_response, is_visual_choice):
+    issues = []
+    if parsed_choices and any(not choice["text"].strip() for choice in parsed_choices):
+        issues.append("A choice still looks blank after recovery.")
+    if parsed_choices and len(parsed_choices) < 5 and not is_open_response and not is_visual_choice:
+        issues.append("This question still has fewer than five parsed answer choices.")
+    if not parsed_choices and not is_open_response and not is_visual_choice and answer:
+        issues.append("Choices could not be parsed from text, so the cropped PDF may still be the source of truth here.")
+    if code_block.count("{") != code_block.count("}") and code_block:
+        issues.append("The parsed code block may still be incomplete.")
+    if len(clean_text_for_display(question_text)) < 20:
+        issues.append("The parsed prompt is very short and may be truncated.")
+    return issues
 
 
 def extract_search_tags(question_text, code_block, shared_context=""):
@@ -298,37 +573,196 @@ def parse_choices(choices_text):
     if not choices_text:
         return []
 
+    def normalize_choice_label(label):
+        label = (label or "").strip().upper()
+        if label == "TRUE":
+            return "T"
+        if label == "FALSE":
+            return "F"
+        return label
+
+    def choice_label_pattern(label):
+        if label == "T":
+            return r"(?:TRUE|T)"
+        if label == "F":
+            return r"(?:FALSE|F)"
+        return re.escape(label)
+
+    def parse_scalar_choice_grid(grid_text):
+        lines = [line.strip() for line in grid_text.replace("\r", "\n").splitlines() if line.strip()]
+        if not lines:
+            return []
+
+        def scalar_tokens(line):
+            normalized = (line or "").replace(chr(8722), "-").replace(chr(8211), "-").replace(chr(8212), "-")
+            normalized = re.sub(r"(?<!\w)-\s+(?=\d)", "-", normalized)
+            return re.findall(r"(?i)LINE\s*#\d+|[+-]?\d+(?:\.\d+)?|[A-Za-z_][\w'.:/+-]*", normalized)
+
+        choice_values = {}
+        pending_labels = []
+        signed_label = None
+
+        for line in lines:
+            label_matches = list(re.finditer(r"(?i)\b([A-E])[\.)](?=\s|$)", line))
+            if label_matches:
+                for idx, match in enumerate(label_matches):
+                    label = match.group(1).upper()
+                    start = match.end()
+                    end = label_matches[idx + 1].start() if idx + 1 < len(label_matches) else len(line)
+                    inline_text = normalize_choice_fragment(line[start:end])
+                    if inline_text:
+                        choice_values[label] = inline_text
+                        if inline_text in {"-", "+"}:
+                            signed_label = label
+                    else:
+                        pending_labels.append(label)
+                continue
+
+            if not pending_labels:
+                continue
+
+            tokens = scalar_tokens(line)
+            if not tokens:
+                continue
+
+            if (
+                signed_label
+                and signed_label in choice_values
+                and choice_values[signed_label] in {"-", "+"}
+                and len(tokens) == len(pending_labels) + 1
+            ):
+                choice_values[signed_label] = f"{choice_values[signed_label]}{tokens[0]}"
+                tokens = tokens[1:]
+                signed_label = None
+
+            if len(tokens) != len(pending_labels):
+                return []
+
+            for label, token in zip(pending_labels, tokens):
+                choice_values[label] = token
+            pending_labels = []
+
+        if pending_labels:
+            return []
+
+        parsed_grid = []
+        for label in ["A", "B", "C", "D", "E"]:
+            value = normalize_choice_fragment(choice_values.get(label, ""))
+            if value:
+                parsed_grid.append({"letter": label, "text": value})
+
+        ordered_letters = [item["letter"] for item in parsed_grid]
+        if ordered_letters not in [
+            ["A", "B", "C", "D", "E"],
+            ["A", "B", "C", "D"],
+            ["A", "B", "C"],
+        ]:
+            return []
+
+        return parsed_grid
+
+    def parse_unlabeled_choice_block(unlabeled_text):
+        normalized_text = (unlabeled_text or "").replace("\r", "\n").strip()
+        if not normalized_text:
+            return []
+
+        raw_lines = [normalize_choice_fragment(line) for line in normalized_text.splitlines() if line.strip()]
+
+        if len(raw_lines) == 5:
+            if any(looks_like_code_line(line) for line in raw_lines):
+                return []
+            if any(len(line) > 120 for line in raw_lines):
+                return []
+            return [
+                {"letter": chr(ord("A") + idx), "text": line}
+                for idx, line in enumerate(raw_lines)
+            ]
+
+        if len(raw_lines) != 1:
+            return []
+
+        line = raw_lines[0]
+        split_patterns = [
+            r"\s*\|\s*",
+            r"\s{2,}",
+            r"\t+",
+            r"\s*,\s*",
+        ]
+        for pattern in split_patterns:
+            parts = [normalize_choice_fragment(part) for part in re.split(pattern, line) if normalize_choice_fragment(part)]
+            if len(parts) != 5:
+                continue
+            if any(looks_like_code_line(part) for part in parts):
+                continue
+            if any(len(part) > 60 for part in parts):
+                continue
+            return [
+                {"letter": chr(ord("A") + idx), "text": part}
+                for idx, part in enumerate(parts)
+            ]
+
+        return []
+
+    text = trim_to_first_choice_label(choices_text).replace("\r", "\n").strip()
+    text = text.replace(chr(8722), "-").replace(chr(8211), "-").replace(chr(8212), "-")
+    text = re.sub(r"(?<!\w)-\s+(?=\d)", "-", text)
+    if not text:
+        return []
+
+    grid_fallback = parse_scalar_choice_grid(text)
+    if grid_fallback:
+        return grid_fallback
+
+    start_match = re.match(r"^\s*((?:[A-E]|TRUE|FALSE|T|F))[\.)]\s*", text, re.IGNORECASE)
+    if not start_match:
+        return parse_unlabeled_choice_block(text)
+
+    first_label = normalize_choice_label(start_match.group(1))
+    if first_label in {"T", "F"}:
+        label_order = ["T", "F"]
+    else:
+        label_order = ["A", "B", "C", "D", "E"]
+
+    try:
+        current_index = label_order.index(first_label)
+    except ValueError:
+        return []
+
     parsed = []
-    current_label = None
-    current_lines = []
+    current_label = first_label
+    content_start = start_match.end()
 
-    for raw_line in trim_to_first_choice_label(choices_text).replace("\r", "\n").splitlines():
-        line = raw_line.strip()
-        if not line:
-            continue
+    while True:
+        next_index = current_index + 1
+        if next_index >= len(label_order):
+            content = clean_text_for_display(text[content_start:])
+            parsed.append({"letter": current_label, "text": content})
+            break
 
-        match = re.match(r"^\s*((?:[A-E]|TRUE|FALSE|T|F))[\.)]\s*(.*)$", line, re.IGNORECASE)
-        if match:
-            if current_label is not None:
-                content = clean_text_for_display("\n".join(current_lines))
-                parsed.append({"letter": current_label, "text": content})
+        next_match = None
+        matched_label = None
+        for candidate_label in label_order[next_index:]:
+            candidate_match = re.search(
+                rf"(?:(?<=\n)|(?<=\s)){choice_label_pattern(candidate_label)}[\.)]\s*",
+                text[content_start:],
+                re.IGNORECASE,
+            )
+            if candidate_match and (next_match is None or candidate_match.start() < next_match.start()):
+                next_match = candidate_match
+                matched_label = candidate_label
 
-            label = match.group(1).strip().upper()
-            content_start = match.group(2).strip()
+        if not next_match:
+            content = clean_text_for_display(text[content_start:])
+            parsed.append({"letter": current_label, "text": content})
+            break
 
-            if label == "TRUE":
-                label = "T"
-            elif label == "FALSE":
-                label = "F"
-
-            current_label = label
-            current_lines = [content_start] if content_start else []
-        elif current_label is not None:
-            current_lines.append(line)
-
-    if current_label is not None:
-        content = clean_text_for_display("\n".join(current_lines))
+        next_pos = content_start + next_match.start()
+        content = clean_text_for_display(text[content_start:next_pos])
         parsed.append({"letter": current_label, "text": content})
+
+        current_label = matched_label
+        current_index = label_order.index(matched_label)
+        content_start += next_match.end()
 
     return parsed
 
@@ -338,22 +772,42 @@ def normalize_answer(answer_text):
 
     if not raw:
         return ""
-    if raw.startswith("TRUE"):
+    if re.fullmatch(r"(?:TRUE|T)", raw):
         return "T"
-    if raw.startswith("FALSE"):
+    if re.fullmatch(r"(?:FALSE|F)", raw):
         return "F"
+    if re.fullmatch(r"[A-E]", raw):
+        return raw
 
-    m = re.search(r'\b([A-Z])\b', raw)
-    if m:
-        return m.group(1)
-    m = re.search(r'([A-Z])', raw)
-    return m.group(1) if m else raw
+    prefixed = re.match(r"^\*?\s*(?:\d+\s*[\.)]\s*)?([A-E]|TRUE|FALSE|T|F)\b", raw, re.IGNORECASE)
+    if prefixed:
+        token = prefixed.group(1).upper()
+        if token == "TRUE":
+            return "T"
+        if token == "FALSE":
+            return "F"
+        return token
+
+    return raw
+
+
+def normalize_open_response_value(value):
+    text = (value or "").strip().upper()
+    text = re.sub(r"[,\s]+", "", text)
+    text = re.sub(r"[.;:!?]+$", "", text)
+    if re.fullmatch(r"[+-]?\d+(?:\.0+)?", text):
+        return str(int(float(text)))
+    if re.fullmatch(r"[+-]?\d+\.\d+", text):
+        text = text.rstrip("0").rstrip(".")
+    return re.sub(r"[^A-Z0-9+\-*/.=]", "", text)
 
 
 def prepare_question(row):
-    display_question = row["question_text"] or ""
-    display_code = row["code_block"] or ""
-    display_choices = row["choices"] or ""
+    override = get_question_override(row)
+    display_question = override.get("question_text", row["question_text"] or "")
+    display_code = override.get("code_block", row["code_block"] or "")
+    display_choices = override.get("choices", row["choices"] or "")
+    display_answer = override.get("answer", row["answer"] or "")
     is_shared_group = (row["group_type"] or "single") != "single" and bool(row["shared_context"])
 
     if is_shared_group:
@@ -384,7 +838,39 @@ def prepare_question(row):
                 if line not in {"{", "}"}:
                     seen.add(line)
 
-    final_choices_text = cleaned_choices.strip()
+    merged_code_text = clean_text_for_display("\n".join(merged_code))
+    cleaned_question, merged_code_text, final_choices_text = maybe_recover_choice_text(
+        row,
+        clean_text_for_display(cleaned_question),
+        merged_code_text,
+        cleaned_choices.strip(),
+        normalize_answer(display_answer),
+    )
+    parsed_choices = parse_choices(final_choices_text)
+    labels_only_text = re.sub(r"(?i)\b(?:[A-E]|TRUE|FALSE|T|F)[\.)](?=\s|$)", " ", final_choices_text or "")
+    label_only_choices = bool(parse_choice_label_sequence(final_choices_text)) and not labels_only_text.strip()
+    if label_only_choices:
+        parsed_choices = []
+    normalized_answer = normalize_answer(display_answer)
+    if parsed_choices and normalized_answer and not re.fullmatch(r"[A-ETF]", normalized_answer):
+        normalized_answer = ""
+    is_open_response = (
+        not parsed_choices
+        and not clean_text_for_display(final_choices_text)
+        and bool(normalized_answer)
+        and not re.fullmatch(r"[A-ETF]", normalized_answer)
+    )
+    visual_choice_labels = infer_visual_choice_labels(normalized_answer) if (label_only_choices or not parsed_choices) and not is_open_response else []
+    is_visual_choice = bool(visual_choice_labels)
+    display_issues = infer_display_issues(
+        cleaned_question,
+        merged_code_text,
+        parsed_choices,
+        normalized_answer,
+        is_open_response,
+        is_visual_choice,
+    )
+    code_line_count = len([line for line in merged_code_text.splitlines() if line.strip()])
 
     return {
         "id": row["id"],
@@ -393,12 +879,19 @@ def prepare_question(row):
         "level": row["level"],
         "question_number": row["question_number"],
         "question_text": clean_text_for_display(cleaned_question),
-        "code_block": clean_text_for_display("\n".join(merged_code)),
+        "code_block": merged_code_text,
         "choices": clean_text_for_display(final_choices_text),
-        "parsed_choices": parse_choices(final_choices_text),
-        "answer": normalize_answer(row["answer"]),
+        "parsed_choices": parsed_choices,
+        "answer": normalized_answer,
+        "normalized_open_response_answer": normalize_open_response_value(display_answer),
+        "is_open_response": is_open_response,
+        "is_visual_choice": is_visual_choice,
+        "visual_choice_labels": visual_choice_labels,
+        "display_issues": display_issues,
+        "code_line_count": code_line_count,
         "group_id": row["group_id"] or "",
-        "group_type": row["group_type"] or "single"
+        "group_type": row["group_type"] or "single",
+        "shared_context": clean_text_for_display(row["shared_context"] or ""),
     }
 
 
@@ -410,17 +903,21 @@ def row_matches_terms(row, terms):
     shared_context = str(row["shared_context"] or "")
     tags = extract_search_tags(question_text, code_block, shared_context)
     searchable_text = build_search_blob(question_text, code_block, choices, answer, shared_context)
+    core_text = build_search_blob(question_text, code_block, "", answer, shared_context)
 
     keyword = (terms[0] if terms else "").strip().lower()
     if not keyword:
         return False
 
-    direct_hit = contains_search_term(searchable_text, keyword)
+    core_hit = contains_search_term(core_text, keyword)
+    choices_hit = contains_search_term(choices, keyword)
+    allow_choice_only_match = keyword not in CHOICE_ONLY_NOISE_TOPICS
+    direct_hit = core_hit or (allow_choice_only_match and choices_hit)
     tag_hit = keyword in tags
     synonym_hits = {
         term.lower()
         for term in terms
-        if term.strip() and contains_search_term(searchable_text, term)
+        if term.strip() and contains_search_term(core_text if not allow_choice_only_match else searchable_text, term)
     }
 
     if direct_hit or tag_hit:
@@ -447,15 +944,20 @@ def score_search_match(row, keyword):
     shared_context = str(row["shared_context"] or "")
     tags = extract_search_tags(question_text, code_block, shared_context)
     searchable_text = build_search_blob(question_text, code_block, choices, answer, shared_context)
+    core_text = build_search_blob(question_text, code_block, "", answer, shared_context)
+    allow_choice_only_match = keyword not in CHOICE_ONLY_NOISE_TOPICS
 
-    direct_hit = contains_search_term(searchable_text, keyword)
+    core_hit = contains_search_term(core_text, keyword)
+    choices_hit = contains_search_term(choices, keyword)
+    direct_hit = core_hit or (allow_choice_only_match and choices_hit)
     tag_hit = keyword in tags
     synonym_hits = []
     for term in expanded_terms[1:]:
         normalized = term.lower()
         if normalized == keyword:
             continue
-        if normalized not in synonym_hits and contains_search_term(searchable_text, term):
+        haystack = searchable_text if allow_choice_only_match else core_text
+        if normalized not in synonym_hits and contains_search_term(haystack, term):
             synonym_hits.append(normalized)
 
     if not direct_hit and not tag_hit:
@@ -469,9 +971,12 @@ def score_search_match(row, keyword):
     score = 0
     reasons = []
 
-    if direct_hit:
+    if core_hit:
         score += 58
         reasons.append(f'exact "{keyword}" match')
+    elif choices_hit and allow_choice_only_match:
+        score += 16
+        reasons.append(f'"{keyword}" found in choices')
 
     if tag_hit:
         score += 60 if keyword in {"recursion", "recursive"} else 34
@@ -499,8 +1004,9 @@ def find_question_page(pdf, question_number, question_text=""):
         return 0
 
     qnum = int(question_number)
-    question_pattern = re.compile(rf"(?im)\bquestion\s*{qnum}\b")
-    compact_pattern = re.compile(rf"(?im)\bquestion\s*{qnum}(?:\D|$)")
+    question_word = r"q\s*u\s*e\s*s\s*t\s*i\s*o\s*n"
+    question_pattern = re.compile(rf"(?im)\b{question_word}\s*{qnum}\b")
+    compact_pattern = re.compile(rf"(?im)\b{question_word}\s*{qnum}(?:\D|$)")
     prompt_snippet = ""
     if question_text:
         words = re.findall(r"[A-Za-z0-9_]+", question_text)
@@ -568,10 +1074,11 @@ def find_question_bounds_on_page(page, question_number, end_question_number=None
     if question_number is None:
         return None
 
-    start_pattern = re.compile(rf"(?i)\bquestion\s*{int(question_number)}\b")
+    question_word = r"q\s*u\s*e\s*s\s*t\s*i\s*o\s*n"
+    start_pattern = re.compile(rf"(?i)\b{question_word}\s*{int(question_number)}\b")
     end_pattern = None
     if end_question_number is not None:
-        end_pattern = re.compile(rf"(?i)\bquestion\s*{int(end_question_number)}\b")
+        end_pattern = re.compile(rf"(?i)\b{question_word}\s*{int(end_question_number)}\b")
 
     start_top = None
     end_top = None
@@ -601,7 +1108,7 @@ def find_question_bounds_on_page(page, question_number, end_question_number=None
                 for line in lines
                 if not remove_noise_lines(line["text"])
                     .lower()
-                    .startswith(("uil computer science", "written test", "test -", "test –"))
+                    .startswith(("uil computer science", "written test", "test -", "test Ã¢â‚¬â€œ"))
             ),
             default=page.height - padding_bottom,
         )
@@ -692,7 +1199,7 @@ def render_pdf_crop(
                     for line in extract_page_lines(page)
                     if not remove_noise_lines(line["text"])
                         .lower()
-                        .startswith(("uil computer science", "written test", "test -", "test –"))
+                        .startswith(("uil computer science", "written test", "test -", "test Ã¢â‚¬â€œ"))
                 ),
                 default=safe_bottom,
             )
@@ -728,12 +1235,101 @@ def render_pdf_crop(
         return img_bytes
 
 
+def fetch_exam_catalog():
+    conn = get_connection()
+    rows = conn.execute(
+        """
+        SELECT year, level, exam_name, COUNT(DISTINCT question_number) AS question_count
+        FROM questions
+        WHERE year IS NOT NULL
+          AND level IS NOT NULL
+          AND exam_name IS NOT NULL
+        GROUP BY year, level, exam_name
+        ORDER BY year DESC, level ASC, exam_name ASC
+        """
+    ).fetchall()
+    conn.close()
+
+    return [
+        {
+            "year": int(row["year"]),
+            "level": str(row["level"] or ""),
+            "exam_name": str(row["exam_name"] or ""),
+            "question_count": int(row["question_count"] or 0),
+        }
+        for row in rows
+    ]
+
+
+def fetch_test_questions(year, level, exam_name):
+    conn = get_connection()
+    rows = conn.execute(
+        """
+        SELECT *
+        FROM questions
+        WHERE year = ?
+          AND lower(level) = lower(?)
+          AND exam_name = ?
+        ORDER BY question_number ASC, id DESC
+        """,
+        (year, level, exam_name),
+    ).fetchall()
+    conn.close()
+
+    latest_by_number = {}
+    for row in rows:
+        qnum = int(row["question_number"] or 0)
+        if qnum and qnum not in latest_by_number:
+            latest_by_number[qnum] = row
+
+    ordered_rows = [latest_by_number[qnum] for qnum in sorted(latest_by_number.keys())]
+    prepared = [prepare_question(row) for row in ordered_rows]
+
+    group_anchor_seen = set()
+    test_questions = []
+    for q in prepared:
+        is_shared_group = q["group_type"] != "single" and bool(q["group_id"])
+        group_id = q["group_id"] if is_shared_group else ""
+        is_group_anchor = False
+        if is_shared_group and group_id not in group_anchor_seen:
+            is_group_anchor = True
+            group_anchor_seen.add(group_id)
+
+        if q["parsed_choices"]:
+            choice_letters = [choice["letter"] for choice in q["parsed_choices"]]
+        elif q["visual_choice_labels"]:
+            choice_letters = list(q["visual_choice_labels"])
+        else:
+            labels = parse_choice_label_sequence(q["choices"])
+            choice_letters = labels if labels else (["A", "B", "C", "D", "E"] if re.fullmatch(r"[A-E]", q["answer"] or "", re.IGNORECASE) else [])
+
+        test_questions.append(
+            {
+                "id": q["id"],
+                "question_number": q["question_number"],
+                "question_text": q["question_text"],
+                "answer": (q["answer"] or "").strip().upper(),
+                "normalized_open_response_answer": q["normalized_open_response_answer"],
+                "is_open_response": bool(q["is_open_response"]),
+                "is_shared_group": is_shared_group,
+                "group_id": group_id,
+                "is_group_anchor": is_group_anchor,
+                "shared_context": q["shared_context"] if is_group_anchor else "",
+                "choice_letters": choice_letters,
+                "display_issues": q["display_issues"],
+            }
+        )
+
+    return test_questions
+
+
 @app.route("/")
 def index():
     keyword = request.args.get("keyword", "").strip()
     year = request.args.get("year", "").strip()
     level = request.args.get("level", "").strip()
     exam_name = request.args.get("exam_name", "").strip()
+    exam_catalog = fetch_exam_catalog()
 
     results = []
 
@@ -773,6 +1369,19 @@ def index():
                 item[0]["question_number"] or 0,
             )
         )
+        # Keep relevance-focused results while shuffling inside narrow score bands
+        # so repeated searches do not always show the exact same top few entries.
+        bucketed = {}
+        for item in filtered:
+            band = int(item[1]["score"] // 5)
+            bucketed.setdefault(band, []).append(item)
+
+        diversified = []
+        for band in sorted(bucketed.keys(), reverse=True):
+            band_rows = bucketed[band]
+            random.shuffle(band_rows)
+            diversified.extend(band_rows)
+        filtered = diversified
 
         seen_groups = set()
         for row, match in filtered:
@@ -802,7 +1411,34 @@ def index():
         keyword=keyword,
         year=year,
         level=level,
-        exam_name=exam_name
+        exam_name=exam_name,
+        exam_catalog=exam_catalog,
+    )
+
+
+@app.route("/test")
+def test_mode():
+    year_text = request.args.get("year", "").strip()
+    level = request.args.get("level", "").strip()
+    exam_name = request.args.get("exam_name", "").strip()
+
+    if not (year_text.isdigit() and level and exam_name):
+        return redirect(url_for("index"))
+
+    year = int(year_text)
+    questions = fetch_test_questions(year, level, exam_name)
+    if not questions:
+        return redirect(url_for("index"))
+
+    exam_key = f"{year}|{level.lower()}|{exam_name}"
+    return render_template(
+        "test_mode.html",
+        year=year,
+        level=level,
+        exam_name=exam_name,
+        exam_key=exam_key,
+        total_questions=len(questions),
+        questions=questions,
     )
 
 
@@ -902,5 +1538,41 @@ def group_detail(group_id):
     )
 
 
+@app.route("/report/<int:question_id>", methods=["POST"])
+def report_parse_issue(question_id):
+    conn = get_connection()
+    row = conn.execute("SELECT * FROM questions WHERE id = ?", (question_id,)).fetchone()
+    conn.close()
+
+    if row is None:
+        return "Question not found", 404
+
+    prepared = prepare_question(row)
+    report_entry = {
+        "reported_at": datetime.utcnow().isoformat(timespec="seconds") + "Z",
+        "id": row["id"],
+        "exam_name": row["exam_name"],
+        "question_number": row["question_number"],
+        "group_id": row["group_id"] or "",
+        "group_type": row["group_type"] or "single",
+        "source_test_pdf": row["source_test_pdf"],
+        "page_number": row["page_number"],
+        "display_issues": prepared["display_issues"],
+        "question_text": row["question_text"] or "",
+        "code_block": row["code_block"] or "",
+        "choices": row["choices"] or "",
+        "answer": row["answer"] or "",
+    }
+
+    with open(PARSE_FEEDBACK_FILE, "a", encoding="utf-8") as f:
+        f.write(json.dumps(report_entry) + "\n")
+
+    return_to = request.form.get("return_to", "").strip()
+    if return_to:
+        return redirect(return_to)
+    return redirect(url_for("question_detail", question_id=question_id))
+
+
 if __name__ == "__main__":
     app.run(debug=True)
+

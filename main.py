@@ -8,11 +8,17 @@ import io
 import json
 import zipfile
 import shutil
+from datetime import datetime
+import subprocess
+import tempfile
 
 DB_FILE = "uil_cs_questions_v2.db"
 DATA_FOLDER = "data"
 ARCHIVE_OVERRIDE_FILE = "archive_overrides.json"
+QUESTION_OVERRIDE_FILE = "question_overrides.json"
 ARCHIVE_CACHE_ROOT = "_archive_cache"
+ANSWER_SANITY_FILE = "answer_sanity_queue.jsonl"
+_OCR_UNAVAILABLE_WARNED = False
 
 
 def connect_db():
@@ -78,6 +84,17 @@ TOPIC_SYNONYMS = {
     "enum": ["enum", "enumerated type", "enumeration"],
     "enums": ["enum", "enumerated type", "enumeration"],
     "collections": ["collection", "collections", "ArrayList", "LinkedList", "HashMap", "TreeMap", "Set", "Queue", "Stack"],
+    "queue": ["queue", "fifo", "first in first out", "deque", "priority queue", "linkedlist"],
+    "queues": ["queue", "fifo", "first in first out", "deque", "priority queue", "linkedlist"],
+    "stack": ["stack", "lifo", "last in first out", "push", "pop", "peek"],
+    "stacks": ["stack", "lifo", "last in first out", "push", "pop", "peek"],
+    "linked list": ["linked list", "linkedlist", "node", "next", "prev"],
+    "linked lists": ["linked list", "linkedlist", "node", "next", "prev"],
+    "hashmap": ["hashmap", "hash map", "map", "key", "value", "put", "get"],
+    "hashset": ["hashset", "hash set", "set", "contains", "add", "remove"],
+    "arraylist": ["arraylist", "list", "add", "remove", "get", "size"],
+    "priority queue": ["priority queue", "heap", "poll", "offer", "peek"],
+    "priorityqueue": ["priority queue", "priorityqueue", "heap", "poll", "offer", "peek"],
     "generic collections": ["collection", "collections", "List", "Set", "Map", "Stack", "Queue", "PriorityQueue", "ArrayList", "LinkedList", "HashSet", "TreeSet", "HashMap", "TreeMap"],
     "generics": ["generic", "generics", "<T>", "Comparable<T>", "Collection", "List", "Set", "Map"],
     "array": ["array", "arrays", "[]"],
@@ -89,6 +106,14 @@ TOPIC_SYNONYMS = {
     "regular expressions": ["regex", "regular expression", "Pattern", "Matcher", "matches", "replaceAll"],
     "sorting": ["sort", "sorted", "selection sort", "insertion sort", "merge sort", "quicksort"],
     "sorts": ["sort", "sorted", "selection sort", "insertion sort", "merge sort", "quicksort", "bubble sort", "radix sort"],
+    "selection sort": ["selection sort", "minimum", "swap", "unsorted portion"],
+    "insertion sort": ["insertion sort", "insert", "shift", "sorted portion"],
+    "merge sort": ["merge sort", "divide and conquer", "merge", "halves"],
+    "quick sort": ["quick sort", "quicksort", "pivot", "partition"],
+    "quicksort": ["quick sort", "quicksort", "pivot", "partition"],
+    "binary search": ["binary search", "middle", "sorted array", "half"],
+    "linear search": ["linear search", "sequential search", "scan"],
+    "sequential search": ["sequential search", "linear search", "scan"],
     "searching": ["search", "binary search", "linear search"],
     "searches": ["search", "binary search", "linear search", "sequential search"],
     "math": ["Math.random", "Math.pow", "Math.sqrt", "Math.abs", "Math.min", "Math.max", "random"],
@@ -103,6 +128,17 @@ TOPIC_SYNONYMS = {
     "base conversion": ["base conversion", "binary", "octal", "hex", "hexadecimal", "decimal", "base 2", "base 8", "base 10", "base 16"],
     "two's complement": ["two's complement", "2's complement", "negative 8-bit integer", "8 bits"],
     "twos complement": ["two's complement", "2's complement", "negative 8-bit integer", "8 bits"],
+    "binary tree": ["binary tree", "tree", "root", "leaf", "inorder", "preorder", "postorder"],
+    "tree traversal": ["inorder", "preorder", "postorder", "level order", "traversal"],
+    "preorder": ["preorder", "tree traversal", "root left right"],
+    "inorder": ["inorder", "tree traversal", "left root right"],
+    "postorder": ["postorder", "tree traversal", "left right root"],
+    "prefix": ["prefix", "prefix notation", "polish notation"],
+    "postfix": ["postfix", "postfix notation", "reverse polish notation"],
+    "big o": ["big o", "runtime", "time complexity", "space complexity", "worst case", "average case"],
+    "time complexity": ["time complexity", "runtime", "big o", "worst case", "average case", "best case"],
+    "space complexity": ["space complexity", "memory", "big o", "runtime"],
+    "bst traversal": ["binary search tree", "bst", "preorder", "inorder", "postorder"],
     "polish notation": ["prefix notation", "postfix notation", "infix", "prefix", "postfix"],
     "finite state machine": ["finite state machine", "fsm", "state machine"],
     "fsm": ["finite state machine", "fsm", "state machine"],
@@ -128,14 +164,83 @@ TOPIC_SYNONYMS = {
 STRICT_TOPIC_MATCHES = {"class", "math", "oop", "inheritance", "polymorphism", "encapsulation"}
 
 
-def extract_full_text(file_path: str):
+def should_attempt_ocr(extracted_text: str):
+    cleaned = (extracted_text or "").strip()
+    if not cleaned:
+        return True
+    alnum_chars = re.findall(r"[A-Za-z0-9]", cleaned)
+    return len(alnum_chars) < 60
+
+
+def extract_text_with_tesseract_ocr(file_path: str, max_pages=14, dpi=220):
+    global _OCR_UNAVAILABLE_WARNED
+    tesseract_cmd = shutil.which("tesseract")
+    if not tesseract_cmd:
+        if not _OCR_UNAVAILABLE_WARNED:
+            print("OCR fallback unavailable: install 'tesseract' and ensure it is on PATH.")
+            _OCR_UNAVAILABLE_WARNED = True
+        return ""
+
+    try:
+        import pypdfium2 as pdfium
+    except Exception:
+        if not _OCR_UNAVAILABLE_WARNED:
+            print("OCR fallback unavailable: install Python package 'pypdfium2'.")
+            _OCR_UNAVAILABLE_WARNED = True
+        return ""
+
+    text_pages = []
+    try:
+        pdf = pdfium.PdfDocument(file_path)
+    except Exception:
+        return ""
+
+    total_pages = min(len(pdf), max_pages)
+    for page_index in range(total_pages):
+        image_path = None
+        try:
+            page = pdf[page_index]
+            pil_image = page.render(scale=dpi / 72).to_pil()
+            with tempfile.NamedTemporaryFile(suffix=".png", delete=False) as tmp:
+                image_path = tmp.name
+            pil_image.save(image_path, format="PNG")
+            run = subprocess.run(
+                [tesseract_cmd, image_path, "stdout", "--dpi", str(dpi), "-l", "eng", "--psm", "6"],
+                check=False,
+                capture_output=True,
+                text=True,
+                encoding="utf-8",
+                errors="ignore",
+            )
+            if run.returncode == 0 and run.stdout.strip():
+                text_pages.append(run.stdout.strip())
+        except Exception:
+            continue
+        finally:
+            if image_path and os.path.exists(image_path):
+                try:
+                    os.remove(image_path)
+                except Exception:
+                    pass
+
+    return "\n".join(text_pages).strip()
+
+
+def extract_full_text(file_path: str, allow_ocr=True):
     pages = []
     with pdfplumber.open(file_path) as pdf:
         for page in pdf.pages:
             text = page.extract_text()
             if text:
                 pages.append(text)
-    return "\n".join(pages)
+    extracted = "\n".join(pages).strip()
+
+    if allow_ocr and should_attempt_ocr(extracted):
+        ocr_text = extract_text_with_tesseract_ocr(file_path)
+        if ocr_text and len(ocr_text) > len(extracted):
+            return ocr_text
+
+    return extracted
 
 
 def infer_year(filename: str):
@@ -227,6 +332,20 @@ def load_archive_overrides():
             data = json.load(f)
     except Exception as exc:
         print(f"Warning: could not load {ARCHIVE_OVERRIDE_FILE}: {exc}")
+        return {}
+
+    return data if isinstance(data, dict) else {}
+
+
+def load_question_overrides():
+    if not os.path.exists(QUESTION_OVERRIDE_FILE):
+        return {}
+
+    try:
+        with open(QUESTION_OVERRIDE_FILE, "r", encoding="utf-8") as f:
+            data = json.load(f)
+    except Exception as exc:
+        print(f"Warning: could not load {QUESTION_OVERRIDE_FILE}: {exc}")
         return {}
 
     return data if isinstance(data, dict) else {}
@@ -879,7 +998,10 @@ def apply_method_reference_groups(parsed_questions, exam_name, year):
                 break
             if (
                 question_references_method_name(candidate.get("question_text", ""), method_names)
-                or looks_like_explicit_shared_reference(candidate.get("question_text", ""))
+                or (
+                    looks_like_explicit_shared_reference(candidate.get("question_text", ""))
+                    and code_block_size(candidate.get("code_block", "")) < 3
+                )
             ):
                 member_indices.append(right)
                 right += 1
@@ -921,6 +1043,10 @@ def question_can_anchor_shared_group(question):
             code_block_declares_reusable_definition(code_block)
         )
     )
+
+
+def question_uses_fill_in_placeholder(text):
+    return bool(re.search(r"<\d+\*>", text or ""))
 
 
 def extract_search_tags(question_text, code_block, shared_context=""):
@@ -977,6 +1103,58 @@ def looks_like_code_line(line):
     return False
 
 
+def split_prompt_and_embedded_code(prompt_text):
+    if not prompt_text:
+        return "", ""
+
+    if re.search(r"(?i)\boutput of (?:this|the)\s+client code\b", prompt_text):
+        return prompt_text.strip(), ""
+
+    prompt_lines = []
+    code_lines = []
+    for raw_line in prompt_text.replace("\r", "\n").splitlines():
+        line = raw_line.strip()
+        if not line:
+            continue
+
+        if looks_like_code_line(line):
+            code_lines.append(line)
+            continue
+
+        if re.match(r"(?i)^\s*}\s*(?:catch|finally|else|while)\b", line):
+            code_lines.append(line)
+            continue
+
+        if re.match(r"(?i)^\s*(?:catch|finally|else)\b", line):
+            code_lines.append(line)
+            continue
+
+        prompt_lines.append(line)
+
+    return "\n".join(prompt_lines).strip(), "\n".join(code_lines).strip()
+
+
+def split_prompt_and_leaked_choice_labels(prompt_text):
+    if not prompt_text:
+        return "", []
+
+    kept_lines = []
+    leaked_labels = []
+    for raw_line in prompt_text.replace("\r", "\n").splitlines():
+        line = raw_line.strip()
+        if not line:
+            continue
+
+        label_only = re.fullmatch(r"(?i)([A-E])[\.)]\s*", line)
+        if label_only:
+            leaked_labels.append(f"{label_only.group(1).upper()})")
+            continue
+
+        kept_lines.append(line)
+
+    return "\n".join(kept_lines).strip(), leaked_labels
+
+
 def split_prompt_and_code(text):
     lines = [line.strip() for line in text.splitlines() if line.strip()]
     prompt_lines = []
@@ -1001,7 +1179,7 @@ def split_choices(text):
 def is_choice_line(text):
     if not text:
         return False
-    return bool(re.match(r"^\s*[A-E]\)\s+", text, re.IGNORECASE))
+    return bool(re.match(r"^\s*[A-E][\.)]\s+", text, re.IGNORECASE))
 
 
 def remove_parser_noise_lines(text):
@@ -1012,6 +1190,15 @@ def remove_parser_noise_lines(text):
         r"^written test",
         r"^test\s+[–-]",
         r"^uil computer science\b",
+        r"^\(?c\)?\s*a\+",
+        r"^©\s*a\+",
+        r"^copyright\b",
+        r"^page\s+\d+\b",
+        r"^www\.",
+        r"^questions$",
+        r"^free response$",
+        r"^your answers\b",
+        r"^double-check\b",
     ]
 
     cleaned_lines = []
@@ -1025,6 +1212,191 @@ def remove_parser_noise_lines(text):
         cleaned_lines.append(line)
 
     return "\n".join(cleaned_lines).strip()
+
+
+def count_inline_choice_markers(text):
+    if not text:
+        return 0
+    return len(re.findall(r'(?i)(?<!\w)[A-E][\.)]\s*', text))
+
+
+def normalize_choice_fragment(text):
+    return re.sub(r"\s+", " ", (text or "").strip()).strip()
+
+
+def split_trailing_choice_leak(prompt_text):
+    if not prompt_text:
+        return "", ""
+
+    lines = [line.strip() for line in prompt_text.splitlines() if line.strip()]
+    if not lines:
+        return "", ""
+
+    leak_idx = None
+    for idx in range(len(lines)):
+        if not re.match(r'(?i)^[A-E][\.)]\s*', lines[idx]):
+            continue
+        remaining = "\n".join(lines[idx:])
+        marker_count = count_inline_choice_markers(remaining)
+        if marker_count >= 2:
+            leak_idx = idx
+            break
+        if idx == len(lines) - 1 and marker_count == 1:
+            leak_idx = idx
+            break
+
+    if leak_idx is None:
+        return prompt_text.strip(), ""
+
+    cleaned_prompt = "\n".join(lines[:leak_idx]).strip()
+    leaked_choices = "\n".join(lines[leak_idx:]).strip()
+    return cleaned_prompt, leaked_choices
+
+
+def rebuild_choice_block(*parts):
+    raw = "\n".join(part for part in parts if part).strip()
+    if not raw:
+        return ""
+
+    matches = list(re.finditer(r'(?i)(?<!\w)([A-E])[\.)]\s*', raw))
+    if not matches:
+        return raw
+
+    label_to_content = {}
+    for idx, match in enumerate(matches):
+        label = match.group(1).upper()
+        start = match.end()
+        end = matches[idx + 1].start() if idx + 1 < len(matches) else len(raw)
+        content = normalize_choice_fragment(raw[start:end])
+        if content and (label not in label_to_content or len(content) > len(label_to_content[label])):
+            label_to_content[label] = content
+
+    rebuilt = []
+    for label in ["A", "B", "C", "D", "E"]:
+        if label in label_to_content:
+            rebuilt.append(f"{label}. {label_to_content[label]}")
+
+    return "\n".join(rebuilt).strip() if rebuilt else raw
+
+
+def extract_choice_block_from_crop_text(crop_text, question_number):
+    if not crop_text:
+        return ""
+
+    block = crop_text
+    question_word = r"Q\s*u\s*e\s*s\s*t\s*i\s*o\s*n"
+    start_match = re.search(rf"(?im)^\s*{question_word}\s*{question_number}\.?\s*$", block)
+    if start_match:
+        block = block[start_match.end():]
+
+    next_question_match = re.search(rf"(?im)^\s*{question_word}\s*\d+\.?\s*$", block)
+    if next_question_match:
+        block = block[:next_question_match.start()]
+
+    footer_match = re.search(r"(?im)^\s*uil computer science\b", block)
+    if footer_match:
+        block = block[:footer_match.start()]
+
+    label_match = re.search(r"(?im)^\s*([A-E][\.)]\s+)", block)
+    if not label_match:
+        return ""
+
+    return block[label_match.start(1):].strip()
+
+
+def rebuild_compact_choice_grid(text):
+    if not text:
+        return ""
+
+    def scalar_tokens(line):
+        normalized = (line or "").replace("−", "-").replace("–", "-").replace("—", "-")
+        normalized = re.sub(r"(?<!\w)-\s+(?=\d)", "-", normalized)
+        return re.findall(r"(?i)LINE\s*#\d+|[+-]?\d+(?:\.\d+)?|[A-Za-z_][\w'.:/+-]*", normalized)
+
+    lines = [line.strip() for line in text.replace("\r", "\n").splitlines() if line.strip()]
+    if not lines:
+        return ""
+
+    choice_values = {}
+    pending_labels = []
+    signed_label = None
+
+    for line in lines:
+        if looks_like_code_line(line) and not re.match(r"(?i)^[A-E][\.)]", line):
+            continue
+
+        label_matches = list(re.finditer(r"(?i)\b([A-E])[\.)]", line))
+        if label_matches:
+            for idx, match in enumerate(label_matches):
+                label = match.group(1).upper()
+                start = match.end()
+                end = label_matches[idx + 1].start() if idx + 1 < len(label_matches) else len(line)
+                inline_text = normalize_choice_fragment(line[start:end])
+                if inline_text:
+                    choice_values[label] = inline_text
+                    if inline_text in {"-", "+"}:
+                        signed_label = label
+                else:
+                    pending_labels.append(label)
+            continue
+
+        if not pending_labels:
+            continue
+
+        tokens = scalar_tokens(line)
+        if not tokens:
+            continue
+
+        if signed_label and signed_label in choice_values and choice_values[signed_label] in {"-", "+"} and len(tokens) == len(pending_labels) + 1:
+            choice_values[signed_label] = f"{choice_values[signed_label]}{tokens[0]}"
+            tokens = tokens[1:]
+            signed_label = None
+
+        if len(tokens) != len(pending_labels):
+            continue
+
+        for label, token in zip(pending_labels, tokens):
+            choice_values[label] = token
+        pending_labels = []
+
+    rebuilt = []
+    for label in ["A", "B", "C", "D", "E"]:
+        value = normalize_choice_fragment(choice_values.get(label, ""))
+        if value:
+            rebuilt.append(f"{label}) {value}")
+
+    return "\n".join(rebuilt).strip()
+
+
+def count_parsed_choice_entries(text):
+    if not text:
+        return 0
+
+    try:
+        from app import parse_choices
+        return len(parse_choices(text))
+    except Exception:
+        return 0
+
+
+def split_choice_prefix_from_code_line(line):
+    if not line:
+        return "", ""
+
+    match = re.match(
+        r'^\s*(-?\d+(?:\.\d+)?)\s+(?=(?:for\s*\(|while\s*\(|if\s*\(|do\{?|return\b|out\.|[A-Za-z_]\w*\s*(?:\+\+|--|=)|[A-Za-z_]\w*(?:\.[A-Za-z_]\w*)*\s*\())',
+        line,
+        re.IGNORECASE,
+    )
+    if not match:
+        return "", line
+
+    choice_text = normalize_choice_fragment(match.group(1))
+    remainder = line[match.end(1):].strip()
+    if not choice_text or not remainder:
+        return "", line
+
+    return choice_text, remainder
 
 
 def split_right_side_reference(text):
@@ -1054,19 +1426,30 @@ def pull_code_out_of_choices(choices_text):
     extracted_code_lines = []
 
     for line in lines:
-        m = re.match(r"^([A-E]\)\s.*?)(\s+(?:for\s*\(|while\s*\(|if\s*\(|out\.print|out\.println|return\b|[A-Za-z_]\w*\s*=|.*;.*))$", line)
-        if m:
-            choice_part = m.group(1).strip()
-            trailing_part = m.group(2).strip()
-            cleaned_choice_lines.append(choice_part)
-            if looks_like_code_line(trailing_part):
-                extracted_code_lines.append(trailing_part)
+        label_match = re.match(r"^([A-E][\.)])\s*(.*)$", line, re.IGNORECASE)
+        if not label_match:
+            cleaned_choice_lines.append(line)
             continue
 
-        if looks_like_code_line(line):
-            extracted_code_lines.append(line)
-        else:
-            cleaned_choice_lines.append(line)
+        label = label_match.group(1).upper().replace(".", ")")
+        body = (label_match.group(2) or "").strip()
+        if not body:
+            cleaned_choice_lines.append(f"{label}")
+            continue
+
+        # Conservative leak recovery: only split when a numeric scalar option
+        # is immediately followed by a code statement that clearly belongs to
+        # prompt/shared code, not a legitimate code-like answer choice.
+        scalar_then_code = re.match(r"^([+-]?\d+(?:\.\d+)?)\s+(.+)$", body)
+        if scalar_then_code:
+            scalar = scalar_then_code.group(1).strip()
+            trailing = scalar_then_code.group(2).strip()
+            if trailing and looks_like_code_line(trailing):
+                cleaned_choice_lines.append(f"{label} {scalar}")
+                extracted_code_lines.append(trailing)
+                continue
+
+        cleaned_choice_lines.append(f"{label} {body}".strip())
 
     return "\n".join(cleaned_choice_lines).strip(), "\n".join(extracted_code_lines).strip()
 
@@ -1149,23 +1532,146 @@ def parse_test_pdf(file_path: str):
 
 def parse_answers_from_text(answer_text: str):
     answers = {}
+    symbolic_token_pattern = re.compile(r"^(?:<<|>>|<=|>=|==|!=|\+\+|--|&&|\|\||[+\-*/%^~!<>&|]{1,4})$")
 
-    patterns = [
-        r"(?im)^\s*\*?\s*(\d+)\)\s*([A-E])\b",
-        r"(?im)^\s*\*?\s*(\d+)\.\s*([A-E])\b",
-        r"(?im)^\s*\*?\s*(\d+)\)\s*(-?\d+)\b",
-        r"(?im)^\s*\*?\s*(\d+)\.\s*(-?\d+)\b",
-        r"(?im)^\s*\*?\s*(\d+)\)\s*([^\n\r]+)",
-        r"(?im)^\s*\*?\s*(\d+)\.\s*([^\n\r]+)",
-    ]
+    def salvage_open_response_token(value: str):
+        cleaned = " ".join((value or "").split()).strip()
+        if not cleaned:
+            return ""
+        if cleaned.lower().startswith("see explanation"):
+            return "See Explanation"
 
-    for pattern in patterns:
-        for qnum, ans in re.findall(pattern, answer_text):
-            qnum = int(qnum)
-            ans = ans.strip()
-            if qnum not in answers and ans:
-                first_token = ans.split()[0]
-                answers[qnum] = first_token
+        token = cleaned.split()[0].strip().rstrip(",;")
+        if re.fullmatch(r"[+-]?\d+(?:\.\d+)?", token):
+            return token
+        if symbolic_token_pattern.fullmatch(token):
+            return token
+        if "cid:" in token.lower():
+            if len(token) >= 12 and token.lower().count("cid:") >= 2:
+                return token
+            return ""
+        if re.fullmatch(r"[A-Za-z0-9+\-*/.=()]{2,48}", token):
+            return token
+        return ""
+
+    def is_plausible_answer_value(value: str, qnum=None):
+        cleaned = (value or "").strip()
+        if not cleaned:
+            return False
+        allow_leading_symbolic = (
+            qnum is not None
+            and int(qnum) >= 37
+            and re.match(r"^[!<>()+\-*/]", cleaned)
+        )
+        if re.match(r"^[,;:.!?)]", cleaned) and not allow_leading_symbolic:
+            return False
+        if symbolic_token_pattern.fullmatch(cleaned):
+            return True
+        if not re.search(r"[A-Za-z0-9]", cleaned):
+            return False
+
+        lowered = cleaned.lower()
+        disallowed_fragments = (
+            "which of the following",
+            "convert the",
+            "make the boolean",
+            "question ",
+        )
+        if qnum is None or int(qnum) < 39:
+            disallowed_fragments = ("cid:", *disallowed_fragments)
+        if any(fragment in lowered for fragment in disallowed_fragments):
+            return False
+
+        if "cid:" in lowered:
+            return len(cleaned) >= 12 and lowered.count("cid:") >= 2
+
+        words = re.findall(r"[A-Za-z0-9+\-*/.=]+", cleaned)
+        max_words = 20 if qnum is not None and int(qnum) >= 37 else 6
+        if len(words) > max_words:
+            return False
+        if cleaned.count(",") >= 2 and len(words) > 3 and not (qnum is not None and int(qnum) >= 37):
+            return False
+        return True
+
+    def answer_quality(value: str):
+        if not value:
+            return 0
+        if re.fullmatch(r"[A-E]", value, re.IGNORECASE):
+            return 100
+        if re.fullmatch(r"(?:TRUE|FALSE|T|F)", value, re.IGNORECASE):
+            return 95
+        if re.fullmatch(r"[+-]?\d+(?:\.\d+)?", value):
+            return 90
+        if " " in value:
+            return 65
+        return 80
+
+    def normalize_answer_value(raw_value: str):
+        value = " ".join((raw_value or "").replace("\r", " ").replace("\n", " ").split()).strip()
+        if not value:
+            return ""
+
+        letter_match = re.match(r"^([A-E])\b", value, re.IGNORECASE)
+        if letter_match:
+            return letter_match.group(1).upper()
+        numeric_with_explanation = re.match(r"^([+-]?\d+(?:\.\d+)?)\s+[A-Za-z]", value)
+        if numeric_with_explanation:
+            return numeric_with_explanation.group(1)
+
+        value = value.lstrip("*").strip()
+        value = re.sub(r"\s*\*+$", "", value).strip()
+        return value
+
+    qnum_pattern = re.compile(r"(?<![A-Za-z0-9:])\*?\s*(\d+)(?:\)|\.(?=\s))\s*")
+
+    for raw_line in answer_text.replace("\r", "\n").splitlines():
+        line = raw_line.strip()
+        if not line:
+            continue
+
+        likely_choice_text = bool(re.search(r"(?i)\b[A-E][\.)]\s+", line))
+        compact_pairs = re.findall(r"(?<!\w)(\d{1,2})\s+([A-E]|TRUE|FALSE|T|F)\b", line, re.IGNORECASE)
+        if (
+            len(compact_pairs) >= 2
+            and re.match(r"^\*?\s*\d", line)
+            and not likely_choice_text
+        ):
+            for raw_qnum, raw_answer in compact_pairs:
+                qnum = int(raw_qnum)
+                if qnum < 1 or qnum > 40:
+                    continue
+                candidate = normalize_answer_value(raw_answer)
+                if not is_plausible_answer_value(candidate, qnum=qnum):
+                    continue
+                existing = answers.get(qnum)
+                if not existing or answer_quality(candidate) > answer_quality(existing):
+                    answers[qnum] = candidate
+
+        matches = list(qnum_pattern.finditer(line))
+        if not matches:
+            continue
+
+        if re.search(r"[A-Za-z]", line[:matches[0].start()]):
+            continue
+
+        for idx, match in enumerate(matches):
+            qnum = int(match.group(1))
+            if qnum < 1 or qnum > 40:
+                continue
+
+            start = match.end()
+            end = matches[idx + 1].start() if idx + 1 < len(matches) else len(line)
+            candidate = normalize_answer_value(line[start:end])
+            if not is_plausible_answer_value(candidate, qnum=qnum):
+                if qnum >= 39 and qnum not in answers:
+                    fallback = salvage_open_response_token(candidate)
+                    if fallback:
+                        answers[qnum] = fallback
+                continue
+
+            existing = answers.get(qnum)
+            if not existing or answer_quality(candidate) > answer_quality(existing):
+                answers[qnum] = candidate
 
     return answers
 
@@ -1176,6 +1682,56 @@ def parse_key_pdf(file_path: str):
     if not answers:
         raise ValueError("Could not parse any answers from key PDF.")
     return answers
+
+
+def normalize_choice_answer_token(answer: str):
+    token = (answer or "").strip().upper()
+    if token == "TRUE":
+        return "T"
+    if token == "FALSE":
+        return "F"
+    return token
+
+
+def evaluate_answer_sanity(question_text: str, choices_text: str, answer: str):
+    issues = []
+    normalized_answer = normalize_choice_answer_token(answer)
+    question_text = question_text or ""
+    choices_text = choices_text or ""
+
+    from app import parse_choices  # Keep sanity checks aligned with runtime choice parsing.
+
+    parsed_choices = parse_choices(choices_text)
+    parsed_labels = [choice["letter"] for choice in parsed_choices if choice.get("text", "").strip()]
+    has_choice_markers = bool(re.search(r"(?i)\b(?:[A-E]|TRUE|FALSE|T|F)[\.)](?=\s|$)", choices_text))
+    likely_choice_question = bool(parsed_labels) or has_choice_markers
+
+    if not normalized_answer:
+        issues.append("missing_answer")
+        return issues
+
+    if likely_choice_question:
+        if not re.fullmatch(r"[A-ETF]", normalized_answer, re.IGNORECASE):
+            issues.append("choice_question_non_choice_answer")
+        elif parsed_labels and normalized_answer not in parsed_labels:
+            issues.append("answer_not_in_parsed_choices")
+        elif not parsed_labels:
+            issues.append("choice_labels_not_parsed")
+    else:
+        if re.fullmatch(r"[A-ETF]", normalized_answer, re.IGNORECASE):
+            # Open-response rows with letter answers are usually parse mistakes.
+            if len(question_text.strip()) > 0:
+                issues.append("open_response_letter_answer")
+
+    return issues
+
+
+def append_answer_sanity_findings(entries):
+    if not entries:
+        return
+    with open(ANSWER_SANITY_FILE, "a", encoding="utf-8") as f:
+        for entry in entries:
+            f.write(json.dumps(entry) + "\n")
 
 
 def vertical_overlap(q1, q2, tolerance=40):
@@ -1206,11 +1762,26 @@ def assign_groups(parsed_questions, exam_name, year):
                 next_q = parsed_questions[j]
                 same_page = next_q["page_number"] == q["page_number"]
                 close_number = next_q["question_number"] == members[-1]["question_number"] + 1
-                references_shared = looks_like_explicit_shared_reference(next_q.get("question_text", ""))
                 overlaps_shared_code = code_blocks_overlap(shared_code, next_q.get("code_block", ""))
+                references_shared = (
+                    looks_like_explicit_shared_reference(next_q.get("question_text", ""))
+                    and (
+                        overlaps_shared_code
+                        or code_block_size(next_q.get("code_block", "")) < 3
+                        or question_uses_fill_in_placeholder(next_q.get("question_text", ""))
+                    )
+                )
+                placeholder_chain = (
+                    code_block_declares_reusable_definition(shared_code)
+                    and (
+                        question_uses_fill_in_placeholder(members[-1].get("question_text", ""))
+                        or question_uses_fill_in_placeholder(next_q.get("question_text", ""))
+                    )
+                    and code_block_size(next_q.get("code_block", "")) >= 3
+                )
                 overlaps = vertical_overlap(members[-1], next_q)
 
-                if same_page and close_number and overlaps and (references_shared or overlaps_shared_code):
+                if same_page and close_number and overlaps and (references_shared or overlaps_shared_code or placeholder_chain):
                     members.append(next_q)
                     if next_q.get("code_block", "").strip():
                         shared_code = (shared_code + "\n" + next_q["code_block"].strip()).strip()
@@ -1309,8 +1880,28 @@ def ingest_exam_pair(exam_name, test_pdf, key_pdf, year=None, level=None, source
     answers = parse_key_pdf(key_pdf) if key_pdf else {}
 
     rows = []
+    sanity_findings = []
     for q in questions:
         qnum = q["question_number"]
+        answer_value = answers.get(qnum, "")
+        sanity_issues = evaluate_answer_sanity(
+            q.get("question_text", ""),
+            q.get("choices", ""),
+            answer_value,
+        )
+        if sanity_issues:
+            sanity_findings.append({
+                "reported_at": datetime.utcnow().isoformat(timespec="seconds") + "Z",
+                "exam_name": exam_name,
+                "source_test_pdf": test_source,
+                "source_key_pdf": key_source,
+                "question_number": qnum,
+                "issues": sanity_issues,
+                "answer": answer_value,
+                "question_preview": re.sub(r"\s+", " ", (q.get("question_text", "") or "")).strip()[:180],
+                "choices_preview": re.sub(r"\s+", " ", (q.get("choices", "") or "")).strip()[:180],
+            })
+
         rows.append((
             test_source,
             key_source,
@@ -1324,13 +1915,19 @@ def ingest_exam_pair(exam_name, test_pdf, key_pdf, year=None, level=None, source
             q["question_text"],
             q["code_block"],
             q["choices"],
-            answers.get(qnum, ""),
+            answer_value,
             q.get("group_id", ""),
             q.get("group_type", "single"),
             q.get("shared_context", "")
         ))
 
     inserted = insert_questions(rows)
+    append_answer_sanity_findings(sanity_findings)
+    if sanity_findings:
+        print(
+            f"{exam_name}: answer sanity flagged {len(sanity_findings)} question(s) "
+            f"(logged to {ANSWER_SANITY_FILE})"
+        )
     return len(rows), inserted
 
 
@@ -1627,6 +2224,7 @@ def extract_page_lines_by_column(page, split_x=280):
 
 def extract_questions_layout_aware(file_path: str, split_x=280):
     parsed = []
+    question_line_regex = re.compile(r"^\s*Q\s*u\s*e\s*s\s*t\s*i\s*o\s*n\s*(\d+)\b", re.IGNORECASE)
 
     with pdfplumber.open(file_path) as pdf:
         for page in pdf.pages:
@@ -1634,7 +2232,7 @@ def extract_questions_layout_aware(file_path: str, split_x=280):
 
             q_starts = []
             for line in left_lines:
-                m = re.match(r"^\s*Question\s*(\d+)", line["text"], re.IGNORECASE)
+                m = question_line_regex.match(line["text"])
                 if m:
                     q_starts.append({"qnum": int(m.group(1)), "top": line["top"]})
 
@@ -1645,6 +2243,10 @@ def extract_questions_layout_aware(file_path: str, split_x=280):
                 qnum = q["qnum"]
                 top_start = q["top"]
                 top_end = q_starts[i + 1]["top"] if i + 1 < len(q_starts) else page.height
+                crop_text = page.within_bbox((0, top_start, page.width, top_end)).extract_text(
+                    x_tolerance=1,
+                    y_tolerance=2,
+                ) or ""
 
                 left_block = [
                     line["text"] for line in left_lines
@@ -1671,7 +2273,7 @@ def extract_questions_layout_aware(file_path: str, split_x=280):
 
                     right_block_lines = [right_lines[idx]["text"] for idx in range(first_idx, last_idx + 1)]
 
-                if left_block and re.match(r"^\s*Question\s*\d+", left_block[0], re.IGNORECASE):
+                if left_block and question_line_regex.match(left_block[0]):
                     left_block = left_block[1:]
 
                 left_text = "\n".join(left_block).strip()
@@ -1679,24 +2281,87 @@ def extract_questions_layout_aware(file_path: str, split_x=280):
                 right_non_choice_lines = [line for line in right_block_lines if not is_choice_line(line)]
                 right_prompt_lines = [line for line in right_non_choice_lines if not looks_like_code_line(line)]
                 right_code_lines = [line for line in right_non_choice_lines if looks_like_code_line(line)]
-                right_text = "\n".join(right_code_lines).strip()
                 before_choices, choices_part = split_choices(left_text)
-                if right_prompt_lines:
-                    before_choices = "\n".join(part for part in [before_choices, "\n".join(right_prompt_lines)] if part).strip()
                 if right_choice_lines:
                     combined_choices = "\n".join(part for part in [choices_part, "\n".join(right_choice_lines)] if part).strip()
                 else:
                     combined_choices = choices_part
 
+                dangling_choice_marker = bool(re.search(r'(?i)(?<!\w)[A-E][\.)]\s*$', combined_choices))
+                should_salvage_choice_text = dangling_choice_marker or count_inline_choice_markers(combined_choices) < 5
+                leaked_prompt_choices = ""
+                if should_salvage_choice_text:
+                    before_choices, leaked_prompt_choices = split_trailing_choice_leak(before_choices)
+
+                leaked_code_choice = ""
+                salvageable_right_prompt_lines = [
+                    line for line in right_prompt_lines
+                    if line.strip()
+                    and line.strip().lower() != "right?"
+                    and not re.match(
+                        r'(?i)^(?:do\{?|for\s*\(|while\s*\(|if\s*\(|return\b|out\.|[A-Za-z_]\w*\s*(?:\+\+|--|=)|[A-Za-z_]\w*\s*\()',
+                        line.strip(),
+                    )
+                ]
+
+                if dangling_choice_marker:
+                    for idx, line in enumerate(list(salvageable_right_prompt_lines)):
+                        leaked_code_choice, remainder = split_choice_prefix_from_code_line(line)
+                        if leaked_code_choice:
+                            salvageable_right_prompt_lines.pop(idx)
+                            if remainder:
+                                right_code_lines.insert(0, remainder)
+                            break
+
+                if dangling_choice_marker and not leaked_code_choice:
+                    for idx, line in enumerate(right_code_lines):
+                        leaked_code_choice, remainder = split_choice_prefix_from_code_line(line)
+                        if leaked_code_choice:
+                            right_code_lines[idx] = remainder
+                            break
+
+                right_text = "\n".join(right_code_lines).strip()
+                dangling_choice_marker = bool(re.search(r'(?i)(?<!\w)[A-E][\.)]\s*$', combined_choices))
+
+                if leaked_prompt_choices or leaked_code_choice or (dangling_choice_marker and salvageable_right_prompt_lines):
+                    combined_choices = rebuild_choice_block(
+                        combined_choices,
+                        leaked_prompt_choices,
+                        leaked_code_choice,
+                        "\n".join(salvageable_right_prompt_lines) if dangling_choice_marker else "",
+                    )
+                elif right_prompt_lines:
+                    before_choices = "\n".join(part for part in [before_choices, "\n".join(right_prompt_lines)] if part).strip()
+
+                before_choices, leaked_prompt_labels = split_prompt_and_leaked_choice_labels(before_choices)
+                if leaked_prompt_labels:
+                    combined_choices = rebuild_choice_block("\n".join(leaked_prompt_labels), combined_choices)
+
+                crop_choices = extract_choice_block_from_crop_text(crop_text, qnum)
+                compact_crop_choices = rebuild_compact_choice_grid(crop_choices)
+                if count_parsed_choice_entries(compact_crop_choices) > count_parsed_choice_entries(combined_choices):
+                    combined_choices = compact_crop_choices
+                elif count_parsed_choice_entries(crop_choices) > count_parsed_choice_entries(combined_choices):
+                    combined_choices = crop_choices
+
+                cleaned_choice_text, leaked_code_from_choices = pull_code_out_of_choices(combined_choices)
+                combined_choices = cleaned_choice_text
+                if leaked_code_from_choices:
+                    right_text = "\n".join(part for part in [right_text, leaked_code_from_choices] if part).strip()
+
                 parsed.append({
                     "question_number": qnum,
-                    "question_text": remove_parser_noise_lines(before_choices.strip()),
-                    "code_block": remove_parser_noise_lines(right_text.strip()),
+                    "question_text": "",
+                    "code_block": "",
                     "choices": remove_parser_noise_lines(combined_choices.strip()),
                     "page_number": page.page_number - 1,
                     "top_y": top_start,
                     "bottom_y": top_end
                 })
+                prompt_text, embedded_code = split_prompt_and_embedded_code(before_choices.strip())
+                merged_code = "\n".join(part for part in [embedded_code, right_text.strip()] if part).strip()
+                parsed[-1]["question_text"] = remove_parser_noise_lines(prompt_text)
+                parsed[-1]["code_block"] = remove_parser_noise_lines(merged_code)
 
     return parsed
 
@@ -1733,7 +2398,7 @@ def detect_parse_issues(row):
     answer = (row["answer"] or "").strip()
     combined = "\n".join(part for part in [question_text, code_block, choices, shared_context] if part)
     lower_combined = combined.lower()
-    open_response_answer = bool(re.fullmatch(r"-?\d+", answer))
+    open_response_answer = bool(answer) and not bool(re.fullmatch(r"[A-ETF]", answer, re.IGNORECASE))
 
     if "uil computer science" in lower_combined or "written test" in lower_combined:
         issues.append("footer_text_leaked")
@@ -1859,12 +2524,60 @@ def audit_database(limit=50):
         print(f"    {item['preview']}")
 
 
+def export_review_queue(output_path="parse_review_queue.json"):
+    audit_conn = sqlite3.connect(DB_FILE)
+    audit_conn.row_factory = sqlite3.Row
+    rows = audit_conn.execute("""
+        SELECT id, source_test_pdf, exam_name, year, level, question_number, page_number,
+               top_y, bottom_y, group_id, group_type, question_text, code_block, choices,
+               answer, shared_context
+        FROM questions
+        ORDER BY year, exam_name, question_number
+    """).fetchall()
+    audit_conn.close()
+
+    overrides = load_question_overrides()
+    queue = []
+    for row in rows:
+        issues = detect_parse_issues(row)
+        if not issues:
+            continue
+
+        override_key = f"{row['exam_name']}#{row['question_number']}"
+        queue.append({
+            "id": row["id"],
+            "exam_name": row["exam_name"],
+            "year": row["year"],
+            "level": row["level"],
+            "question_number": row["question_number"],
+            "page_number": row["page_number"],
+            "group_id": row["group_id"] or "",
+            "group_type": row["group_type"] or "single",
+            "source_test_pdf": row["source_test_pdf"],
+            "issues": issues,
+            "question_preview": make_preview(row["question_text"] or row["code_block"] or row["choices"] or "", max_len=140),
+            "has_manual_override": override_key in overrides,
+            "override_key": override_key,
+        })
+
+    with open(output_path, "w", encoding="utf-8") as f:
+        json.dump(queue, f, indent=2)
+
+    print(f"Wrote {len(queue)} flagged question(s) to {output_path}")
+
+
 if __name__ == "__main__":
     if len(sys.argv) > 1 and sys.argv[1].lower() == "audit":
         limit = 50
         if len(sys.argv) > 2 and sys.argv[2].isdigit():
             limit = int(sys.argv[2])
         audit_database(limit=limit)
+        conn.close()
+        raise SystemExit(0)
+
+    if len(sys.argv) > 1 and sys.argv[1].lower() == "review_queue":
+        output_path = sys.argv[2] if len(sys.argv) > 2 else "parse_review_queue.json"
+        export_review_queue(output_path=output_path)
         conn.close()
         raise SystemExit(0)
 

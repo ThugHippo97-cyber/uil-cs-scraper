@@ -23,18 +23,26 @@
                 <img src="{{ url_for('group_image', group_id=group_id) }}" class="question-img">
 
                 {% if shared_context %}
-                    <div class="detail-panel shared-panel">
-                        <h3>Shared Code / Context</h3>
-                        <pre class="content-block code-surface">{{ shared_context }}</pre>
-                    </div>
+                    <details class="detail-panel shared-panel collapsible-panel">
+                        <summary class="collapsible-summary">
+                            <span>Shared Code / Context</span>
+                            <span class="collapsible-hint">Show</span>
+                        </summary>
+                        <pre class="content-block code-surface collapsible-content">{{ shared_context }}</pre>
+                    </details>
                 {% endif %}
             </section>
 
             {% for question in questions %}
                 <section class="question-card grouped-question">
-                    <div class="detail-header compact-header">
+                <div class="detail-header compact-header">
                         <h3>Question {{ question.question_number }}</h3>
                     </div>
+
+                    <form class="report-form inline-report-form" method="post" action="{{ url_for('report_parse_issue', question_id=question.id) }}">
+                        <input type="hidden" name="return_to" value="{{ request.path }}">
+                        <button class="report-btn" type="submit">Report Parse Issue</button>
+                    </form>
 
                     {% if question.question_text %}
                         <div class="detail-panel">
@@ -43,21 +51,49 @@
                         </div>
                     {% endif %}
 
+                    {% if question.display_issues %}
+                        <div class="detail-panel issue-panel">
+                            <h4>Parser Notes</h4>
+                            {% for issue in question.display_issues %}
+                                <p class="issue-note">{{ issue }}</p>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+
                     <div class="detail-panel answer-panel">
-                        <h4>Answer Choices</h4>
+                        <h4>{% if question.is_open_response %}Answer Response{% else %}Answer Choices{% endif %}</h4>
                         {% if question.parsed_choices %}
-                            <div class="choice-buttons">
+                            <div class="choice-buttons choice-label-only">
                                 {% for choice in question.parsed_choices %}
                                     <button
                                         class="choice-btn q{{ question.id }}"
+                                        data-choice-letter="{{ choice.letter|trim|upper }}"
                                         onclick="checkAnswer('q{{ question.id }}', '{{ choice.letter }}', '{{ question.answer|trim|upper }}', this)">
-                                        <strong>{{ choice.letter }}.</strong> {{ choice.text }}
+                                        <strong>{{ choice.letter }}.</strong>
+                                    </button>
+                                {% endfor %}
+                            </div>
+                            <div id="result-q{{ question.id }}" class="result-box" style="display:none;"></div>
+                        {% elif question.is_visual_choice %}
+                            <div class="choice-buttons visual-choice-buttons">
+                                {% for label in question.visual_choice_labels %}
+                                    <button
+                                        class="choice-btn visual-choice-btn q{{ question.id }}"
+                                        onclick="checkAnswer('q{{ question.id }}', '{{ label }}', '{{ question.answer|trim|upper }}', this)">
+                                        <strong>{{ label }}</strong>
                                     </button>
                                 {% endfor %}
                             </div>
                             <div id="result-q{{ question.id }}" class="result-box" style="display:none;"></div>
                         {% elif question.choices %}
                             <pre class="content-block">{{ question.choices }}</pre>
+                        {% elif question.is_open_response %}
+                            <div class="response-form">
+                                <label class="response-label" for="response-input-q{{ question.id }}">Enter your answer</label>
+                                <input id="response-input-q{{ question.id }}" class="response-input" type="text" autocomplete="off" spellcheck="false">
+                                <button class="response-submit" type="button" onclick='checkOpenResponse("response-input-q{{ question.id }}", {{ question.answer|tojson }}, {{ question.normalized_open_response_answer|tojson }}, "result-q{{ question.id }}")'>Check Answer</button>
+                            </div>
+                            <div id="result-q{{ question.id }}" class="result-box" style="display:none;"></div>
                         {% endif %}
                     </div>
                 </section>
@@ -86,13 +122,54 @@
                 btn.classList.add('incorrect-btn');
 
                 buttons.forEach(button => {
-                    const text = button.textContent.trim().toUpperCase();
-                    if (text.startsWith(normalizedCorrect + '.') || text.startsWith(normalizedCorrect + ')') || text.startsWith(normalizedCorrect + ' ')) {
+                    const letter = (button.dataset.choiceLetter || '').trim().toUpperCase();
+                    if (letter === normalizedCorrect) {
                         button.classList.add('correct-btn');
                     }
                 });
 
                 resultBox.textContent = 'Incorrect. Correct answer: ' + normalizedCorrect;
+                resultBox.className = 'result-box incorrect';
+            }
+
+            resultBox.style.display = 'block';
+        }
+
+        function normalizeOpenResponse(value) {
+            let text = (value || '').toString().trim().toUpperCase();
+            text = text.replace(/[,\s]+/g, '');
+            text = text.replace(/[.;:!?]+$/g, '');
+
+            if (/^[+-]?\d+(\.0+)?$/.test(text)) {
+                return String(parseInt(Number(text), 10));
+            }
+
+            if (/^[+-]?\d+\.\d+$/.test(text)) {
+                text = text.replace(/0+$/g, '').replace(/\.$/g, '');
+            }
+
+            return text.replace(/[^A-Z0-9+\-*/.=]/g, '');
+        }
+
+        function checkOpenResponse(inputId, correct, normalizedCorrect, resultId) {
+            const input = document.getElementById(inputId);
+            const resultBox = document.getElementById(resultId);
+            const typed = input.value || '';
+            const normalizedTyped = normalizeOpenResponse(typed);
+            const target = normalizedCorrect || normalizeOpenResponse(correct);
+
+            if (!normalizedTyped) {
+                resultBox.textContent = 'Enter an answer first.';
+                resultBox.className = 'result-box incorrect';
+                resultBox.style.display = 'block';
+                return;
+            }
+
+            if (normalizedTyped === target) {
+                resultBox.textContent = 'Correct.';
+                resultBox.className = 'result-box correct';
+            } else {
+                resultBox.textContent = 'Incorrect. Correct answer: ' + correct;
                 resultBox.className = 'result-box incorrect';
             }
 

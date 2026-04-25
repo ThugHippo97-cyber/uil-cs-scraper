@@ -6,12 +6,19 @@ import app
 
 
 DATA_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), "data")
+ARCHIVE_DIR = os.path.join(
+    os.path.dirname(os.path.dirname(__file__)),
+    "_archive_cache",
+    "Written-20260405T175554Z-3-001",
+    "Written",
+)
 
 
 class ParserRegressionTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls._cache = {}
+        cls._archive_cache = {}
 
     @classmethod
     def load_grouped_questions(cls, filename):
@@ -28,6 +35,19 @@ class ParserRegressionTests(unittest.TestCase):
                 for question in grouped
             }
         return cls._cache[filename]
+
+    @classmethod
+    def load_archive_questions(cls, relative_path):
+        if relative_path not in cls._archive_cache:
+            path = os.path.join(ARCHIVE_DIR, *relative_path)
+            if not os.path.exists(path):
+                raise unittest.SkipTest(f"Archive fixture missing: {path}")
+            parsed = main.parse_test_pdf(path)
+            cls._archive_cache[relative_path] = {
+                question["question_number"]: question
+                for question in parsed
+            }
+        return cls._archive_cache[relative_path]
 
     def test_2017_invitational_a_questions_22_to_24_stay_in_one_shared_group(self):
         questions = self.load_grouped_questions("2017_invitationalA_test.pdf.pdf")
@@ -106,6 +126,20 @@ class ParserRegressionTests(unittest.TestCase):
         self.assertIn("class B extends A{", shared_context)
         self.assertIn("///////////client code////////////", shared_context)
 
+    def test_2025_invitational_a_questions_35_to_38_share_data_struct_context(self):
+        questions = self.load_grouped_questions("2025_invitationalA_test.pdf.pdf")
+
+        expected_group_id = "2025_2025_invitationala_p8_shared_35_38"
+        for qnum in (35, 36, 37, 38):
+            self.assertEqual(questions[qnum]["group_id"], expected_group_id)
+            self.assertEqual(questions[qnum]["group_type"], "shared_code")
+
+        shared_context = questions[38]["shared_context"]
+        self.assertIn("class DataStruct", shared_context)
+        self.assertIn("public T peek()", shared_context)
+        self.assertIn("public T pop()", shared_context)
+        self.assertIn("public T push(T data)", shared_context)
+
     def test_2024_invitational_a_recursion_questions_share_method_context(self):
         questions = self.load_grouped_questions("2024_invitationalA_test.pdf.pdf")
 
@@ -175,6 +209,185 @@ class ParserRegressionTests(unittest.TestCase):
             ],
         )
 
+    def test_choice_text_with_embedded_letter_references_does_not_split_into_fake_choices(self):
+        prepared = app.prepare_question({
+            "id": 0,
+            "exam_name": "2025_invitationala",
+            "year": 2025,
+            "level": "invitational",
+            "question_number": 22,
+            "question_text": "Which choice is correct?",
+            "code_block": "",
+            "choices": "A. option one B. option two C. option three D. A. and C. E. A. and B.",
+            "answer": "D",
+            "group_id": "",
+            "group_type": "single",
+            "shared_context": "",
+        })
+
+        self.assertEqual(
+            prepared["parsed_choices"],
+            [
+                {"letter": "A", "text": "option one"},
+                {"letter": "B", "text": "option two"},
+                {"letter": "C", "text": "option three"},
+                {"letter": "D", "text": "A. and C."},
+                {"letter": "E", "text": "A. and B."},
+            ],
+        )
+
+    def test_compact_choice_grid_with_values_on_following_lines_parses_separately(self):
+        parsed = app.parse_choices("A) B) C)\n3 2 5\nD) E)\n6 1")
+
+        self.assertEqual(
+            parsed,
+            [
+                {"letter": "A", "text": "3"},
+                {"letter": "B", "text": "2"},
+                {"letter": "C", "text": "5"},
+                {"letter": "D", "text": "6"},
+                {"letter": "E", "text": "1"},
+            ],
+        )
+
+    def test_sparse_choice_labels_can_still_parse_later_answer(self):
+        parsed = app.parse_choices("C. bit class package\nE. throw final")
+
+        self.assertEqual(
+            parsed,
+            [
+                {"letter": "C", "text": "bit class package"},
+                {"letter": "E", "text": "throw final"},
+            ],
+        )
+
+    def test_unlabeled_five_line_choices_are_mapped_to_a_through_e(self):
+        parsed = app.parse_choices("Queue\nStack\nLinked List\nTree\nHashMap")
+
+        self.assertEqual(
+            parsed,
+            [
+                {"letter": "A", "text": "Queue"},
+                {"letter": "B", "text": "Stack"},
+                {"letter": "C", "text": "Linked List"},
+                {"letter": "D", "text": "Tree"},
+                {"letter": "E", "text": "HashMap"},
+            ],
+        )
+
+    def test_unlabeled_single_line_choices_with_delimiters_are_mapped(self):
+        parsed = app.parse_choices("Queue | Stack | Linked List | Tree | HashMap")
+
+        self.assertEqual(
+            parsed,
+            [
+                {"letter": "A", "text": "Queue"},
+                {"letter": "B", "text": "Stack"},
+                {"letter": "C", "text": "Linked List"},
+                {"letter": "D", "text": "Tree"},
+                {"letter": "E", "text": "HashMap"},
+            ],
+        )
+
+    def test_answer_sanity_flags_non_choice_key_for_choice_question(self):
+        issues = main.evaluate_answer_sanity(
+            "What is the output?",
+            "A. 1\nB. 2\nC. 3\nD. 4\nE. 5",
+            "merge",
+        )
+
+        self.assertIn("choice_question_non_choice_answer", issues)
+
+    def test_answer_sanity_flags_letter_key_not_in_available_labels(self):
+        issues = main.evaluate_answer_sanity(
+            "True/False question",
+            "T. True\nF. False",
+            "A",
+        )
+
+        self.assertIn("answer_not_in_parsed_choices", issues)
+
+    def test_prepare_question_recovers_missing_trailing_choice_from_code_prefix(self):
+        prepared = app.prepare_question({
+            "id": 0,
+            "exam_name": "2025_stacey_tests_test_11",
+            "year": 2025,
+            "level": "invitational",
+            "question_number": 9,
+            "question_text": "What is the output by the code to the right?\ndo{",
+            "code_block": "7.8 g-=a-=3;\n}\nwhile (a++ > -2);\nout.println(g);",
+            "choices": "A. 15.8 B. 13.8 C. 11.8 D. 9.8 E.",
+            "answer": "B",
+            "group_id": "",
+            "group_type": "single",
+            "shared_context": "",
+        })
+
+        self.assertEqual(
+            prepared["parsed_choices"],
+            [
+                {"letter": "A", "text": "15.8"},
+                {"letter": "B", "text": "13.8"},
+                {"letter": "C", "text": "11.8"},
+                {"letter": "D", "text": "9.8"},
+                {"letter": "E", "text": "7.8"},
+            ],
+        )
+        self.assertIn("g-=a-=3;", prepared["code_block"])
+
+    def test_visual_choice_fallback_handles_image_only_answer_sets(self):
+        prepared = app.prepare_question({
+            "id": 0,
+            "exam_name": "2017_invitationala",
+            "year": 2017,
+            "level": "invitational",
+            "question_number": 34,
+            "question_text": "Which diagram is correct?",
+            "code_block": "",
+            "choices": "",
+            "answer": "D",
+            "group_id": "",
+            "group_type": "single",
+            "shared_context": "",
+        })
+
+        self.assertTrue(prepared["is_visual_choice"])
+        self.assertEqual(prepared["visual_choice_labels"], ["A", "B", "C", "D", "E"])
+        self.assertFalse(prepared["is_open_response"])
+
+    def test_extract_choice_block_from_crop_text_recovers_separate_choice_lines(self):
+        crop_text = """Question 31.
+Which of the following is the output of the main method shown here?
+A)
+abcdeabcdef
+B)
+fedcbaedcba
+C)
+cabdebacedf
+D)
+cedbaefdbca
+E)
+cbaededfbac
+Question 32.
+"""
+
+        recovered = app.extract_choice_block_from_crop_text(crop_text, 31)
+
+        self.assertIn("A)", recovered)
+        self.assertIn("E)", recovered)
+        parsed = app.parse_choices(recovered)
+        self.assertEqual(parsed[0], {"letter": "A", "text": "abcdeabcdef"})
+        self.assertEqual(parsed[-1], {"letter": "E", "text": "cbaededfbac"})
+
+    def test_open_response_normalization_treats_numeric_equivalents_the_same(self):
+        self.assertEqual(app.normalize_open_response_value("04"), "4")
+        self.assertEqual(app.normalize_open_response_value("4.0"), "4")
+        self.assertEqual(app.normalize_open_response_value(" 4 "), "4")
+
+    def test_normalize_answer_does_not_collapse_long_sentence_to_first_letter(self):
+        text = "Tests may not be turned in until 45 minutes have elapsed."
+        self.assertEqual(app.normalize_answer(text), text.upper())
+
     def test_method_reference_questions_can_share_following_method_definition(self):
         parsed = [
             {
@@ -222,6 +435,27 @@ class ParserRegressionTests(unittest.TestCase):
         self.assertEqual(grouped[1]["group_id"], grouped[2]["group_id"])
         self.assertIn("public int go(int num)", grouped[0]["shared_context"])
         self.assertIn("return go(num - 1);", grouped[2]["shared_context"])
+
+    def test_2017_invitational_c_question_39_stays_open_response_without_fake_choices(self):
+        questions = self.load_archive_questions(
+            ("2017", "Inv C (Round Rock)", "MC1703a_Written_QUESTIONS.pdf")
+        )
+        q39 = questions[39]
+
+        self.assertIn("reverse Polish notation", q39["question_text"])
+        self.assertNotIn("B)", q39["choices"])
+        self.assertEqual(q39["choices"], "")
+
+    def test_2025_district_question_39_does_not_bleed_into_question_40(self):
+        questions = self.load_archive_questions(
+            ("2025", "2025", "District", "CompSciWritten_StudyPacket_D_25.pdf")
+        )
+        q39 = questions[39]
+
+        self.assertNotIn("Question 40", q39["question_text"])
+        self.assertNotIn("Q uestion 40", q39["question_text"])
+        self.assertNotIn("Convert the prefix expression", q39["question_text"])
+        self.assertIn(40, questions)
 
 
 if __name__ == "__main__":

@@ -87,6 +87,32 @@ class SearchRelevanceTests(unittest.TestCase):
         self.assertGreaterEqual(match["score"], 60)
         self.assertIn("recursion tag", " ".join(match["reasons"]))
 
+    def test_priority_queue_search_matches_heap_style_question(self):
+        row = self.make_row(
+            question_text="What value is removed next from the heap?",
+            code_block="PriorityQueue<Integer> pq = new PriorityQueue<>(); pq.offer(7); pq.poll();",
+        )
+
+        self.assertTrue(app.row_matches_terms(row, ["priority queue", *app.expand_keyword("priority queue")]))
+
+    def test_stack_search_ignores_choice_only_mentions(self):
+        row = self.make_row(
+            question_text="Which generic modifier is required by this declaration?",
+            code_block="public class Box<T extends Comparable<T>> {}",
+            choices="A) LinkedList B) Queue C) Stack D) Vector E) Deque",
+        )
+
+        self.assertFalse(app.row_matches_terms(row, ["stack", *app.expand_keyword("stack")]))
+        self.assertIsNone(app.score_search_match(row, "stack"))
+
+    def test_big_o_search_matches_runtime_question(self):
+        row = self.make_row(
+            question_text="What is the worst case runtime in Big O notation?",
+            code_block="for (int i = 0; i < n; i++) { for (int j = 0; j < n; j++) {} }",
+        )
+
+        self.assertTrue(app.row_matches_terms(row, ["big o", *app.expand_keyword("big o")]))
+
 
 if __name__ == "__main__":
     unittest.main()

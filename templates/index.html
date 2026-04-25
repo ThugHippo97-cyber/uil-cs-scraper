@@ -3,20 +3,43 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>UIL CS Question Search</title>
+    <title>UIL CS Test Practice</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
     <div class="container">
         <section class="hero">
             <div class="hero-copy">
-                <p class="eyebrow">UIL Computer Science Archive</p>
-                <h1>Find questions by topic, year, and exam style.</h1>
-                <p class="hero-text">Search parsed UIL CS questions, then jump into source images, code snippets, and grouped shared-context problems.</p>
+                <p class="eyebrow">UIL Computer Science Practice</p>
+                <h1>Take full digital tests first. Drill by topic second.</h1>
+                <p class="hero-text">Pick a year, level, and exam to run a full question-by-question practice test. Use keyword search below for targeted skill work.</p>
             </div>
 
-            <form method="get" class="search-form search-panel">
-                <input type="text" name="keyword" placeholder="Try recursion, lambda, stack, inheritance..." value="{{ keyword }}">
+            <section class="search-panel test-launcher">
+                <h3>Start Full Test</h3>
+                <form method="get" action="{{ url_for('test_mode') }}" class="test-launch-form" id="test-launch-form">
+                    <select id="test-year" name="year" required>
+                        <option value="">Select year</option>
+                    </select>
+                    <select id="test-level" name="level" required disabled>
+                        <option value="">Select level</option>
+                    </select>
+                    <select id="test-exam" name="exam_name" required disabled>
+                        <option value="">Select exam</option>
+                    </select>
+                    <button type="submit">Start Test</button>
+                </form>
+                <p class="muted" id="test-launch-meta">Choose an exam set to begin.</p>
+            </section>
+        </section>
+
+        <section class="search-panel practice-panel">
+            <div class="results-head">
+                <h3>Topic Practice Search</h3>
+                <p class="results-subtitle">Secondary mode for targeted question drills.</p>
+            </div>
+            <form method="get" class="search-form">
+                <input type="text" name="keyword" placeholder="Try recursion, binary tree, runtime, polymorphism..." value="{{ keyword }}">
                 <input type="text" name="year" placeholder="Year" value="{{ year }}">
                 <input type="text" name="level" placeholder="Level" value="{{ level }}">
                 <input type="text" name="exam_name" placeholder="Exam name" value="{{ exam_name }}">
@@ -60,9 +83,111 @@
         {% elif keyword %}
             <div class="empty-state">
                 <p class="results-count">No results found.</p>
-                <p class="results-subtitle">Try a broader topic like <code>recursion</code>, <code>lambda</code>, <code>class</code>, or remove a filter.</p>
+                <p class="results-subtitle">Try a broader topic like <code>recursion</code>, <code>binary tree</code>, <code>class</code>, or remove a filter.</p>
             </div>
         {% endif %}
     </div>
+
+    <script>
+        const examCatalog = {{ exam_catalog|tojson }};
+        const yearSelect = document.getElementById("test-year");
+        const levelSelect = document.getElementById("test-level");
+        const examSelect = document.getElementById("test-exam");
+        const metaText = document.getElementById("test-launch-meta");
+
+        function uniq(values) {
+            return Array.from(new Set(values));
+        }
+
+        function option(label, value) {
+            const opt = document.createElement("option");
+            opt.value = value;
+            opt.textContent = label;
+            return opt;
+        }
+
+        function resetSelect(select, placeholder) {
+            select.innerHTML = "";
+            select.appendChild(option(placeholder, ""));
+        }
+
+        function loadYears() {
+            resetSelect(yearSelect, "Select year");
+            const years = uniq(examCatalog.map(item => String(item.year))).sort((a, b) => Number(b) - Number(a));
+            years.forEach(year => yearSelect.appendChild(option(year, year)));
+        }
+
+        function loadLevels() {
+            resetSelect(levelSelect, "Select level");
+            resetSelect(examSelect, "Select exam");
+            examSelect.disabled = true;
+
+            const selectedYear = yearSelect.value;
+            if (!selectedYear) {
+                levelSelect.disabled = true;
+                metaText.textContent = "Choose an exam set to begin.";
+                return;
+            }
+
+            const levels = uniq(
+                examCatalog
+                    .filter(item => String(item.year) === selectedYear)
+                    .map(item => item.level)
+            ).sort();
+
+            levels.forEach(level => levelSelect.appendChild(option(level, level)));
+            levelSelect.disabled = levels.length === 0;
+            metaText.textContent = levels.length ? "Now choose a level." : "No levels found for this year.";
+        }
+
+        function loadExams() {
+            resetSelect(examSelect, "Select exam");
+            const selectedYear = yearSelect.value;
+            const selectedLevel = levelSelect.value;
+
+            if (!selectedYear || !selectedLevel) {
+                examSelect.disabled = true;
+                metaText.textContent = "Now choose a level.";
+                return;
+            }
+
+            const exams = examCatalog
+                .filter(item => String(item.year) === selectedYear && item.level === selectedLevel)
+                .sort((a, b) => a.exam_name.localeCompare(b.exam_name));
+
+            exams.forEach(item => {
+                examSelect.appendChild(option(`${item.exam_name} (${item.question_count} questions)`, item.exam_name));
+            });
+            examSelect.disabled = exams.length === 0;
+            metaText.textContent = exams.length ? "Pick an exam and start test mode." : "No exams found for this year/level.";
+        }
+
+        function updateExamMeta() {
+            const selectedYear = yearSelect.value;
+            const selectedLevel = levelSelect.value;
+            const selectedExam = examSelect.value;
+            if (!selectedYear || !selectedLevel || !selectedExam) {
+                return;
+            }
+            const chosen = examCatalog.find(
+                item => String(item.year) === selectedYear && item.level === selectedLevel && item.exam_name === selectedExam
+            );
+            if (chosen) {
+                metaText.textContent = `Ready: ${chosen.year} ${chosen.level} ${chosen.exam_name} (${chosen.question_count} questions).`;
+            }
+        }
+
+        yearSelect.addEventListener("change", () => {
+            loadLevels();
+        });
+        levelSelect.addEventListener("change", () => {
+            loadExams();
+        });
+        examSelect.addEventListener("change", () => {
+            updateExamMeta();
+        });
+
+        loadYears();
+    </script>
 </body>
 </html>

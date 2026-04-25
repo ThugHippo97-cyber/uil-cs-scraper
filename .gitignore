@@ -17,6 +17,8 @@ env/
 # Generated archive artifacts
 _archive_cache/
 archive_scan_report.json
+.tmp/
+.run/
 
 # OS/editor noise
 .DS_Store
