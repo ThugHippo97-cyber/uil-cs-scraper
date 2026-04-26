@@ -1,4 +1,34 @@
 {
+  "2018/2018_computer_science_inv_a_study_materials.pdf": {
+    "pdf_type": "combo",
+    "year": 2018,
+    "level": "invitational",
+    "exam_name": "2018_invitationala"
+  },
+  "2018/2018_computer_science_inv_b_study_materials.pdf": {
+    "pdf_type": "combo",
+    "year": 2018,
+    "level": "invitational",
+    "exam_name": "2018_invitationalb"
+  },
+  "2018/2018_computer_science_district_study_materials.pdf": {
+    "pdf_type": "combo",
+    "year": 2018,
+    "level": "district",
+    "exam_name": "2018_district"
+  },
+  "2018/2018_computer_science_region_study_materials.pdf": {
+    "pdf_type": "combo",
+    "year": 2018,
+    "level": "regional",
+    "exam_name": "2018_regional"
+  },
+  "2018/2018_computer_science_state_study_materials.pdf": {
+    "pdf_type": "combo",
+    "year": 2018,
+    "level": "state",
+    "exam_name": "2018_state"
+  },
   "2019/computer_sci_inv_a.pdf": {
     "pdf_type": "combo",
     "year": 2019,

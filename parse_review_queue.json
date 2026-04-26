@@ -174,6 +174,736 @@
     "override_key": "2017_invitationalc#35"
   },
   {
+    "id": 2362,
+    "exam_name": "2018_district",
+    "year": 2018,
+    "level": "district",
+    "question_number": 12,
+    "page_number": 3,
+    "group_id": "2018_2018_district_p3_q12",
+    "group_type": "single",
+    "source_test_pdf": "_archive_cache/2018-20260426T040154Z-3-001/2018/2018_computer_science_district_study_materials.pdf",
+    "issues": [
+      "code_unbalanced_braces"
+    ],
+    "question_preview": "What is the output of the code segment to the right? do {",
+    "has_manual_override": false,
+    "override_key": "2018_district#12"
+  },
+  {
+    "id": 2366,
+    "exam_name": "2018_district",
+    "year": 2018,
+    "level": "district",
+    "question_number": 16,
+    "page_number": 4,
+    "group_id": "2018_2018_district_p4_q16",
+    "group_type": "single",
+    "source_test_pdf": "_archive_cache/2018-20260426T040154Z-3-001/2018/2018_computer_science_district_study_materials.pdf",
+    "issues": [
+      "recursive_question_not_grouped"
+    ],
+    "question_preview": "What is printed by the code segment shown on the right?",
+    "has_manual_override": false,
+    "override_key": "2018_district#16"
+  },
+  {
+    "id": 2367,
+    "exam_name": "2018_district",
+    "year": 2018,
+    "level": "district",
+    "question_number": 17,
+    "page_number": 4,
+    "group_id": "2018_2018_district_p4_q17",
+    "group_type": "single",
+    "source_test_pdf": "_archive_cache/2018-20260426T040154Z-3-001/2018/2018_computer_science_district_study_materials.pdf",
+    "issues": [
+      "recursive_question_not_grouped"
+    ],
+    "question_preview": "What is the output of the client code shown on the right?",
+    "has_manual_override": false,
+    "override_key": "2018_district#17"
+  },
+  {
+    "id": 2369,
+    "exam_name": "2018_district",
+    "year": 2018,
+    "level": "district",
+    "question_number": 19,
+    "page_number": 5,
+    "group_id": "2018_2018_district_p5_shared_19_20",
+    "group_type": "shared_code",
+    "source_test_pdf": "_archive_cache/2018-20260426T040154Z-3-001/2018/2018_computer_science_district_study_materials.pdf",
+    "issues": [
+      "code_unbalanced_braces"
+    ],
+    "question_preview": "Which of the following should replace <code 2> in the class shown on the right?",
+    "has_manual_override": false,
+    "override_key": "2018_district#19"
+  },
+  {
+    "id": 2370,
+    "exam_name": "2018_district",
+    "year": 2018,
+    "level": "district",
+    "question_number": 20,
+    "page_number": 5,
+    "group_id": "2018_2018_district_p5_shared_19_20",
+    "group_type": "shared_code",
+    "source_test_pdf": "_archive_cache/2018-20260426T040154Z-3-001/2018/2018_computer_science_district_study_materials.pdf",
+    "issues": [
+      "code_unbalanced_braces"
+    ],
+    "question_preview": "What is the output if this client code that is implemented in different class than Box.",
+    "has_manual_override": false,
+    "override_key": "2018_district#20"
+  },
+  {
+    "id": 2374,
+    "exam_name": "2018_district",
+    "year": 2018,
+    "level": "district",
+    "question_number": 24,
+    "page_number": 6,
+    "group_id": "2018_2018_district_p6_q24",
+    "group_type": "single",
+    "source_test_pdf": "_archive_cache/2018-20260426T040154Z-3-001/2018/2018_computer_science_district_study_materials.pdf",
+    "issues": [
+      "only_4_choice_labels",
+      "only_4_choice_labels"
+    ],
+    "question_preview": "Which of the following methods will return N! (N factorial) ?",
+    "has_manual_override": false,
+    "override_key": "2018_district#24"
+  },
+  {
+    "id": 2378,
+    "exam_name": "2018_district",
+    "year": 2018,
+    "level": "district",
+    "question_number": 28,
+    "page_number": 7,
+    "group_id": "2018_2018_district_p7_shared_28_30",
+    "group_type": "shared_code",
+    "source_test_pdf": "_archive_cache/2018-20260426T040154Z-3-001/2018/2018_computer_science_district_study_materials.pdf",
+    "issues": [
+      "code_unbalanced_braces"
+    ],
+    "question_preview": "Once <code> has been filled in correctly, which of the following sorting algorithms is implemented by the uilSort method? do {",
+    "has_manual_override": false,
+    "override_key": "2018_district#28"
+  },
+  {
+    "id": 2379,
+    "exam_name": "2018_district",
+    "year": 2018,
+    "level": "district",
+    "question_number": 29,
+    "page_number": 7,
+    "group_id": "2018_2018_district_p7_shared_28_30",
+    "group_type": "shared_code",
+    "source_test_pdf": "_archive_cache/2018-20260426T040154Z-3-001/2018/2018_computer_science_district_study_materials.pdf",
+    "issues": [
+      "code_unbalanced_braces"
+    ],
+    "question_preview": "What is the least restrictive worst case time efficiency (Big O value) for the uilSort method?",
+    "has_manual_override": false,
+    "override_key": "2018_district#29"
+  },
+  {
+    "id": 2381,
+    "exam_name": "2018_district",
+    "year": 2018,
+    "level": "district",
+    "question_number": 31,
+    "page_number": 8,
+    "group_id": "2018_2018_district_p8_q31",
+    "group_type": "single",
+    "source_test_pdf": "_archive_cache/2018-20260426T040154Z-3-001/2018/2018_computer_science_district_study_materials.pdf",
+    "issues": [
+      "recursive_question_not_grouped"
+    ],
+    "question_preview": "What is the output of the code segment shown here given the method implementation on the right?",
+    "has_manual_override": false,
+    "override_key": "2018_district#31"
+  },
+  {
+    "id": 2384,
+    "exam_name": "2018_district",
+    "year": 2018,
+    "level": "district",
+    "question_number": 34,
+    "page_number": 8,
+    "group_id": "2018_2018_district_p8_q34",
+    "group_type": "single",
+    "source_test_pdf": "_archive_cache/2018-20260426T040154Z-3-001/2018/2018_computer_science_district_study_materials.pdf",
+    "issues": [
+      "code_unbalanced_braces"
+    ],
+    "question_preview": "Which of the following lines of code will not compile correctly? correctly. switch(s.substring(i, i+1)) { case \"r\": case \"1\":",
+    "has_manual_override": false,
+    "override_key": "2018_district#34"
+  },
+  {
+    "id": 2385,
+    "exam_name": "2018_district",
+    "year": 2018,
+    "level": "district",
+    "question_number": 35,
+    "page_number": 8,
+    "group_id": "2018_2018_district_p8_q35",
+    "group_type": "single",
+    "source_test_pdf": "_archive_cache/2018-20260426T040154Z-3-001/2018/2018_computer_science_district_study_materials.pdf",
+    "issues": [
+      "code_unbalanced_braces"
+    ],
+    "question_preview": "What is the output of the code segment shown on the right? switch(s.substring(i, i+1)) { case \"r\": case \"1\":",
+    "has_manual_override": false,
+    "override_key": "2018_district#35"
+  },
+  {
+    "id": 2388,
+    "exam_name": "2018_district",
+    "year": 2018,
+    "level": "district",
+    "question_number": 38,
+    "page_number": 9,
+    "group_id": "2018_2018_district_p9_q38",
+    "group_type": "single",
+    "source_test_pdf": "_archive_cache/2018-20260426T040154Z-3-001/2018/2018_computer_science_district_study_materials.pdf",
+    "issues": [
+      "only_3_choice_labels",
+      "inline_choices_same_line",
+      "only_3_choice_labels"
+    ],
+    "question_preview": "Which of the graphs illustrated here is a complete graph?",
+    "has_manual_override": false,
+    "override_key": "2018_district#38"
+  },
+  {
+    "id": 2398,
+    "exam_name": "2018_invitationala",
+    "year": 2018,
+    "level": "invitational",
+    "question_number": 8,
+    "page_number": 3,
+    "group_id": "2018_2018_invitationala_p3_q8",
+    "group_type": "single",
+    "source_test_pdf": "_archive_cache/2018-20260426T040154Z-3-001/2018/2018_computer_science_inv_a_study_materials.pdf",
+    "issues": [
+      "code_unbalanced_braces"
+    ],
+    "question_preview": "What is the output of the code segment to the right? do {",
+    "has_manual_override": false,
+    "override_key": "2018_invitationala#8"
+  },
+  {
+    "id": 2399,
+    "exam_name": "2018_invitationala",
+    "year": 2018,
+    "level": "invitational",
+    "question_number": 9,
+    "page_number": 3,
+    "group_id": "2018_2018_invitationala_p3_q9",
+    "group_type": "single",
+    "source_test_pdf": "_archive_cache/2018-20260426T040154Z-3-001/2018/2018_computer_science_inv_a_study_materials.pdf",
+    "issues": [
+      "code_unbalanced_braces"
+    ],
+    "question_preview": "How many hash tags are printed by the code shown to the right? do {",
+    "has_manual_override": false,
+    "override_key": "2018_invitationala#9"
+  },
+  {
+    "id": 2406,
+    "exam_name": "2018_invitationala",
+    "year": 2018,
+    "level": "invitational",
+    "question_number": 16,
+    "page_number": 4,
+    "group_id": "2018_2018_invitationala_p4_q16",
+    "group_type": "single",
+    "source_test_pdf": "_archive_cache/2018-20260426T040154Z-3-001/2018/2018_computer_science_inv_a_study_materials.pdf",
+    "issues": [
+      "code_unbalanced_braces"
+    ],
+    "question_preview": "What is the output of the code segment shown here?",
+    "has_manual_override": false,
+    "override_key": "2018_invitationala#16"
+  },
+  {
+    "id": 2407,
+    "exam_name": "2018_invitationala",
+    "year": 2018,
+    "level": "invitational",
+    "question_number": 17,
+    "page_number": 4,
+    "group_id": "2018_2018_invitationala_p4_q17",
+    "group_type": "single",
+    "source_test_pdf": "_archive_cache/2018-20260426T040154Z-3-001/2018/2018_computer_science_inv_a_study_materials.pdf",
+    "issues": [
+      "recursive_question_not_grouped"
+    ],
+    "question_preview": "What is printed by the client code shown here given the implementation of the method abc shown to the right?",
+    "has_manual_override": false,
+    "override_key": "2018_invitationala#17"
+  },
+  {
+    "id": 2412,
+    "exam_name": "2018_invitationala",
+    "year": 2018,
+    "level": "invitational",
+    "question_number": 22,
+    "page_number": 6,
+    "group_id": "2018_2018_invitationala_p6_shared_22_24",
+    "group_type": "shared_code",
+    "source_test_pdf": "_archive_cache/2018-20260426T040154Z-3-001/2018/2018_computer_science_inv_a_study_materials.pdf",
+    "issues": [
+      "code_unbalanced_braces"
+    ],
+    "question_preview": "Which of the following reserved words must replace <code> the setC method? in has",
+    "has_manual_override": false,
+    "override_key": "2018_invitationala#22"
+  },
+  {
+    "id": 2414,
+    "exam_name": "2018_invitationala",
+    "year": 2018,
+    "level": "invitational",
+    "question_number": 24,
+    "page_number": 6,
+    "group_id": "2018_2018_invitationala_p6_shared_22_24",
+    "group_type": "shared_code",
+    "source_test_pdf": "_archive_cache/2018-20260426T040154Z-3-001/2018/2018_computer_science_inv_a_study_materials.pdf",
+    "issues": [
+      "code_unbalanced_braces"
+    ],
+    "question_preview": "What is the output of the client code shown here if <code> been filled in correctly? Uil b=new Uil(); b.setC(6); b.a=1; out.print(b.a+\" \"...",
+    "has_manual_override": false,
+    "override_key": "2018_invitationala#24"
+  },
+  {
+    "id": 2418,
+    "exam_name": "2018_invitationala",
+    "year": 2018,
+    "level": "invitational",
+    "question_number": 28,
+    "page_number": 8,
+    "group_id": "2018_2018_invitationala_p8_q28",
+    "group_type": "single",
+    "source_test_pdf": "_archive_cache/2018-20260426T040154Z-3-001/2018/2018_computer_science_inv_a_study_materials.pdf",
+    "issues": [
+      "only_4_choice_labels",
+      "only_4_choice_labels",
+      "recursive_question_not_grouped"
+    ],
+    "question_preview": "Which of the following methods will return the index number the character is not present in the string? of the last occurrence of the cha...",
+    "has_manual_override": false,
+    "override_key": "2018_invitationala#28"
+  },
+  {
+    "id": 2423,
+    "exam_name": "2018_invitationala",
+    "year": 2018,
+    "level": "invitational",
+    "question_number": 33,
+    "page_number": 9,
+    "group_id": "2018_2018_invitationala_p9_shared_32_33",
+    "group_type": "shared_code",
+    "source_test_pdf": "_archive_cache/2018-20260426T040154Z-3-001/2018/2018_computer_science_inv_a_study_materials.pdf",
+    "issues": [
+      "code_unbalanced_braces"
+    ],
+    "question_preview": "Which of the following sorting algorithms is implemented by sort method shown on the right? the //comment",
+    "has_manual_override": false,
+    "override_key": "2018_invitationala#33"
+  },
+  {
+    "id": 2425,
+    "exam_name": "2018_invitationala",
+    "year": 2018,
+    "level": "invitational",
+    "question_number": 35,
+    "page_number": 10,
+    "group_id": "2018_2018_invitationala_p10_q35",
+    "group_type": "single",
+    "source_test_pdf": "_archive_cache/2018-20260426T040154Z-3-001/2018/2018_computer_science_inv_a_study_materials.pdf",
+    "issues": [
+      "only_3_choice_labels",
+      "empty_choice_text",
+      "inline_choices_same_line",
+      "only_3_choice_labels"
+    ],
+    "question_preview": "If 1, 8, 3, 5 and 9 are placed into a binary search tree, in that tree?",
+    "has_manual_override": false,
+    "override_key": "2018_invitationala#35"
+  },
+  {
+    "id": 2452,
+    "exam_name": "2018_invitationalb",
+    "year": 2018,
+    "level": "invitational",
+    "question_number": 22,
+    "page_number": 5,
+    "group_id": "2018_2018_invitationalb_p5_shared_21_22",
+    "group_type": "shared_code",
+    "source_test_pdf": "_archive_cache/2018-20260426T040154Z-3-001/2018/2018_computer_science_inv_b_study_materials.pdf",
+    "issues": [
+      "code_unbalanced_braces",
+      "code_starts_mid_block"
+    ],
+    "question_preview": "Assuming that <code #1> and <code #2> have been filled in correctly, what is the greatest possible number of comparisons that will be req...",
+    "has_manual_override": false,
+    "override_key": "2018_invitationalb#22"
+  },
+  {
+    "id": 2459,
+    "exam_name": "2018_invitationalb",
+    "year": 2018,
+    "level": "invitational",
+    "question_number": 29,
+    "page_number": 8,
+    "group_id": "2018_2018_invitationalb_p8_shared_29_30",
+    "group_type": "shared_code",
+    "source_test_pdf": "_archive_cache/2018-20260426T040154Z-3-001/2018/2018_computer_science_inv_b_study_materials.pdf",
+    "issues": [
+      "code_unbalanced_braces"
+    ],
+    "question_preview": "Which of the following must replace <code> in the class Student shown on the right so that the code segment shown between comments will f...",
+    "has_manual_override": false,
+    "override_key": "2018_invitationalb#29"
+  },
+  {
+    "id": 2461,
+    "exam_name": "2018_invitationalb",
+    "year": 2018,
+    "level": "invitational",
+    "question_number": 31,
+    "page_number": 8,
+    "group_id": "2018_2018_invitationalb_p8_q31",
+    "group_type": "single",
+    "source_test_pdf": "_archive_cache/2018-20260426T040154Z-3-001/2018/2018_computer_science_inv_b_study_materials.pdf",
+    "issues": [
+      "code_unbalanced_braces"
+    ],
+    "question_preview": "Assuming s1 and s2 are both Student objects constructed with the name \u201cLarry\u201d, what is printed by this client code?",
+    "has_manual_override": false,
+    "override_key": "2018_invitationalb#31"
+  },
+  {
+    "id": 2477,
+    "exam_name": "2018_regional",
+    "year": 2018,
+    "level": "regional",
+    "question_number": 7,
+    "page_number": 2,
+    "group_id": "2018_2018_regional_p2_q7",
+    "group_type": "single",
+    "source_test_pdf": "_archive_cache/2018-20260426T040154Z-3-001/2018/2018_computer_science_region_study_materials.pdf",
+    "issues": [
+      "code_unbalanced_braces"
+    ],
+    "question_preview": "What is the output of the code segment to the right? switch(n%10) {",
+    "has_manual_override": false,
+    "override_key": "2018_regional#7"
+  },
+  {
+    "id": 2478,
+    "exam_name": "2018_regional",
+    "year": 2018,
+    "level": "regional",
+    "question_number": 8,
+    "page_number": 2,
+    "group_id": "2018_2018_regional_p2_q8",
+    "group_type": "single",
+    "source_test_pdf": "_archive_cache/2018-20260426T040154Z-3-001/2018/2018_computer_science_region_study_materials.pdf",
+    "issues": [
+      "code_unbalanced_braces"
+    ],
+    "question_preview": "What is the output of the code segment to the right? switch(n%10) {",
+    "has_manual_override": false,
+    "override_key": "2018_regional#8"
+  },
+  {
+    "id": 2482,
+    "exam_name": "2018_regional",
+    "year": 2018,
+    "level": "regional",
+    "question_number": 12,
+    "page_number": 3,
+    "group_id": "2018_2018_regional_p3_shared_11_12",
+    "group_type": "shared_code",
+    "source_test_pdf": "_archive_cache/2018-20260426T040154Z-3-001/2018/2018_computer_science_region_study_materials.pdf",
+    "issues": [
+      "footer_text_leaked",
+      "only_3_choice_labels",
+      "only_3_choice_labels"
+    ],
+    "question_preview": "Which of the following code segments will find and print the sum of the odd numbers within the array a? Array a has been",
+    "has_manual_override": false,
+    "override_key": "2018_regional#12"
+  },
+  {
+    "id": 2484,
+    "exam_name": "2018_regional",
+    "year": 2018,
+    "level": "regional",
+    "question_number": 14,
+    "page_number": 4,
+    "group_id": "2018_2018_regional_p4_q14",
+    "group_type": "single",
+    "source_test_pdf": "_archive_cache/2018-20260426T040154Z-3-001/2018/2018_computer_science_region_study_materials.pdf",
+    "issues": [
+      "recursive_question_not_grouped"
+    ],
+    "question_preview": "What is printed by the segment of code shown on the right?",
+    "has_manual_override": false,
+    "override_key": "2018_regional#14"
+  },
+  {
+    "id": 2485,
+    "exam_name": "2018_regional",
+    "year": 2018,
+    "level": "regional",
+    "question_number": 15,
+    "page_number": 4,
+    "group_id": "2018_2018_regional_p4_q15",
+    "group_type": "single",
+    "source_test_pdf": "_archive_cache/2018-20260426T040154Z-3-001/2018/2018_computer_science_region_study_materials.pdf",
+    "issues": [
+      "recursive_question_not_grouped"
+    ],
+    "question_preview": "What is the output of the code segment to the right?",
+    "has_manual_override": false,
+    "override_key": "2018_regional#15"
+  },
+  {
+    "id": 2486,
+    "exam_name": "2018_regional",
+    "year": 2018,
+    "level": "regional",
+    "question_number": 16,
+    "page_number": 4,
+    "group_id": "2018_2018_regional_p4_q16",
+    "group_type": "single",
+    "source_test_pdf": "_archive_cache/2018-20260426T040154Z-3-001/2018/2018_computer_science_region_study_materials.pdf",
+    "issues": [
+      "recursive_question_not_grouped"
+    ],
+    "question_preview": "What is the output of the client code shown to the right?",
+    "has_manual_override": false,
+    "override_key": "2018_regional#16"
+  },
+  {
+    "id": 2491,
+    "exam_name": "2018_regional",
+    "year": 2018,
+    "level": "regional",
+    "question_number": 21,
+    "page_number": 5,
+    "group_id": "2018_2018_regional_p5_shared_21_22",
+    "group_type": "shared_code",
+    "source_test_pdf": "_archive_cache/2018-20260426T040154Z-3-001/2018/2018_computer_science_region_study_materials.pdf",
+    "issues": [
+      "code_unbalanced_braces"
+    ],
+    "question_preview": "All of the methods shown within the Intf interface are ________? the",
+    "has_manual_override": false,
+    "override_key": "2018_regional#21"
+  },
+  {
+    "id": 2496,
+    "exam_name": "2018_regional",
+    "year": 2018,
+    "level": "regional",
+    "question_number": 26,
+    "page_number": 6,
+    "group_id": "2018_2018_regional_p6_shared_25_26",
+    "group_type": "shared_code",
+    "source_test_pdf": "_archive_cache/2018-20260426T040154Z-3-001/2018/2018_computer_science_region_study_materials.pdf",
+    "issues": [
+      "code_unbalanced_braces"
+    ],
+    "question_preview": "Which of the following lines of code must replace <code 2> <code 3> so that sort will compile and execute correctly? and <code 2> <code 3>",
+    "has_manual_override": false,
+    "override_key": "2018_regional#26"
+  },
+  {
+    "id": 2509,
+    "exam_name": "2018_regional",
+    "year": 2018,
+    "level": "regional",
+    "question_number": 39,
+    "page_number": 9,
+    "group_id": "2018_2018_regional_p9_q39",
+    "group_type": "single",
+    "source_test_pdf": "_archive_cache/2018-20260426T040154Z-3-001/2018/2018_computer_science_region_study_materials.pdf",
+    "issues": [
+      "no_choice_labels"
+    ],
+    "question_preview": "A B C Rewrite this postfix expression using infix notation. * + D \u2013",
+    "has_manual_override": false,
+    "override_key": "2018_regional#39"
+  },
+  {
+    "id": 2519,
+    "exam_name": "2018_state",
+    "year": 2018,
+    "level": "state",
+    "question_number": 9,
+    "page_number": 3,
+    "group_id": "2018_2018_state_p3_q9",
+    "group_type": "single",
+    "source_test_pdf": "_archive_cache/2018-20260426T040154Z-3-001/2018/2018_computer_science_state_study_materials.pdf",
+    "issues": [
+      "code_unbalanced_braces"
+    ],
+    "question_preview": "What is the output of the code segment shown on the right? do {",
+    "has_manual_override": false,
+    "override_key": "2018_state#9"
+  },
+  {
+    "id": 2528,
+    "exam_name": "2018_state",
+    "year": 2018,
+    "level": "state",
+    "question_number": 18,
+    "page_number": 5,
+    "group_id": "2018_2018_state_p5_q18",
+    "group_type": "single",
+    "source_test_pdf": "_archive_cache/2018-20260426T040154Z-3-001/2018/2018_computer_science_state_study_materials.pdf",
+    "issues": [
+      "code_unbalanced_braces"
+    ],
+    "question_preview": "Which of the following methods will return the greatest common I. II. a,int b) { a,int b) { } } divisor of a and b? III. int gcd(int publ...",
+    "has_manual_override": false,
+    "override_key": "2018_state#18"
+  },
+  {
+    "id": 2531,
+    "exam_name": "2018_state",
+    "year": 2018,
+    "level": "state",
+    "question_number": 21,
+    "page_number": 6,
+    "group_id": "2018_2018_state_p6_q21",
+    "group_type": "single",
+    "source_test_pdf": "_archive_cache/2018-20260426T040154Z-3-001/2018/2018_computer_science_state_study_materials.pdf",
+    "issues": [
+      "only_4_choice_labels",
+      "only_4_choice_labels",
+      "code_unbalanced_braces",
+      "recursive_question_not_grouped"
+    ],
+    "question_preview": "Which of the following classes is immutable? Stack<String> st) { Stack<String> st) {",
+    "has_manual_override": false,
+    "override_key": "2018_state#21"
+  },
+  {
+    "id": 2532,
+    "exam_name": "2018_state",
+    "year": 2018,
+    "level": "state",
+    "question_number": 22,
+    "page_number": 7,
+    "group_id": "2018_2018_state_p7_q22",
+    "group_type": "single",
+    "source_test_pdf": "_archive_cache/2018-20260426T040154Z-3-001/2018/2018_computer_science_state_study_materials.pdf",
+    "issues": [
+      "code_unbalanced_braces",
+      "recursive_question_not_grouped"
+    ],
+    "question_preview": "Which line in the code shown here contains an error?",
+    "has_manual_override": false,
+    "override_key": "2018_state#22"
+  },
+  {
+    "id": 2534,
+    "exam_name": "2018_state",
+    "year": 2018,
+    "level": "state",
+    "question_number": 24,
+    "page_number": 7,
+    "group_id": "2018_2018_state_p7_q24",
+    "group_type": "single",
+    "source_test_pdf": "_archive_cache/2018-20260426T040154Z-3-001/2018/2018_computer_science_state_study_materials.pdf",
+    "issues": [
+      "recursive_question_not_grouped"
+    ],
+    "question_preview": "What is the output of line #2 in the code segment shown on right? the",
+    "has_manual_override": false,
+    "override_key": "2018_state#24"
+  },
+  {
+    "id": 2535,
+    "exam_name": "2018_state",
+    "year": 2018,
+    "level": "state",
+    "question_number": 25,
+    "page_number": 7,
+    "group_id": "2018_2018_state_p7_q25",
+    "group_type": "single",
+    "source_test_pdf": "_archive_cache/2018-20260426T040154Z-3-001/2018/2018_computer_science_state_study_materials.pdf",
+    "issues": [
+      "recursive_question_not_grouped"
+    ],
+    "question_preview": "What is printed by the main method shown on the right?",
+    "has_manual_override": false,
+    "override_key": "2018_state#25"
+  },
+  {
+    "id": 2538,
+    "exam_name": "2018_state",
+    "year": 2018,
+    "level": "state",
+    "question_number": 28,
+    "page_number": 8,
+    "group_id": "2018_2018_state_p8_q28",
+    "group_type": "single",
+    "source_test_pdf": "_archive_cache/2018-20260426T040154Z-3-001/2018/2018_computer_science_state_study_materials.pdf",
+    "issues": [
+      "code_unbalanced_braces"
+    ],
+    "question_preview": "What is the run time efficiency (Big O value) of the segment code shown on the right? of int[][][] a= {{{3,2,1},{1,2,3},{6,5,4}}, {{4,5,6...",
+    "has_manual_override": false,
+    "override_key": "2018_state#28"
+  },
+  {
+    "id": 2539,
+    "exam_name": "2018_state",
+    "year": 2018,
+    "level": "state",
+    "question_number": 29,
+    "page_number": 8,
+    "group_id": "2018_2018_state_p8_q29",
+    "group_type": "single",
+    "source_test_pdf": "_archive_cache/2018-20260426T040154Z-3-001/2018/2018_computer_science_state_study_materials.pdf",
+    "issues": [
+      "code_unbalanced_braces"
+    ],
+    "question_preview": "What is the output of the code segment shown on the right? int[][][] a= {{{3,2,1},{1,2,3},{6,5,4}}, {{4,5,6},{9,5,1},{7,5,3}},",
+    "has_manual_override": false,
+    "override_key": "2018_state#29"
+  },
+  {
+    "id": 2548,
+    "exam_name": "2018_state",
+    "year": 2018,
+    "level": "state",
+    "question_number": 38,
+    "page_number": 11,
+    "group_id": "2018_2018_state_p11_shared_37_38",
+    "group_type": "shared_code",
+    "source_test_pdf": "_archive_cache/2018-20260426T040154Z-3-001/2018/2018_computer_science_state_study_materials.pdf",
+    "issues": [
+      "only_3_choice_labels",
+      "only_3_choice_labels"
+    ],
+    "question_preview": "Once completed correctly, which of the following graphs does the client code shown on the right model?",
+    "has_manual_override": false,
+    "override_key": "2018_state#38"
+  },
+  {
     "id": 2159,
     "exam_name": "2019_district",
     "year": 2019,
