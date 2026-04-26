@@ -33,6 +33,9 @@
             <section class="search-panel test-launcher">
                 <h3>Start Full Test</h3>
                 <form method="get" action="{{ url_for('test_mode') }}" class="test-launch-form" id="test-launch-form">
+                    <select id="test-collection" required>
+                        <option value="">Select collection</option>
+                    </select>
                     <select id="test-year" name="year" required>
                         <option value="">Select year</option>
                     </select>
@@ -105,6 +108,7 @@
 
     <script>
         const examCatalog = {{ exam_catalog|tojson }};
+        const collectionSelect = document.getElementById("test-collection");
         const yearSelect = document.getElementById("test-year");
         const levelSelect = document.getElementById("test-level");
         const examSelect = document.getElementById("test-exam");
@@ -126,10 +130,46 @@
             select.appendChild(option(placeholder, ""));
         }
 
+        function collectionLabel(collection) {
+            return collection === "UIL" ? "UIL Official" : collection;
+        }
+
+        function loadCollections() {
+            resetSelect(collectionSelect, "Select collection");
+            const collections = uniq(examCatalog.map(item => item.collection || "UIL"));
+            collections.sort((a, b) => {
+                if (a === "UIL") return -1;
+                if (b === "UIL") return 1;
+                return a.localeCompare(b);
+            });
+            collections.forEach(collection => collectionSelect.appendChild(option(collectionLabel(collection), collection)));
+            if (collections.includes("UIL")) {
+                collectionSelect.value = "UIL";
+            }
+        }
+
         function loadYears() {
             resetSelect(yearSelect, "Select year");
-            const years = uniq(examCatalog.map(item => String(item.year))).sort((a, b) => Number(b) - Number(a));
+            resetSelect(levelSelect, "Select level");
+            resetSelect(examSelect, "Select exam");
+            levelSelect.disabled = true;
+            examSelect.disabled = true;
+
+            const selectedCollection = collectionSelect.value;
+            if (!selectedCollection) {
+                yearSelect.disabled = true;
+                metaText.textContent = "Choose a test collection to begin.";
+                return;
+            }
+
+            const years = uniq(
+                examCatalog
+                    .filter(item => (item.collection || "UIL") === selectedCollection)
+                    .map(item => String(item.year))
+            ).sort((a, b) => Number(b) - Number(a));
             years.forEach(year => yearSelect.appendChild(option(year, year)));
+            yearSelect.disabled = years.length === 0;
+            metaText.textContent = years.length ? "Choose a year." : "No exams found in this collection.";
         }
 
         function loadLevels() {
@@ -137,16 +177,17 @@
             resetSelect(examSelect, "Select exam");
             examSelect.disabled = true;
 
+            const selectedCollection = collectionSelect.value;
             const selectedYear = yearSelect.value;
             if (!selectedYear) {
                 levelSelect.disabled = true;
-                metaText.textContent = "Choose an exam set to begin.";
+                metaText.textContent = "Choose a year.";
                 return;
             }
 
             const levels = uniq(
                 examCatalog
-                    .filter(item => String(item.year) === selectedYear)
+                    .filter(item => (item.collection || "UIL") === selectedCollection && String(item.year) === selectedYear)
                     .map(item => item.level)
             ).sort();
 
@@ -157,6 +198,7 @@
 
         function loadExams() {
             resetSelect(examSelect, "Select exam");
+            const selectedCollection = collectionSelect.value;
             const selectedYear = yearSelect.value;
             const selectedLevel = levelSelect.value;
 
@@ -167,7 +209,7 @@
             }
 
             const exams = examCatalog
-                .filter(item => String(item.year) === selectedYear && item.level === selectedLevel)
+                .filter(item => (item.collection || "UIL") === selectedCollection && String(item.year) === selectedYear && item.level === selectedLevel)
                 .sort((a, b) => a.exam_name.localeCompare(b.exam_name));
 
             exams.forEach(item => {
@@ -188,10 +230,13 @@
                 item => String(item.year) === selectedYear && item.level === selectedLevel && item.exam_name === selectedExam
             );
             if (chosen) {
-                metaText.textContent = `Ready: ${chosen.year} ${chosen.level} ${chosen.exam_name} (${chosen.question_count} questions).`;
+                metaText.textContent = `Ready: ${collectionLabel(chosen.collection || "UIL")} | ${chosen.year} ${chosen.level} ${chosen.exam_name} (${chosen.question_count} questions).`;
             }
         }
 
+        collectionSelect.addEventListener("change", () => {
+            loadYears();
+        });
         yearSelect.addEventListener("change", () => {
             loadLevels();
         });
@@ -202,6 +247,7 @@
             updateExamMeta();
         });
 
+        loadCollections();
         loadYears();
     </script>
     <script src="{{ url_for('static', filename='theme.js') }}"></script>

@@ -502,7 +502,7 @@ h4 {
 
 .test-launch-form {
     display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr)) auto;
+    grid-template-columns: repeat(4, minmax(0, 1fr)) auto;
     gap: 12px;
     align-items: center;
 }

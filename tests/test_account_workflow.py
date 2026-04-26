@@ -38,10 +38,24 @@ class AccountWorkflowTests(unittest.TestCase):
         """)
         conn.execute("""
             INSERT INTO questions
-            (exam_name, year, level, question_number, question_text, code_block,
+            (source_test_pdf, exam_name, year, level, question_number, question_text, code_block,
              choices, answer, group_id, group_type, shared_context)
-            VALUES ('sample_exam', 2026, 'invitational', 1, 'What is 1 + 1?',
+            VALUES ('_archive_cache/Written/2026/Inv A/sample.pdf', 'sample_exam', 2026, 'invitational', 1, 'What is 1 + 1?',
                     '', 'A) 1 B) 2 C) 3 D) 4 E) 5', 'B', '', 'single', '')
+        """)
+        conn.execute("""
+            INSERT INTO questions
+            (source_test_pdf, exam_name, year, level, question_number, question_text, code_block,
+             choices, answer, group_id, group_type, shared_context)
+            VALUES ('_archive_cache/Written/2025/Stacey Tests/test.pdf', '2025_stacey_tests_test_02', 2025, 'invitational', 1,
+                    'What is 2 + 2?', '', 'A) 1 B) 2 C) 3 D) 4 E) 5', 'D', '', 'single', '')
+        """)
+        conn.execute("""
+            INSERT INTO questions
+            (source_test_pdf, exam_name, year, level, question_number, question_text, code_block,
+             choices, answer, group_id, group_type, shared_context)
+            VALUES ('_archive_cache/Written/2025/District/official.pdf', '2025_district', 2025, 'district', 1,
+                    'What is 3 + 3?', '', 'A) 4 B) 5 C) 6 D) 7 E) 8', 'C', '', 'single', '')
         """)
         conn.commit()
         conn.close()
@@ -83,6 +97,18 @@ class AccountWorkflowTests(unittest.TestCase):
         response = self.client.get("/dashboard")
         self.assertEqual(response.status_code, 200)
         self.assertIn(b"sample_exam", response.data)
+
+    def test_exam_catalog_splits_uil_and_other_collections(self):
+        catalog = app.fetch_exam_catalog()
+        by_exam = {item["exam_name"]: item for item in catalog}
+
+        self.assertEqual(by_exam["2025_district"]["collection"], "UIL")
+        self.assertEqual(by_exam["2025_stacey_tests_test_02"]["collection"], "Other")
+
+        response = self.client.get("/")
+        self.assertEqual(response.status_code, 200)
+        self.assertIn(b"UIL Official", response.data)
+        self.assertIn(b"Other", response.data)
 
 
 if __name__ == "__main__":

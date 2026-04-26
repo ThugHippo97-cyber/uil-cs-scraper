@@ -1332,7 +1332,8 @@ def fetch_exam_catalog():
     conn = get_connection()
     rows = conn.execute(
         """
-        SELECT year, level, exam_name, COUNT(DISTINCT question_number) AS question_count
+        SELECT year, level, exam_name, COUNT(DISTINCT question_number) AS question_count,
+               MIN(source_test_pdf) AS source_test_pdf
         FROM questions
         WHERE year IS NOT NULL
           AND level IS NOT NULL
@@ -1349,9 +1350,39 @@ def fetch_exam_catalog():
             "level": str(row["level"] or ""),
             "exam_name": str(row["exam_name"] or ""),
             "question_count": int(row["question_count"] or 0),
+            "collection": classify_exam_collection(
+                str(row["exam_name"] or ""),
+                str(row["source_test_pdf"] or ""),
+            ),
         }
         for row in rows
     ]
+
+
+def classify_exam_collection(exam_name, source_test_pdf=""):
+    combined = f"{exam_name} {source_test_pdf}".lower()
+    other_markers = (
+        "stacey",
+        "caney creek",
+        "caney_creek",
+        "carthage",
+        "college station",
+        "college_station",
+        "sulphur springs",
+        "sulphur_springs",
+        "whitehouse",
+        "virtual",
+    )
+    if any(marker in combined for marker in other_markers):
+        return "Other"
+
+    normalized = str(exam_name or "").lower()
+    if re.fullmatch(r"\d{4}_(invitational[a-z]?|district|regional|state)", normalized):
+        return "UIL"
+    if re.fullmatch(r"\d{4}_compsciw_study_packet_[abcdsr]_\d{2}_pdf", normalized):
+        return "UIL"
+
+    return "Other"
 
 
 def fetch_test_questions(year, level, exam_name):
