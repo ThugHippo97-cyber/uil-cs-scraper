@@ -787,11 +787,15 @@ def extract_question_section(full_text: str):
         raise ValueError("Could not find start of question section ('Question 1').")
 
     start = start_match.start()
-    key_match = re.search(r"(?im)^\s*KEY\b", full_text[start:])
+    key_match = re.search(r"(?im)^\s*(?:KEY\b|.*ANSWER\s+KEY\b)", full_text[start:])
     if key_match:
         end = start + key_match.start()
         return full_text[start:end]
     return full_text[start:]
+
+
+def has_complete_written_question_sequence(parsed_questions):
+    return [q["question_number"] for q in parsed_questions] == list(range(1, 41))
 
 
 def validate_question_sequence(parsed_questions, source_name):
@@ -1558,9 +1562,14 @@ def parse_test_pdf(file_path: str):
 
     if layout_parsed:
         question_numbers = [q["question_number"] for q in layout_parsed]
-        if len(layout_parsed) >= 35 and question_numbers and max(question_numbers) >= 35:
+        if has_complete_written_question_sequence(layout_parsed):
             validate_question_sequence(layout_parsed, os.path.basename(file_path))
             return layout_parsed
+        if len(layout_parsed) >= 35 and question_numbers and max(question_numbers) >= 35:
+            layout_has_gaps = question_numbers != list(range(min(question_numbers), max(question_numbers) + 1))
+            if not layout_has_gaps:
+                validate_question_sequence(layout_parsed, os.path.basename(file_path))
+                return layout_parsed
 
     full_text = extract_full_text(file_path)
     question_section = extract_question_section(full_text)

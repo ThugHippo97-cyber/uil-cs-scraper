@@ -489,6 +489,1210 @@
     "override_key": "2021_invitationalb#39"
   },
   {
+    "id": 1972,
+    "exam_name": "2022_district",
+    "year": 2022,
+    "level": "district",
+    "question_number": 22,
+    "page_number": 8,
+    "group_id": "2022_2022_district_p8_shared_22_25",
+    "group_type": "shared_code",
+    "source_test_pdf": "_archive_cache/2022-20260426T032905Z-3-001/2022/computer_sci_d_22.pdf",
+    "issues": [
+      "code_unbalanced_braces"
+    ],
+    "question_preview": "What is returned by the function call below? int ai, int bi){",
+    "has_manual_override": false,
+    "override_key": "2022_district#22"
+  },
+  {
+    "id": 1973,
+    "exam_name": "2022_district",
+    "year": 2022,
+    "level": "district",
+    "question_number": 23,
+    "page_number": 8,
+    "group_id": "2022_2022_district_p8_shared_22_25",
+    "group_type": "shared_code",
+    "source_test_pdf": "_archive_cache/2022-20260426T032905Z-3-001/2022/computer_sci_d_22.pdf",
+    "issues": [
+      "code_unbalanced_braces"
+    ],
+    "question_preview": "What is returned by the function call below?",
+    "has_manual_override": false,
+    "override_key": "2022_district#23"
+  },
+  {
+    "id": 1974,
+    "exam_name": "2022_district",
+    "year": 2022,
+    "level": "district",
+    "question_number": 24,
+    "page_number": 8,
+    "group_id": "2022_2022_district_p8_shared_22_25",
+    "group_type": "shared_code",
+    "source_test_pdf": "_archive_cache/2022-20260426T032905Z-3-001/2022/computer_sci_d_22.pdf",
+    "issues": [
+      "code_unbalanced_braces"
+    ],
+    "question_preview": "Assume that a and b are strings of length N. Which of the following is the most restrictive Big O upper bound of method call rec(a, b, 0,...",
+    "has_manual_override": false,
+    "override_key": "2022_district#24"
+  },
+  {
+    "id": 1975,
+    "exam_name": "2022_district",
+    "year": 2022,
+    "level": "district",
+    "question_number": 25,
+    "page_number": 8,
+    "group_id": "2022_2022_district_p8_shared_22_25",
+    "group_type": "shared_code",
+    "source_test_pdf": "_archive_cache/2022-20260426T032905Z-3-001/2022/computer_sci_d_22.pdf",
+    "issues": [
+      "code_unbalanced_braces",
+      "code_starts_mid_block"
+    ],
+    "question_preview": "Assume that a and b are strings of length N. Which of the following is the most restrictive Big O upper bound of method call dp(a, b)?",
+    "has_manual_override": false,
+    "override_key": "2022_district#25"
+  },
+  {
+    "id": 1977,
+    "exam_name": "2022_district",
+    "year": 2022,
+    "level": "district",
+    "question_number": 27,
+    "page_number": 9,
+    "group_id": "2022_2022_district_p9_q27",
+    "group_type": "single",
+    "source_test_pdf": "_archive_cache/2022-20260426T032905Z-3-001/2022/computer_sci_d_22.pdf",
+    "issues": [
+      "code_unbalanced_braces"
+    ],
+    "question_preview": "How many constructors does the Cloud class have?",
+    "has_manual_override": false,
+    "override_key": "2022_district#27"
+  },
+  {
+    "id": 1978,
+    "exam_name": "2022_district",
+    "year": 2022,
+    "level": "district",
+    "question_number": 28,
+    "page_number": 9,
+    "group_id": "2022_2022_district_p9_q28",
+    "group_type": "single",
+    "source_test_pdf": "_archive_cache/2022-20260426T032905Z-3-001/2022/computer_sci_d_22.pdf",
+    "issues": [
+      "code_unbalanced_braces",
+      "recursive_question_not_grouped"
+    ],
+    "question_preview": "What is the output of client code shown below?",
+    "has_manual_override": false,
+    "override_key": "2022_district#28"
+  },
+  {
+    "id": 1979,
+    "exam_name": "2022_district",
+    "year": 2022,
+    "level": "district",
+    "question_number": 29,
+    "page_number": 10,
+    "group_id": "2022_2022_district_p10_q29",
+    "group_type": "single",
+    "source_test_pdf": "_archive_cache/2022-20260426T032905Z-3-001/2022/computer_sci_d_22.pdf",
+    "issues": [
+      "code_unbalanced_braces",
+      "recursive_question_not_grouped"
+    ],
+    "question_preview": "What is the output of client code shown below?",
+    "has_manual_override": false,
+    "override_key": "2022_district#29"
+  },
+  {
+    "id": 1986,
+    "exam_name": "2022_district",
+    "year": 2022,
+    "level": "district",
+    "question_number": 36,
+    "page_number": 11,
+    "group_id": "2022_2022_district_p11_q36",
+    "group_type": "single",
+    "source_test_pdf": "_archive_cache/2022-20260426T032905Z-3-001/2022/computer_sci_d_22.pdf",
+    "issues": [
+      "code_unbalanced_braces",
+      "recursive_question_not_grouped"
+    ],
+    "question_preview": "What is the output of the client code below? Structure<Integer> s; s = new Structure<Integer>(6); int N = 314159265; while(N != 0) { s.ad...",
+    "has_manual_override": false,
+    "override_key": "2022_district#36"
+  },
+  {
+    "id": 1987,
+    "exam_name": "2022_district",
+    "year": 2022,
+    "level": "district",
+    "question_number": 37,
+    "page_number": 12,
+    "group_id": "2022_2022_district_p12_q37",
+    "group_type": "single",
+    "source_test_pdf": "_archive_cache/2022-20260426T032905Z-3-001/2022/computer_sci_d_22.pdf",
+    "issues": [
+      "code_unbalanced_braces"
+    ],
+    "question_preview": "Which of the following is the most restrictive Big O upper bound of method add?",
+    "has_manual_override": false,
+    "override_key": "2022_district#37"
+  },
+  {
+    "id": 1988,
+    "exam_name": "2022_district",
+    "year": 2022,
+    "level": "district",
+    "question_number": 38,
+    "page_number": 12,
+    "group_id": "2022_2022_district_p12_shared_38_39",
+    "group_type": "shared_code",
+    "source_test_pdf": "_archive_cache/2022-20260426T032905Z-3-001/2022/computer_sci_d_22.pdf",
+    "issues": [
+      "code_unbalanced_braces"
+    ],
+    "question_preview": "What data structure does the Structure class represent?",
+    "has_manual_override": false,
+    "override_key": "2022_district#38"
+  },
+  {
+    "id": 1992,
+    "exam_name": "2022_invitationala",
+    "year": 2022,
+    "level": "invitational",
+    "question_number": 2,
+    "page_number": 0,
+    "group_id": "2022_2022_invitationala_p0_q2",
+    "group_type": "single",
+    "source_test_pdf": "_archive_cache/2022-20260426T032905Z-3-001/2022/computer_science_a_22.pdf",
+    "issues": [
+      "question_text_very_short"
+    ],
+    "question_preview": "What is the output of the code segment to the right? out.print(9 * 8 + 7 % 6 / 5);",
+    "has_manual_override": false,
+    "override_key": "2022_invitationala#2"
+  },
+  {
+    "id": 1996,
+    "exam_name": "2022_invitationala",
+    "year": 2022,
+    "level": "invitational",
+    "question_number": 6,
+    "page_number": 0,
+    "group_id": "2022_2022_invitationala_p0_q6",
+    "group_type": "single",
+    "source_test_pdf": "_archive_cache/2022-20260426T032905Z-3-001/2022/computer_science_a_22.pdf",
+    "issues": [
+      "question_text_very_short"
+    ],
+    "question_preview": "What is the output of the code segment to the right? out.print(Math.round(2.45));",
+    "has_manual_override": false,
+    "override_key": "2022_invitationala#6"
+  },
+  {
+    "id": 1997,
+    "exam_name": "2022_invitationala",
+    "year": 2022,
+    "level": "invitational",
+    "question_number": 7,
+    "page_number": 0,
+    "group_id": "2022_2022_invitationala_p0_q7",
+    "group_type": "single",
+    "source_test_pdf": "_archive_cache/2022-20260426T032905Z-3-001/2022/computer_science_a_22.pdf",
+    "issues": [
+      "only_1_choice_labels",
+      "question_text_very_short"
+    ],
+    "question_preview": "int x = 6, y = 10; What is the output of the code segment to the right? double a = 1.5, b = 1.25; B) 17.0 C) 18.0 D) 19.0 E) 20.0 out.pri...",
+    "has_manual_override": false,
+    "override_key": "2022_invitationala#7"
+  },
+  {
+    "id": 1998,
+    "exam_name": "2022_invitationala",
+    "year": 2022,
+    "level": "invitational",
+    "question_number": 8,
+    "page_number": 0,
+    "group_id": "2022_2022_invitationala_p0_q8",
+    "group_type": "single",
+    "source_test_pdf": "_archive_cache/2022-20260426T032905Z-3-001/2022/computer_science_a_22.pdf",
+    "issues": [
+      "footer_text_leaked"
+    ],
+    "question_preview": "What is the output of the code segment to the right? case \"test\":",
+    "has_manual_override": false,
+    "override_key": "2022_invitationala#8"
+  },
+  {
+    "id": 1999,
+    "exam_name": "2022_invitationala",
+    "year": 2022,
+    "level": "invitational",
+    "question_number": 9,
+    "page_number": 0,
+    "group_id": "2022_2022_invitationala_p0_q9",
+    "group_type": "single",
+    "source_test_pdf": "_archive_cache/2022-20260426T032905Z-3-001/2022/computer_science_a_22.pdf",
+    "issues": [
+      "question_text_very_short"
+    ],
+    "question_preview": "What is the output of the code segment to the right? String str = \"\"; for(int i = 0;i<3;i++)",
+    "has_manual_override": false,
+    "override_key": "2022_invitationala#9"
+  },
+  {
+    "id": 2002,
+    "exam_name": "2022_invitationala",
+    "year": 2022,
+    "level": "invitational",
+    "question_number": 12,
+    "page_number": 0,
+    "group_id": "2022_2022_invitationala_p0_q12",
+    "group_type": "single",
+    "source_test_pdf": "_archive_cache/2022-20260426T032905Z-3-001/2022/computer_science_a_22.pdf",
+    "issues": [
+      "question_text_very_short"
+    ],
+    "question_preview": "What is the output of the code segment to the right? int a = 1; int h = 0; h += a; a++;",
+    "has_manual_override": false,
+    "override_key": "2022_invitationala#12"
+  },
+  {
+    "id": 2003,
+    "exam_name": "2022_invitationala",
+    "year": 2022,
+    "level": "invitational",
+    "question_number": 13,
+    "page_number": 0,
+    "group_id": "2022_2022_invitationala_p0_q13",
+    "group_type": "single",
+    "source_test_pdf": "_archive_cache/2022-20260426T032905Z-3-001/2022/computer_science_a_22.pdf",
+    "issues": [
+      "footer_text_leaked"
+    ],
+    "question_preview": "What is the output of the code segment shown on the right?",
+    "has_manual_override": false,
+    "override_key": "2022_invitationala#13"
+  },
+  {
+    "id": 2007,
+    "exam_name": "2022_invitationala",
+    "year": 2022,
+    "level": "invitational",
+    "question_number": 17,
+    "page_number": 0,
+    "group_id": "2022_2022_invitationala_p0_q17",
+    "group_type": "single",
+    "source_test_pdf": "_archive_cache/2022-20260426T032905Z-3-001/2022/computer_science_a_22.pdf",
+    "issues": [
+      "question_unbalanced_parentheses"
+    ],
+    "question_preview": "(Question 17 What is output by a call to M1(12,12)?",
+    "has_manual_override": false,
+    "override_key": "2022_invitationala#17"
+  },
+  {
+    "id": 2008,
+    "exam_name": "2022_invitationala",
+    "year": 2022,
+    "level": "invitational",
+    "question_number": 18,
+    "page_number": 0,
+    "group_id": "2022_2022_invitationala_p0_q18",
+    "group_type": "single",
+    "source_test_pdf": "_archive_cache/2022-20260426T032905Z-3-001/2022/computer_science_a_22.pdf",
+    "issues": [
+      "footer_text_leaked",
+      "question_text_very_short"
+    ],
+    "question_preview": "What is output by a call to M1(108,24)? x = y; y = save; 24 4 z++;",
+    "has_manual_override": false,
+    "override_key": "2022_invitationala#18"
+  },
+  {
+    "id": 2010,
+    "exam_name": "2022_invitationala",
+    "year": 2022,
+    "level": "invitational",
+    "question_number": 20,
+    "page_number": 0,
+    "group_id": "2022_2022_invitationala_p0_q20",
+    "group_type": "single",
+    "source_test_pdf": "_archive_cache/2022-20260426T032905Z-3-001/2022/computer_science_a_22.pdf",
+    "issues": [
+      "code_unbalanced_braces"
+    ],
+    "question_preview": "How many asterisks are printed by M2(16)? public static void M2(int n){",
+    "has_manual_override": false,
+    "override_key": "2022_invitationala#20"
+  },
+  {
+    "id": 2012,
+    "exam_name": "2022_invitationala",
+    "year": 2022,
+    "level": "invitational",
+    "question_number": 22,
+    "page_number": 0,
+    "group_id": "2022_2022_invitationala_p0_q22",
+    "group_type": "single",
+    "source_test_pdf": "_archive_cache/2022-20260426T032905Z-3-001/2022/computer_science_a_22.pdf",
+    "issues": [
+      "only_4_choice_labels"
+    ],
+    "question_preview": "Which of the following could be generated by the following line of code? I. 9 II. 10 III. 11 IV. 12",
+    "has_manual_override": false,
+    "override_key": "2022_invitationala#22"
+  },
+  {
+    "id": 2013,
+    "exam_name": "2022_invitationala",
+    "year": 2022,
+    "level": "invitational",
+    "question_number": 23,
+    "page_number": 0,
+    "group_id": "2022_2022_invitationala_p0_q23",
+    "group_type": "single",
+    "source_test_pdf": "_archive_cache/2022-20260426T032905Z-3-001/2022/computer_science_a_22.pdf",
+    "issues": [
+      "footer_text_leaked"
+    ],
+    "question_preview": "What is the output of the code segment shown on the right?",
+    "has_manual_override": false,
+    "override_key": "2022_invitationala#23"
+  },
+  {
+    "id": 2016,
+    "exam_name": "2022_invitationala",
+    "year": 2022,
+    "level": "invitational",
+    "question_number": 26,
+    "page_number": 0,
+    "group_id": "2022_2022_invitationala_p0_q26",
+    "group_type": "single",
+    "source_test_pdf": "_archive_cache/2022-20260426T032905Z-3-001/2022/computer_science_a_22.pdf",
+    "issues": [
+      "footer_text_leaked"
+    ],
+    "question_preview": "Which of the following is closest to the expected output of the code to the right?",
+    "has_manual_override": false,
+    "override_key": "2022_invitationala#26"
+  },
+  {
+    "id": 2018,
+    "exam_name": "2022_invitationala",
+    "year": 2022,
+    "level": "invitational",
+    "question_number": 28,
+    "page_number": 0,
+    "group_id": "2022_2022_invitationala_p0_shared_27_28",
+    "group_type": "shared_code",
+    "source_test_pdf": "_archive_cache/2022-20260426T032905Z-3-001/2022/computer_science_a_22.pdf",
+    "issues": [
+      "code_unbalanced_braces"
+    ],
+    "question_preview": "What is output by the following client code? DataStructure<Integer> ds; }",
+    "has_manual_override": false,
+    "override_key": "2022_invitationala#28"
+  },
+  {
+    "id": 2019,
+    "exam_name": "2022_invitationala",
+    "year": 2022,
+    "level": "invitational",
+    "question_number": 29,
+    "page_number": 0,
+    "group_id": "2022_2022_invitationala_p0_q29",
+    "group_type": "single",
+    "source_test_pdf": "_archive_cache/2022-20260426T032905Z-3-001/2022/computer_science_a_22.pdf",
+    "issues": [
+      "question_text_very_short"
+    ],
+    "question_preview": "What data structure does DataStructure represent? h = h.next; sz--;",
+    "has_manual_override": false,
+    "override_key": "2022_invitationala#29"
+  },
+  {
+    "id": 2020,
+    "exam_name": "2022_invitationala",
+    "year": 2022,
+    "level": "invitational",
+    "question_number": 30,
+    "page_number": 0,
+    "group_id": "2022_2022_invitationala_p0_q30",
+    "group_type": "single",
+    "source_test_pdf": "_archive_cache/2022-20260426T032905Z-3-001/2022/computer_science_a_22.pdf",
+    "issues": [
+      "footer_text_leaked"
+    ],
+    "question_preview": "The O class is an example of what?",
+    "has_manual_override": false,
+    "override_key": "2022_invitationala#30"
+  },
+  {
+    "id": 2023,
+    "exam_name": "2022_invitationala",
+    "year": 2022,
+    "level": "invitational",
+    "question_number": 33,
+    "page_number": 0,
+    "group_id": "2022_2022_invitationala_p0_q33",
+    "group_type": "single",
+    "source_test_pdf": "_archive_cache/2022-20260426T032905Z-3-001/2022/computer_science_a_22.pdf",
+    "issues": [
+      "code_unbalanced_braces"
+    ],
+    "question_preview": "What sort does method sort implement?",
+    "has_manual_override": false,
+    "override_key": "2022_invitationala#33"
+  },
+  {
+    "id": 2024,
+    "exam_name": "2022_invitationala",
+    "year": 2022,
+    "level": "invitational",
+    "question_number": 34,
+    "page_number": 0,
+    "group_id": "2022_2022_invitationala_p0_q34",
+    "group_type": "single",
+    "source_test_pdf": "_archive_cache/2022-20260426T032905Z-3-001/2022/computer_science_a_22.pdf",
+    "issues": [
+      "footer_text_leaked"
+    ],
+    "question_preview": "How many combinations of assigned values will make the following circuit evaluate to false?",
+    "has_manual_override": false,
+    "override_key": "2022_invitationala#34"
+  },
+  {
+    "id": 2025,
+    "exam_name": "2022_invitationala",
+    "year": 2022,
+    "level": "invitational",
+    "question_number": 35,
+    "page_number": 0,
+    "group_id": "2022_2022_invitationala_p0_q35",
+    "group_type": "single",
+    "source_test_pdf": "_archive_cache/2022-20260426T032905Z-3-001/2022/computer_science_a_22.pdf",
+    "issues": [
+      "only_3_choice_labels",
+      "only_3_choice_labels"
+    ],
+    "question_preview": "Convert the postfix expression to the right to prefix",
+    "has_manual_override": false,
+    "override_key": "2022_invitationala#35"
+  },
+  {
+    "id": 2026,
+    "exam_name": "2022_invitationala",
+    "year": 2022,
+    "level": "invitational",
+    "question_number": 36,
+    "page_number": 0,
+    "group_id": "2022_2022_invitationala_p0_q36",
+    "group_type": "single",
+    "source_test_pdf": "_archive_cache/2022-20260426T032905Z-3-001/2022/computer_science_a_22.pdf",
+    "issues": [
+      "question_text_very_short"
+    ],
+    "question_preview": "What is the output of the code segment shown on the right? ArrayList<Integer> list; list = new ArrayList<Integer>();",
+    "has_manual_override": false,
+    "override_key": "2022_invitationala#36"
+  },
+  {
+    "id": 2027,
+    "exam_name": "2022_invitationala",
+    "year": 2022,
+    "level": "invitational",
+    "question_number": 37,
+    "page_number": 0,
+    "group_id": "2022_2022_invitationala_p0_q37",
+    "group_type": "single",
+    "source_test_pdf": "_archive_cache/2022-20260426T032905Z-3-001/2022/computer_science_a_22.pdf",
+    "issues": [
+      "code_unbalanced_braces"
+    ],
+    "question_preview": "What is the output of the code to the right?",
+    "has_manual_override": false,
+    "override_key": "2022_invitationala#37"
+  },
+  {
+    "id": 2030,
+    "exam_name": "2022_invitationala",
+    "year": 2022,
+    "level": "invitational",
+    "question_number": 40,
+    "page_number": 0,
+    "group_id": "2022_2022_invitationala_p0_q40",
+    "group_type": "single",
+    "source_test_pdf": "_archive_cache/2022-20260426T032905Z-3-001/2022/computer_science_a_22.pdf",
+    "issues": [
+      "footer_text_leaked"
+    ],
+    "question_preview": "Write the signed 8-bit binary two's complement representation of the lowest number that is possible to be represented in this form UIL Co...",
+    "has_manual_override": false,
+    "override_key": "2022_invitationala#40"
+  },
+  {
+    "id": 2032,
+    "exam_name": "2022_invitationalb",
+    "year": 2022,
+    "level": "invitational",
+    "question_number": 2,
+    "page_number": 0,
+    "group_id": "2022_2022_invitationalb_p0_q2",
+    "group_type": "single",
+    "source_test_pdf": "_archive_cache/2022-20260426T032905Z-3-001/2022/computer_science_b_22.pdf",
+    "issues": [
+      "question_text_very_short"
+    ],
+    "question_preview": "What is the output of the code segment to the right? out.print(9 * 8 + 7 % 6 / 5);",
+    "has_manual_override": false,
+    "override_key": "2022_invitationalb#2"
+  },
+  {
+    "id": 2035,
+    "exam_name": "2022_invitationalb",
+    "year": 2022,
+    "level": "invitational",
+    "question_number": 5,
+    "page_number": 0,
+    "group_id": "2022_2022_invitationalb_p0_q5",
+    "group_type": "single",
+    "source_test_pdf": "_archive_cache/2022-20260426T032905Z-3-001/2022/computer_science_b_22.pdf",
+    "issues": [
+      "question_text_very_short"
+    ],
+    "question_preview": "What is the output of the line of code shown on the right? boolean t = true; boolean f = false;",
+    "has_manual_override": false,
+    "override_key": "2022_invitationalb#5"
+  },
+  {
+    "id": 2036,
+    "exam_name": "2022_invitationalb",
+    "year": 2022,
+    "level": "invitational",
+    "question_number": 6,
+    "page_number": 0,
+    "group_id": "2022_2022_invitationalb_p0_q6",
+    "group_type": "single",
+    "source_test_pdf": "_archive_cache/2022-20260426T032905Z-3-001/2022/computer_science_b_22.pdf",
+    "issues": [
+      "question_text_very_short"
+    ],
+    "question_preview": "What is the output of the code segment to the right? out.print(Math.round(2.45));",
+    "has_manual_override": false,
+    "override_key": "2022_invitationalb#6"
+  },
+  {
+    "id": 2037,
+    "exam_name": "2022_invitationalb",
+    "year": 2022,
+    "level": "invitational",
+    "question_number": 7,
+    "page_number": 0,
+    "group_id": "2022_2022_invitationalb_p0_q7",
+    "group_type": "single",
+    "source_test_pdf": "_archive_cache/2022-20260426T032905Z-3-001/2022/computer_science_b_22.pdf",
+    "issues": [
+      "only_1_choice_labels",
+      "question_text_very_short"
+    ],
+    "question_preview": "int x = 6, y = 10; What is the output of the code segment to the right? double a = 1.5, b = 1.25; B) 17.0 C) 18.0 D) 19.0 E) 20.0 out.pri...",
+    "has_manual_override": false,
+    "override_key": "2022_invitationalb#7"
+  },
+  {
+    "id": 2038,
+    "exam_name": "2022_invitationalb",
+    "year": 2022,
+    "level": "invitational",
+    "question_number": 8,
+    "page_number": 0,
+    "group_id": "2022_2022_invitationalb_p0_q8",
+    "group_type": "single",
+    "source_test_pdf": "_archive_cache/2022-20260426T032905Z-3-001/2022/computer_science_b_22.pdf",
+    "issues": [
+      "footer_text_leaked"
+    ],
+    "question_preview": "switch(\"test\"){ What is the output of the code segment to the right? case \"test\":",
+    "has_manual_override": false,
+    "override_key": "2022_invitationalb#8"
+  },
+  {
+    "id": 2041,
+    "exam_name": "2022_invitationalb",
+    "year": 2022,
+    "level": "invitational",
+    "question_number": 11,
+    "page_number": 0,
+    "group_id": "2022_2022_invitationalb_p0_q11",
+    "group_type": "single",
+    "source_test_pdf": "_archive_cache/2022-20260426T032905Z-3-001/2022/computer_science_b_22.pdf",
+    "issues": [
+      "code_unbalanced_braces"
+    ],
+    "question_preview": "The contents of input.txt are as follows: What is output by the code segment to the right?",
+    "has_manual_override": false,
+    "override_key": "2022_invitationalb#11"
+  },
+  {
+    "id": 2042,
+    "exam_name": "2022_invitationalb",
+    "year": 2022,
+    "level": "invitational",
+    "question_number": 12,
+    "page_number": 0,
+    "group_id": "2022_2022_invitationalb_p0_q12",
+    "group_type": "single",
+    "source_test_pdf": "_archive_cache/2022-20260426T032905Z-3-001/2022/computer_science_b_22.pdf",
+    "issues": [
+      "question_text_very_short"
+    ],
+    "question_preview": "What is the output of the code segment to the right? int a = 1; int h = 0; h += a; a++;",
+    "has_manual_override": false,
+    "override_key": "2022_invitationalb#12"
+  },
+  {
+    "id": 2043,
+    "exam_name": "2022_invitationalb",
+    "year": 2022,
+    "level": "invitational",
+    "question_number": 13,
+    "page_number": 0,
+    "group_id": "2022_2022_invitationalb_p0_q13",
+    "group_type": "single",
+    "source_test_pdf": "_archive_cache/2022-20260426T032905Z-3-001/2022/computer_science_b_22.pdf",
+    "issues": [
+      "footer_text_leaked"
+    ],
+    "question_preview": "What is the output of the code segment shown on the right?",
+    "has_manual_override": false,
+    "override_key": "2022_invitationalb#13"
+  },
+  {
+    "id": 2045,
+    "exam_name": "2022_invitationalb",
+    "year": 2022,
+    "level": "invitational",
+    "question_number": 15,
+    "page_number": 0,
+    "group_id": "2022_2022_invitationalb_p0_q15",
+    "group_type": "single",
+    "source_test_pdf": "_archive_cache/2022-20260426T032905Z-3-001/2022/computer_science_b_22.pdf",
+    "issues": [
+      "question_text_very_short"
+    ],
+    "question_preview": "What is the output of the code segment to the right? ArrayList<Integer> list;",
+    "has_manual_override": false,
+    "override_key": "2022_invitationalb#15"
+  },
+  {
+    "id": 2047,
+    "exam_name": "2022_invitationalb",
+    "year": 2022,
+    "level": "invitational",
+    "question_number": 17,
+    "page_number": 0,
+    "group_id": "2022_2022_invitationalb_p0_q17",
+    "group_type": "single",
+    "source_test_pdf": "_archive_cache/2022-20260426T032905Z-3-001/2022/computer_science_b_22.pdf",
+    "issues": [
+      "question_unbalanced_parentheses"
+    ],
+    "question_preview": "(Question 17 What is output by the following client code?",
+    "has_manual_override": false,
+    "override_key": "2022_invitationalb#17"
+  },
+  {
+    "id": 2048,
+    "exam_name": "2022_invitationalb",
+    "year": 2022,
+    "level": "invitational",
+    "question_number": 18,
+    "page_number": 0,
+    "group_id": "2022_2022_invitationalb_p0_q18",
+    "group_type": "single",
+    "source_test_pdf": "_archive_cache/2022-20260426T032905Z-3-001/2022/computer_science_b_22.pdf",
+    "issues": [
+      "code_unbalanced_braces",
+      "question_text_very_short"
+    ],
+    "question_preview": "What is the most restrictive Big O upper bound of f1(n)? return f1(x-1) + f1(x-2); }",
+    "has_manual_override": false,
+    "override_key": "2022_invitationalb#18"
+  },
+  {
+    "id": 2049,
+    "exam_name": "2022_invitationalb",
+    "year": 2022,
+    "level": "invitational",
+    "question_number": 19,
+    "page_number": 0,
+    "group_id": "2022_2022_invitationalb_p0_q19",
+    "group_type": "single",
+    "source_test_pdf": "_archive_cache/2022-20260426T032905Z-3-001/2022/computer_science_b_22.pdf",
+    "issues": [
+      "footer_text_leaked",
+      "code_unbalanced_braces",
+      "question_text_very_short"
+    ],
+    "question_preview": "What is the most restrictive Big O upper bound of f2(n)? return f[x]; }",
+    "has_manual_override": false,
+    "override_key": "2022_invitationalb#19"
+  },
+  {
+    "id": 2052,
+    "exam_name": "2022_invitationalb",
+    "year": 2022,
+    "level": "invitational",
+    "question_number": 22,
+    "page_number": 0,
+    "group_id": "2022_2022_invitationalb_p0_q22",
+    "group_type": "single",
+    "source_test_pdf": "_archive_cache/2022-20260426T032905Z-3-001/2022/computer_science_b_22.pdf",
+    "issues": [
+      "only_4_choice_labels"
+    ],
+    "question_preview": "Which of the following could be generated by the following line of code? I. 9 II. 10 III. 11 IV. 12",
+    "has_manual_override": false,
+    "override_key": "2022_invitationalb#22"
+  },
+  {
+    "id": 2053,
+    "exam_name": "2022_invitationalb",
+    "year": 2022,
+    "level": "invitational",
+    "question_number": 23,
+    "page_number": 0,
+    "group_id": "2022_2022_invitationalb_p0_q23",
+    "group_type": "single",
+    "source_test_pdf": "_archive_cache/2022-20260426T032905Z-3-001/2022/computer_science_b_22.pdf",
+    "issues": [
+      "footer_text_leaked"
+    ],
+    "question_preview": "What is the output of the code segment shown on the right?",
+    "has_manual_override": false,
+    "override_key": "2022_invitationalb#23"
+  },
+  {
+    "id": 2056,
+    "exam_name": "2022_invitationalb",
+    "year": 2022,
+    "level": "invitational",
+    "question_number": 26,
+    "page_number": 0,
+    "group_id": "2022_2022_invitationalb_p0_q26",
+    "group_type": "single",
+    "source_test_pdf": "_archive_cache/2022-20260426T032905Z-3-001/2022/computer_science_b_22.pdf",
+    "issues": [
+      "footer_text_leaked"
+    ],
+    "question_preview": "Which of the following is closest to the expected output of the code to the right?",
+    "has_manual_override": false,
+    "override_key": "2022_invitationalb#26"
+  },
+  {
+    "id": 2058,
+    "exam_name": "2022_invitationalb",
+    "year": 2022,
+    "level": "invitational",
+    "question_number": 28,
+    "page_number": 0,
+    "group_id": "2022_2022_invitationalb_p0_shared_27_28",
+    "group_type": "shared_code",
+    "source_test_pdf": "_archive_cache/2022-20260426T032905Z-3-001/2022/computer_science_b_22.pdf",
+    "issues": [
+      "code_unbalanced_braces"
+    ],
+    "question_preview": "What is output by the following client code?",
+    "has_manual_override": false,
+    "override_key": "2022_invitationalb#28"
+  },
+  {
+    "id": 2059,
+    "exam_name": "2022_invitationalb",
+    "year": 2022,
+    "level": "invitational",
+    "question_number": 29,
+    "page_number": 0,
+    "group_id": "2022_2022_invitationalb_p0_q29",
+    "group_type": "single",
+    "source_test_pdf": "_archive_cache/2022-20260426T032905Z-3-001/2022/computer_science_b_22.pdf",
+    "issues": [
+      "code_unbalanced_braces"
+    ],
+    "question_preview": "What data structure does DataStructure represent?",
+    "has_manual_override": false,
+    "override_key": "2022_invitationalb#29"
+  },
+  {
+    "id": 2060,
+    "exam_name": "2022_invitationalb",
+    "year": 2022,
+    "level": "invitational",
+    "question_number": 30,
+    "page_number": 0,
+    "group_id": "2022_2022_invitationalb_p0_q30",
+    "group_type": "single",
+    "source_test_pdf": "_archive_cache/2022-20260426T032905Z-3-001/2022/computer_science_b_22.pdf",
+    "issues": [
+      "footer_text_leaked"
+    ],
+    "question_preview": "The O class is an example of what?",
+    "has_manual_override": false,
+    "override_key": "2022_invitationalb#30"
+  },
+  {
+    "id": 2064,
+    "exam_name": "2022_invitationalb",
+    "year": 2022,
+    "level": "invitational",
+    "question_number": 34,
+    "page_number": 0,
+    "group_id": "2022_2022_invitationalb_p0_q34",
+    "group_type": "single",
+    "source_test_pdf": "_archive_cache/2022-20260426T032905Z-3-001/2022/computer_science_b_22.pdf",
+    "issues": [
+      "footer_text_leaked"
+    ],
+    "question_preview": "How many assignments of A, B, and C will make the following circuit evaluate to true?",
+    "has_manual_override": false,
+    "override_key": "2022_invitationalb#34"
+  },
+  {
+    "id": 2065,
+    "exam_name": "2022_invitationalb",
+    "year": 2022,
+    "level": "invitational",
+    "question_number": 35,
+    "page_number": 0,
+    "group_id": "2022_2022_invitationalb_p0_q35",
+    "group_type": "single",
+    "source_test_pdf": "_archive_cache/2022-20260426T032905Z-3-001/2022/computer_science_b_22.pdf",
+    "issues": [
+      "only_4_choice_labels",
+      "inline_choices_same_line",
+      "only_4_choice_labels"
+    ],
+    "question_preview": "Convert the postfix expression to the right to infix",
+    "has_manual_override": false,
+    "override_key": "2022_invitationalb#35"
+  },
+  {
+    "id": 2066,
+    "exam_name": "2022_invitationalb",
+    "year": 2022,
+    "level": "invitational",
+    "question_number": 36,
+    "page_number": 0,
+    "group_id": "2022_2022_invitationalb_p0_q36",
+    "group_type": "single",
+    "source_test_pdf": "_archive_cache/2022-20260426T032905Z-3-001/2022/computer_science_b_22.pdf",
+    "issues": [
+      "question_text_very_short"
+    ],
+    "question_preview": "What is the output of the code segment shown on the right? ArrayList<Integer> list; list = new ArrayList<Integer>();",
+    "has_manual_override": false,
+    "override_key": "2022_invitationalb#36"
+  },
+  {
+    "id": 2067,
+    "exam_name": "2022_invitationalb",
+    "year": 2022,
+    "level": "invitational",
+    "question_number": 37,
+    "page_number": 0,
+    "group_id": "2022_2022_invitationalb_p0_q37",
+    "group_type": "single",
+    "source_test_pdf": "_archive_cache/2022-20260426T032905Z-3-001/2022/computer_science_b_22.pdf",
+    "issues": [
+      "code_unbalanced_braces"
+    ],
+    "question_preview": "for(int i = 1;i<b.length;i++) What is the output of the code to the right?",
+    "has_manual_override": false,
+    "override_key": "2022_invitationalb#37"
+  },
+  {
+    "id": 2070,
+    "exam_name": "2022_invitationalb",
+    "year": 2022,
+    "level": "invitational",
+    "question_number": 40,
+    "page_number": 0,
+    "group_id": "2022_2022_invitationalb_p0_q40",
+    "group_type": "single",
+    "source_test_pdf": "_archive_cache/2022-20260426T032905Z-3-001/2022/computer_science_b_22.pdf",
+    "issues": [
+      "footer_text_leaked"
+    ],
+    "question_preview": "Write the signed 8-bit binary two's complement representation of the largest 1-byte integer possible. UIL Computer Science Written Test \u2013...",
+    "has_manual_override": false,
+    "override_key": "2022_invitationalb#40"
+  },
+  {
+    "id": 2089,
+    "exam_name": "2022_regional",
+    "year": 2022,
+    "level": "regional",
+    "question_number": 19,
+    "page_number": 6,
+    "group_id": "2022_2022_regional_p6_q19",
+    "group_type": "single",
+    "source_test_pdf": "_archive_cache/2022-20260426T032905Z-3-001/2022/compsciwritten_2022_region.pdf",
+    "issues": [
+      "code_unbalanced_braces"
+    ],
+    "question_preview": "How many times does the line labeled /*LINE:*/ execute before terminating in the code to the right? /*LINE:*/",
+    "has_manual_override": false,
+    "override_key": "2022_regional#19"
+  },
+  {
+    "id": 2093,
+    "exam_name": "2022_regional",
+    "year": 2022,
+    "level": "regional",
+    "question_number": 23,
+    "page_number": 7,
+    "group_id": "2022_2022_regional_p7_shared_22_24",
+    "group_type": "shared_code",
+    "source_test_pdf": "_archive_cache/2022-20260426T032905Z-3-001/2022/compsciwritten_2022_region.pdf",
+    "issues": [
+      "code_unbalanced_braces"
+    ],
+    "question_preview": "Which of the following is the most restrictive Big O upper bound of method call dp(ints)? Assume ints is of length N",
+    "has_manual_override": false,
+    "override_key": "2022_regional#23"
+  },
+  {
+    "id": 2094,
+    "exam_name": "2022_regional",
+    "year": 2022,
+    "level": "regional",
+    "question_number": 24,
+    "page_number": 7,
+    "group_id": "2022_2022_regional_p7_shared_22_24",
+    "group_type": "shared_code",
+    "source_test_pdf": "_archive_cache/2022-20260426T032905Z-3-001/2022/compsciwritten_2022_region.pdf",
+    "issues": [
+      "code_unbalanced_braces"
+    ],
+    "question_preview": "Which of the following is the most restrictive Big O upper bound of method call rec(ints)? Assume ints is of length N",
+    "has_manual_override": false,
+    "override_key": "2022_regional#24"
+  },
+  {
+    "id": 2095,
+    "exam_name": "2022_regional",
+    "year": 2022,
+    "level": "regional",
+    "question_number": 25,
+    "page_number": 8,
+    "group_id": "2022_2022_regional_p8_shared_25_28",
+    "group_type": "shared_code",
+    "source_test_pdf": "_archive_cache/2022-20260426T032905Z-3-001/2022/compsciwritten_2022_region.pdf",
+    "issues": [
+      "code_unbalanced_braces"
+    ],
+    "question_preview": "How many instance variables does a member of the fish class have?",
+    "has_manual_override": false,
+    "override_key": "2022_regional#25"
+  },
+  {
+    "id": 2098,
+    "exam_name": "2022_regional",
+    "year": 2022,
+    "level": "regional",
+    "question_number": 28,
+    "page_number": 8,
+    "group_id": "2022_2022_regional_p8_shared_25_28",
+    "group_type": "shared_code",
+    "source_test_pdf": "_archive_cache/2022-20260426T032905Z-3-001/2022/compsciwritten_2022_region.pdf",
+    "issues": [
+      "code_unbalanced_braces"
+    ],
+    "question_preview": "What is the output of the client code shown below? pet a = new fish(5, \"jeff\"); pet b = new fish(5, \"jeff\"); out.println(a.equals(b));",
+    "has_manual_override": false,
+    "override_key": "2022_regional#28"
+  },
+  {
+    "id": 2106,
+    "exam_name": "2022_regional",
+    "year": 2022,
+    "level": "regional",
+    "question_number": 36,
+    "page_number": 12,
+    "group_id": "2022_2022_regional_p12_shared_36_38",
+    "group_type": "shared_code",
+    "source_test_pdf": "_archive_cache/2022-20260426T032905Z-3-001/2022/compsciwritten_2022_region.pdf",
+    "issues": [
+      "code_unbalanced_braces"
+    ],
+    "question_preview": "What is the output of the client code marked as Line 1?",
+    "has_manual_override": false,
+    "override_key": "2022_regional#36"
+  },
+  {
+    "id": 2107,
+    "exam_name": "2022_regional",
+    "year": 2022,
+    "level": "regional",
+    "question_number": 37,
+    "page_number": 12,
+    "group_id": "2022_2022_regional_p12_shared_36_38",
+    "group_type": "shared_code",
+    "source_test_pdf": "_archive_cache/2022-20260426T032905Z-3-001/2022/compsciwritten_2022_region.pdf",
+    "issues": [
+      "code_unbalanced_braces"
+    ],
+    "question_preview": "What is the output of the client code marked as Line 2?",
+    "has_manual_override": false,
+    "override_key": "2022_regional#37"
+  },
+  {
+    "id": 2117,
+    "exam_name": "2022_state",
+    "year": 2022,
+    "level": "state",
+    "question_number": 7,
+    "page_number": 4,
+    "group_id": "2022_2022_state_p4_q7",
+    "group_type": "single",
+    "source_test_pdf": "_archive_cache/2022-20260426T032905Z-3-001/2022/compsci_2022_state_written-test.pdf",
+    "issues": [
+      "code_unbalanced_braces"
+    ],
+    "question_preview": "What is the output of the code segment to the right? case \"Java13\" -> { default -> {",
+    "has_manual_override": false,
+    "override_key": "2022_state#7"
+  },
+  {
+    "id": 2118,
+    "exam_name": "2022_state",
+    "year": 2022,
+    "level": "state",
+    "question_number": 8,
+    "page_number": 4,
+    "group_id": "2022_2022_state_p4_q8",
+    "group_type": "single",
+    "source_test_pdf": "_archive_cache/2022-20260426T032905Z-3-001/2022/compsci_2022_state_written-test.pdf",
+    "issues": [
+      "code_unbalanced_braces"
+    ],
+    "question_preview": "What is the output of the code segment to the right? case \"Java13\" -> { default -> {",
+    "has_manual_override": false,
+    "override_key": "2022_state#8"
+  },
+  {
+    "id": 2122,
+    "exam_name": "2022_state",
+    "year": 2022,
+    "level": "state",
+    "question_number": 12,
+    "page_number": 5,
+    "group_id": "2022_2022_state_p5_q12",
+    "group_type": "single",
+    "source_test_pdf": "_archive_cache/2022-20260426T032905Z-3-001/2022/compsci_2022_state_written-test.pdf",
+    "issues": [
+      "code_unbalanced_braces"
+    ],
+    "question_preview": "What is the output of the code segment to the right? do{",
+    "has_manual_override": false,
+    "override_key": "2022_state#12"
+  },
+  {
+    "id": 2126,
+    "exam_name": "2022_state",
+    "year": 2022,
+    "level": "state",
+    "question_number": 16,
+    "page_number": 6,
+    "group_id": "2022_2022_state_p6_q16",
+    "group_type": "single",
+    "source_test_pdf": "_archive_cache/2022-20260426T032905Z-3-001/2022/compsci_2022_state_written-test.pdf",
+    "issues": [
+      "only_4_choice_labels",
+      "inline_choices_same_line"
+    ],
+    "question_preview": "What is the output of the code segment to the right?",
+    "has_manual_override": false,
+    "override_key": "2022_state#16"
+  },
+  {
+    "id": 2136,
+    "exam_name": "2022_state",
+    "year": 2022,
+    "level": "state",
+    "question_number": 26,
+    "page_number": 8,
+    "group_id": "2022_2022_state_p8_shared_25_26",
+    "group_type": "shared_code",
+    "source_test_pdf": "_archive_cache/2022-20260426T032905Z-3-001/2022/compsci_2022_state_written-test.pdf",
+    "issues": [
+      "code_unbalanced_braces"
+    ],
+    "question_preview": "Assume method sh() is given a sorted array of 15 integers ints and some integer value for s. What is the maximum number of times that the...",
+    "has_manual_override": false,
+    "override_key": "2022_state#26"
+  },
+  {
+    "id": 2137,
+    "exam_name": "2022_state",
+    "year": 2022,
+    "level": "state",
+    "question_number": 27,
+    "page_number": 9,
+    "group_id": "2022_2022_state_p9_q27",
+    "group_type": "single",
+    "source_test_pdf": "_archive_cache/2022-20260426T032905Z-3-001/2022/compsci_2022_state_written-test.pdf",
+    "issues": [
+      "code_unbalanced_braces"
+    ],
+    "question_preview": "How many instance variables does a member of class RedPanda have?",
+    "has_manual_override": false,
+    "override_key": "2022_state#27"
+  },
+  {
+    "id": 2139,
+    "exam_name": "2022_state",
+    "year": 2022,
+    "level": "state",
+    "question_number": 29,
+    "page_number": 9,
+    "group_id": "2022_2022_state_p9_shared_28_29",
+    "group_type": "shared_code",
+    "source_test_pdf": "_archive_cache/2022-20260426T032905Z-3-001/2022/compsci_2022_state_written-test.pdf",
+    "issues": [
+      "code_unbalanced_braces"
+    ],
+    "question_preview": "What is the output of client code shown below?",
+    "has_manual_override": false,
+    "override_key": "2022_state#29"
+  },
+  {
+    "id": 2141,
+    "exam_name": "2022_state",
+    "year": 2022,
+    "level": "state",
+    "question_number": 31,
+    "page_number": 9,
+    "group_id": "2022_2022_state_p9_q31",
+    "group_type": "single",
+    "source_test_pdf": "_archive_cache/2022-20260426T032905Z-3-001/2022/compsci_2022_state_written-test.pdf",
+    "issues": [
+      "question_unbalanced_parentheses"
+    ],
+    "question_preview": "What is the output of the client code below? FI lambda = (i, j) -> i.split(\" \",j); String[] res = lambda.go(\"a b c d\", out.print(res.leng...",
+    "has_manual_override": false,
+    "override_key": "2022_state#31"
+  },
+  {
     "id": 180,
     "exam_name": "2023_compsciw_study_packet_d_23_pdf",
     "year": 2023,

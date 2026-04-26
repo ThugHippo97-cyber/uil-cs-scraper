@@ -1,1 +1,38 @@
-{}
+{
+  "2022/computer_science_a_22.pdf": {
+    "pdf_type": "combo",
+    "year": 2022,
+    "level": "invitational",
+    "exam_name": "2022_invitationala"
+  },
+  "2022/computer_science_b_22.pdf": {
+    "pdf_type": "combo",
+    "year": 2022,
+    "level": "invitational",
+    "exam_name": "2022_invitationalb"
+  },
+  "2022/computer_sci_d_22.pdf": {
+    "pdf_type": "combo",
+    "year": 2022,
+    "level": "district",
+    "exam_name": "2022_district"
+  },
+  "2022/compsciwritten_2022_region.pdf": {
+    "pdf_type": "combo",
+    "year": 2022,
+    "level": "regional",
+    "exam_name": "2022_regional"
+  },
+  "2022/compsci_2022_state_written-test.pdf": {
+    "pdf_type": "test",
+    "year": 2022,
+    "level": "state",
+    "exam_name": "2022_state"
+  },
+  "2022/compsci_2022_state_written-key.pdf": {
+    "pdf_type": "key",
+    "year": 2022,
+    "level": "state",
+    "exam_name": "2022_state"
+  }
+}
