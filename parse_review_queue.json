@@ -174,6 +174,742 @@
     "override_key": "2017_invitationalc#35"
   },
   {
+    "id": 2159,
+    "exam_name": "2019_district",
+    "year": 2019,
+    "level": "district",
+    "question_number": 9,
+    "page_number": 3,
+    "group_id": "2019_2019_district_p3_q9",
+    "group_type": "single",
+    "source_test_pdf": "_archive_cache/2019-20260426T034546Z-3-001/2019/computer_sci_written_district.pdf",
+    "issues": [
+      "code_unbalanced_braces"
+    ],
+    "question_preview": "What is the output of the code segment shown on the right? do {",
+    "has_manual_override": false,
+    "override_key": "2019_district#9"
+  },
+  {
+    "id": 2164,
+    "exam_name": "2019_district",
+    "year": 2019,
+    "level": "district",
+    "question_number": 14,
+    "page_number": 4,
+    "group_id": "2019_2019_district_p4_q14",
+    "group_type": "single",
+    "source_test_pdf": "_archive_cache/2019-20260426T034546Z-3-001/2019/computer_sci_written_district.pdf",
+    "issues": [
+      "question_unbalanced_parentheses"
+    ],
+    "question_preview": "What is the output of this line of code? out.println(Math.max(Short.BYTES,",
+    "has_manual_override": false,
+    "override_key": "2019_district#14"
+  },
+  {
+    "id": 2166,
+    "exam_name": "2019_district",
+    "year": 2019,
+    "level": "district",
+    "question_number": 16,
+    "page_number": 4,
+    "group_id": "2019_2019_district_p4_q16",
+    "group_type": "single",
+    "source_test_pdf": "_archive_cache/2019-20260426T034546Z-3-001/2019/computer_sci_written_district.pdf",
+    "issues": [
+      "recursive_question_not_grouped"
+    ],
+    "question_preview": "What is printed by this client code? UILClass is shown on right. the",
+    "has_manual_override": false,
+    "override_key": "2019_district#16"
+  },
+  {
+    "id": 2171,
+    "exam_name": "2019_district",
+    "year": 2019,
+    "level": "district",
+    "question_number": 21,
+    "page_number": 6,
+    "group_id": "2019_2019_district_p6_q21",
+    "group_type": "single",
+    "source_test_pdf": "_archive_cache/2019-20260426T034546Z-3-001/2019/computer_sci_written_district.pdf",
+    "issues": [
+      "only_3_choice_labels",
+      "only_3_choice_labels"
+    ],
+    "question_preview": "Which of the following code segments can replace the <missing method will return a friend's correct age in years? code segment> in the Fr...",
+    "has_manual_override": false,
+    "override_key": "2019_district#21"
+  },
+  {
+    "id": 2174,
+    "exam_name": "2019_district",
+    "year": 2019,
+    "level": "district",
+    "question_number": 24,
+    "page_number": 7,
+    "group_id": "2019_2019_district_p7_q24",
+    "group_type": "single",
+    "source_test_pdf": "_archive_cache/2019-20260426T034546Z-3-001/2019/computer_sci_written_district.pdf",
+    "issues": [
+      "footer_text_leaked",
+      "only_3_choice_labels",
+      "only_3_choice_labels",
+      "code_unbalanced_braces",
+      "recursive_question_not_grouped"
+    ],
+    "question_preview": "Which of the following is NOT a correct implementation of the insertion sort algorithm? do {",
+    "has_manual_override": false,
+    "override_key": "2019_district#24"
+  },
+  {
+    "id": 2178,
+    "exam_name": "2019_district",
+    "year": 2019,
+    "level": "district",
+    "question_number": 28,
+    "page_number": 8,
+    "group_id": "2019_2019_district_p8_q28",
+    "group_type": "single",
+    "source_test_pdf": "_archive_cache/2019-20260426T034546Z-3-001/2019/computer_sci_written_district.pdf",
+    "issues": [
+      "recursive_question_not_grouped"
+    ],
+    "question_preview": "What is the output of the client code shown on the right?",
+    "has_manual_override": false,
+    "override_key": "2019_district#28"
+  },
+  {
+    "id": 2181,
+    "exam_name": "2019_district",
+    "year": 2019,
+    "level": "district",
+    "question_number": 31,
+    "page_number": 9,
+    "group_id": "2019_2019_district_p9_shared_30_31",
+    "group_type": "shared_code",
+    "source_test_pdf": "_archive_cache/2019-20260426T034546Z-3-001/2019/computer_sci_written_district.pdf",
+    "issues": [
+      "code_unbalanced_braces",
+      "code_starts_mid_block"
+    ],
+    "question_preview": "If <code> has been filled in correctly, what is the output of this line of client code?",
+    "has_manual_override": false,
+    "override_key": "2019_district#31"
+  },
+  {
+    "id": 2182,
+    "exam_name": "2019_district",
+    "year": 2019,
+    "level": "district",
+    "question_number": 32,
+    "page_number": 9,
+    "group_id": "2019_2019_district_p9_q32",
+    "group_type": "single",
+    "source_test_pdf": "_archive_cache/2019-20260426T034546Z-3-001/2019/computer_sci_written_district.pdf",
+    "issues": [
+      "code_unbalanced_braces"
+    ],
+    "question_preview": "Which of the following data types cannot be assigned to a variable",
+    "has_manual_override": false,
+    "override_key": "2019_district#32"
+  },
+  {
+    "id": 2183,
+    "exam_name": "2019_district",
+    "year": 2019,
+    "level": "district",
+    "question_number": 33,
+    "page_number": 9,
+    "group_id": "2019_2019_district_p9_q33",
+    "group_type": "single",
+    "source_test_pdf": "_archive_cache/2019-20260426T034546Z-3-001/2019/computer_sci_written_district.pdf",
+    "issues": [
+      "code_unbalanced_braces"
+    ],
+    "question_preview": "What is the output of the code segment shown on the right? switch(x) { case 3: case 6: case 5: case 7: case 1: case 4:",
+    "has_manual_override": false,
+    "override_key": "2019_district#33"
+  },
+  {
+    "id": 2208,
+    "exam_name": "2019_invitationala",
+    "year": 2019,
+    "level": "invitational",
+    "question_number": 18,
+    "page_number": 5,
+    "group_id": "2019_2019_invitationala_p5_q18",
+    "group_type": "single",
+    "source_test_pdf": "_archive_cache/2019-20260426T034546Z-3-001/2019/computer_sci_inv_a.pdf",
+    "issues": [
+      "question_unbalanced_parentheses",
+      "recursive_question_not_grouped"
+    ],
+    "question_preview": "Which of the following methods will return the sum of the digits in the parameter n? n will always be positive. sum+=Long.parseLong(",
+    "has_manual_override": false,
+    "override_key": "2019_invitationala#18"
+  },
+  {
+    "id": 2213,
+    "exam_name": "2019_invitationala",
+    "year": 2019,
+    "level": "invitational",
+    "question_number": 23,
+    "page_number": 6,
+    "group_id": "2019_2019_invitationala_p6_shared_22_24",
+    "group_type": "shared_code",
+    "source_test_pdf": "_archive_cache/2019-20260426T034546Z-3-001/2019/computer_sci_inv_a.pdf",
+    "issues": [
+      "code_unbalanced_braces"
+    ],
+    "question_preview": "Which of the following must replace <code 2> to ensure the method will compile and execute as intended?",
+    "has_manual_override": false,
+    "override_key": "2019_invitationala#23"
+  },
+  {
+    "id": 2214,
+    "exam_name": "2019_invitationala",
+    "year": 2019,
+    "level": "invitational",
+    "question_number": 24,
+    "page_number": 6,
+    "group_id": "2019_2019_invitationala_p6_shared_22_24",
+    "group_type": "shared_code",
+    "source_test_pdf": "_archive_cache/2019-20260426T034546Z-3-001/2019/computer_sci_inv_a.pdf",
+    "issues": [
+      "code_unbalanced_braces",
+      "code_starts_mid_block"
+    ],
+    "question_preview": "Once implemented correctly, and if n is the length of the array, which of the following is the strictest correct runtime?",
+    "has_manual_override": false,
+    "override_key": "2019_invitationala#24"
+  },
+  {
+    "id": 2224,
+    "exam_name": "2019_invitationala",
+    "year": 2019,
+    "level": "invitational",
+    "question_number": 34,
+    "page_number": 8,
+    "group_id": "2019_2019_invitationala_p8_shared_34_35",
+    "group_type": "shared_code",
+    "source_test_pdf": "_archive_cache/2019-20260426T034546Z-3-001/2019/computer_sci_inv_a.pdf",
+    "issues": [
+      "code_unbalanced_braces"
+    ],
+    "question_preview": "What is the output of the client code shown here? Contestant c5=new Contestant(); out.print(c5.getName()+\" \"+c5.getIdNum() +\" \"+c5.getSco...",
+    "has_manual_override": false,
+    "override_key": "2019_invitationala#34"
+  },
+  {
+    "id": 2225,
+    "exam_name": "2019_invitationala",
+    "year": 2019,
+    "level": "invitational",
+    "question_number": 35,
+    "page_number": 8,
+    "group_id": "2019_2019_invitationala_p8_shared_34_35",
+    "group_type": "shared_code",
+    "source_test_pdf": "_archive_cache/2019-20260426T034546Z-3-001/2019/computer_sci_inv_a.pdf",
+    "issues": [
+      "code_unbalanced_braces",
+      "code_starts_mid_block"
+    ],
+    "question_preview": "Which of the following methods, when added to the Contestant class, will compile and correctly assign a value the instance variable score...",
+    "has_manual_override": false,
+    "override_key": "2019_invitationala#35"
+  },
+  {
+    "id": 2250,
+    "exam_name": "2019_invitationalb",
+    "year": 2019,
+    "level": "invitational",
+    "question_number": 20,
+    "page_number": 6,
+    "group_id": "2019_2019_invitationalb_p6_q20",
+    "group_type": "single",
+    "source_test_pdf": "_archive_cache/2019-20260426T034546Z-3-001/2019/computer_sci_inv_b.pdf",
+    "issues": [
+      "footer_text_leaked",
+      "only_4_choice_labels",
+      "only_4_choice_labels",
+      "recursive_question_not_grouped"
+    ],
+    "question_preview": "Which of the following methods will correctly return the least of a and b does not exceed Integer.MAX_VALUE. common multiple of parameter...",
+    "has_manual_override": false,
+    "override_key": "2019_invitationalb#20"
+  },
+  {
+    "id": 2258,
+    "exam_name": "2019_invitationalb",
+    "year": 2019,
+    "level": "invitational",
+    "question_number": 28,
+    "page_number": 8,
+    "group_id": "2019_2019_invitationalb_p8_shared_27_28",
+    "group_type": "shared_code",
+    "source_test_pdf": "_archive_cache/2019-20260426T034546Z-3-001/2019/computer_sci_inv_b.pdf",
+    "issues": [
+      "code_unbalanced_braces"
+    ],
+    "question_preview": "Which of the following algorithms is implemented by the sort method shown on the right?",
+    "has_manual_override": false,
+    "override_key": "2019_invitationalb#28"
+  },
+  {
+    "id": 2262,
+    "exam_name": "2019_invitationalb",
+    "year": 2019,
+    "level": "invitational",
+    "question_number": 32,
+    "page_number": 9,
+    "group_id": "2019_2019_invitationalb_p9_shared_31_34",
+    "group_type": "shared_code",
+    "source_test_pdf": "_archive_cache/2019-20260426T034546Z-3-001/2019/computer_sci_inv_b.pdf",
+    "issues": [
+      "code_unbalanced_braces"
+    ],
+    "question_preview": "Which of the following must replace <code2> to ensure that method toString will compile and execute correctly? the",
+    "has_manual_override": false,
+    "override_key": "2019_invitationalb#32"
+  },
+  {
+    "id": 2263,
+    "exam_name": "2019_invitationalb",
+    "year": 2019,
+    "level": "invitational",
+    "question_number": 33,
+    "page_number": 9,
+    "group_id": "2019_2019_invitationalb_p9_shared_31_34",
+    "group_type": "shared_code",
+    "source_test_pdf": "_archive_cache/2019-20260426T034546Z-3-001/2019/computer_sci_inv_b.pdf",
+    "issues": [
+      "code_unbalanced_braces"
+    ],
+    "question_preview": "Which of the following is the correct implementation of a method that will return the value stored in the field cost?",
+    "has_manual_override": false,
+    "override_key": "2019_invitationalb#33"
+  },
+  {
+    "id": 2266,
+    "exam_name": "2019_invitationalb",
+    "year": 2019,
+    "level": "invitational",
+    "question_number": 36,
+    "page_number": 10,
+    "group_id": "2019_2019_invitationalb_p10_q36",
+    "group_type": "single",
+    "source_test_pdf": "_archive_cache/2019-20260426T034546Z-3-001/2019/computer_sci_inv_b.pdf",
+    "issues": [
+      "code_unbalanced_braces"
+    ],
+    "question_preview": "Which of the following Boolean expressions is not equal to A? + 0 of",
+    "has_manual_override": false,
+    "override_key": "2019_invitationalb#36"
+  },
+  {
+    "id": 2267,
+    "exam_name": "2019_invitationalb",
+    "year": 2019,
+    "level": "invitational",
+    "question_number": 37,
+    "page_number": 10,
+    "group_id": "2019_2019_invitationalb_p10_q37",
+    "group_type": "single",
+    "source_test_pdf": "_archive_cache/2019-20260426T034546Z-3-001/2019/computer_sci_inv_b.pdf",
+    "issues": [
+      "recursive_question_not_grouped"
+    ],
+    "question_preview": "Given the class DataStructure shown on the right, which the following data structures must the class be implementing? of",
+    "has_manual_override": false,
+    "override_key": "2019_invitationalb#37"
+  },
+  {
+    "id": 2285,
+    "exam_name": "2019_regional",
+    "year": 2019,
+    "level": "regional",
+    "question_number": 15,
+    "page_number": 4,
+    "group_id": "2019_2019_regional_p4_q15",
+    "group_type": "single",
+    "source_test_pdf": "_archive_cache/2019-20260426T034546Z-3-001/2019/computer_sci_written_region.pdf",
+    "issues": [
+      "recursive_question_not_grouped"
+    ],
+    "question_preview": "What is the output of the code segment to the right?",
+    "has_manual_override": false,
+    "override_key": "2019_regional#15"
+  },
+  {
+    "id": 2286,
+    "exam_name": "2019_regional",
+    "year": 2019,
+    "level": "regional",
+    "question_number": 16,
+    "page_number": 4,
+    "group_id": "2019_2019_regional_p4_q16",
+    "group_type": "single",
+    "source_test_pdf": "_archive_cache/2019-20260426T034546Z-3-001/2019/computer_sci_written_region.pdf",
+    "issues": [
+      "recursive_question_not_grouped"
+    ],
+    "question_preview": "What is the output of the main method shown on the right?",
+    "has_manual_override": false,
+    "override_key": "2019_regional#16"
+  },
+  {
+    "id": 2287,
+    "exam_name": "2019_regional",
+    "year": 2019,
+    "level": "regional",
+    "question_number": 17,
+    "page_number": 4,
+    "group_id": "2019_2019_regional_p4_q17",
+    "group_type": "single",
+    "source_test_pdf": "_archive_cache/2019-20260426T034546Z-3-001/2019/computer_sci_written_region.pdf",
+    "issues": [
+      "footer_text_leaked",
+      "only_3_choice_labels",
+      "only_3_choice_labels",
+      "recursive_question_not_grouped"
+    ],
+    "question_preview": "Which of these methods will correctly return the decimal equivalent character passed to the method is always valid and is an uppercase of...",
+    "has_manual_override": false,
+    "override_key": "2019_regional#17"
+  },
+  {
+    "id": 2292,
+    "exam_name": "2019_regional",
+    "year": 2019,
+    "level": "regional",
+    "question_number": 22,
+    "page_number": 6,
+    "group_id": "2019_2019_regional_p6_shared_22_24",
+    "group_type": "shared_code",
+    "source_test_pdf": "_archive_cache/2019-20260426T034546Z-3-001/2019/computer_sci_written_region.pdf",
+    "issues": [
+      "code_unbalanced_braces"
+    ],
+    "question_preview": "How many class variables does the class Circle contain?",
+    "has_manual_override": false,
+    "override_key": "2019_regional#22"
+  },
+  {
+    "id": 2293,
+    "exam_name": "2019_regional",
+    "year": 2019,
+    "level": "regional",
+    "question_number": 23,
+    "page_number": 6,
+    "group_id": "2019_2019_regional_p6_shared_22_24",
+    "group_type": "shared_code",
+    "source_test_pdf": "_archive_cache/2019-20260426T034546Z-3-001/2019/computer_sci_written_region.pdf",
+    "issues": [
+      "code_unbalanced_braces"
+    ],
+    "question_preview": "What is the output of client code line #1 ?",
+    "has_manual_override": false,
+    "override_key": "2019_regional#23"
+  },
+  {
+    "id": 2294,
+    "exam_name": "2019_regional",
+    "year": 2019,
+    "level": "regional",
+    "question_number": 24,
+    "page_number": 6,
+    "group_id": "2019_2019_regional_p6_shared_22_24",
+    "group_type": "shared_code",
+    "source_test_pdf": "_archive_cache/2019-20260426T034546Z-3-001/2019/computer_sci_written_region.pdf",
+    "issues": [
+      "code_unbalanced_braces"
+    ],
+    "question_preview": "What is the output of client code line #2?",
+    "has_manual_override": false,
+    "override_key": "2019_regional#24"
+  },
+  {
+    "id": 2295,
+    "exam_name": "2019_regional",
+    "year": 2019,
+    "level": "regional",
+    "question_number": 25,
+    "page_number": 6,
+    "group_id": "2019_2019_regional_p6_q25",
+    "group_type": "single",
+    "source_test_pdf": "_archive_cache/2019-20260426T034546Z-3-001/2019/computer_sci_written_region.pdf",
+    "issues": [
+      "code_unbalanced_braces",
+      "recursive_question_not_grouped"
+    ],
+    "question_preview": "What is the output of this line of client code given the method shown on the right? return;}",
+    "has_manual_override": false,
+    "override_key": "2019_regional#25"
+  },
+  {
+    "id": 2297,
+    "exam_name": "2019_regional",
+    "year": 2019,
+    "level": "regional",
+    "question_number": 27,
+    "page_number": 7,
+    "group_id": "2019_2019_regional_p7_q27",
+    "group_type": "single",
+    "source_test_pdf": "_archive_cache/2019-20260426T034546Z-3-001/2019/computer_sci_written_region.pdf",
+    "issues": [
+      "code_unbalanced_braces",
+      "recursive_question_not_grouped"
+    ],
+    "question_preview": "Which of the following must replace <code 1> in the mtd1 method shown on the right?",
+    "has_manual_override": false,
+    "override_key": "2019_regional#27"
+  },
+  {
+    "id": 2300,
+    "exam_name": "2019_regional",
+    "year": 2019,
+    "level": "regional",
+    "question_number": 30,
+    "page_number": 7,
+    "group_id": "2019_2019_regional_p7_q30",
+    "group_type": "single",
+    "source_test_pdf": "_archive_cache/2019-20260426T034546Z-3-001/2019/computer_sci_written_region.pdf",
+    "issues": [
+      "code_unbalanced_braces"
+    ],
+    "question_preview": "The class AClass implements a ________________.",
+    "has_manual_override": false,
+    "override_key": "2019_regional#30"
+  },
+  {
+    "id": 2302,
+    "exam_name": "2019_regional",
+    "year": 2019,
+    "level": "regional",
+    "question_number": 32,
+    "page_number": 8,
+    "group_id": "2019_2019_regional_p8_shared_32_35",
+    "group_type": "shared_code",
+    "source_test_pdf": "_archive_cache/2019-20260426T034546Z-3-001/2019/computer_sci_written_region.pdf",
+    "issues": [
+      "code_unbalanced_braces"
+    ],
+    "question_preview": "Which of the following run time efficiencies is the fastest for very large values of n?",
+    "has_manual_override": false,
+    "override_key": "2019_regional#32"
+  },
+  {
+    "id": 2303,
+    "exam_name": "2019_regional",
+    "year": 2019,
+    "level": "regional",
+    "question_number": 33,
+    "page_number": 8,
+    "group_id": "2019_2019_regional_p8_shared_32_35",
+    "group_type": "shared_code",
+    "source_test_pdf": "_archive_cache/2019-20260426T034546Z-3-001/2019/computer_sci_written_region.pdf",
+    "issues": [
+      "code_unbalanced_braces"
+    ],
+    "question_preview": "How many instance variables does the object obj2 encapsulate?",
+    "has_manual_override": false,
+    "override_key": "2019_regional#33"
+  },
+  {
+    "id": 2304,
+    "exam_name": "2019_regional",
+    "year": 2019,
+    "level": "regional",
+    "question_number": 34,
+    "page_number": 8,
+    "group_id": "2019_2019_regional_p8_shared_32_35",
+    "group_type": "shared_code",
+    "source_test_pdf": "_archive_cache/2019-20260426T034546Z-3-001/2019/computer_sci_written_region.pdf",
+    "issues": [
+      "code_unbalanced_braces"
+    ],
+    "question_preview": "What is the output of the client code segment up to and including line #1?",
+    "has_manual_override": false,
+    "override_key": "2019_regional#34"
+  },
+  {
+    "id": 2305,
+    "exam_name": "2019_regional",
+    "year": 2019,
+    "level": "regional",
+    "question_number": 35,
+    "page_number": 8,
+    "group_id": "2019_2019_regional_p8_shared_32_35",
+    "group_type": "shared_code",
+    "source_test_pdf": "_archive_cache/2019-20260426T034546Z-3-001/2019/computer_sci_written_region.pdf",
+    "issues": [
+      "code_unbalanced_braces"
+    ],
+    "question_preview": "What is the output of the client code segment after line #1?",
+    "has_manual_override": false,
+    "override_key": "2019_regional#35"
+  },
+  {
+    "id": 2307,
+    "exam_name": "2019_regional",
+    "year": 2019,
+    "level": "regional",
+    "question_number": 37,
+    "page_number": 9,
+    "group_id": "2019_2019_regional_p9_q37",
+    "group_type": "single",
+    "source_test_pdf": "_archive_cache/2019-20260426T034546Z-3-001/2019/computer_sci_written_region.pdf",
+    "issues": [
+      "code_unbalanced_braces"
+    ],
+    "question_preview": "Consider the unimplemented method shown below. What must to properly sort an array of objects of unknown type? replace missing code in th...",
+    "has_manual_override": false,
+    "override_key": "2019_regional#37"
+  },
+  {
+    "id": 2319,
+    "exam_name": "2019_state",
+    "year": 2019,
+    "level": "state",
+    "question_number": 9,
+    "page_number": 3,
+    "group_id": "2019_2019_state_p3_q9",
+    "group_type": "single",
+    "source_test_pdf": "_archive_cache/2019-20260426T034546Z-3-001/2019/computer_sci_written_state.pdf",
+    "issues": [
+      "only_3_choice_labels",
+      "inline_choices_same_line",
+      "only_3_choice_labels"
+    ],
+    "question_preview": "What is the output of the code segment shown on the right?",
+    "has_manual_override": false,
+    "override_key": "2019_state#9"
+  },
+  {
+    "id": 2322,
+    "exam_name": "2019_state",
+    "year": 2019,
+    "level": "state",
+    "question_number": 12,
+    "page_number": 3,
+    "group_id": "2019_2019_state_p3_q12",
+    "group_type": "single",
+    "source_test_pdf": "_archive_cache/2019-20260426T034546Z-3-001/2019/computer_sci_written_state.pdf",
+    "issues": [
+      "code_unbalanced_braces"
+    ],
+    "question_preview": "What is the output of the code segment shown on the right? do {",
+    "has_manual_override": false,
+    "override_key": "2019_state#12"
+  },
+  {
+    "id": 2326,
+    "exam_name": "2019_state",
+    "year": 2019,
+    "level": "state",
+    "question_number": 16,
+    "page_number": 4,
+    "group_id": "2019_2019_state_p4_q16",
+    "group_type": "single",
+    "source_test_pdf": "_archive_cache/2019-20260426T034546Z-3-001/2019/computer_sci_written_state.pdf",
+    "issues": [
+      "only_3_choice_labels",
+      "only_3_choice_labels",
+      "code_unbalanced_braces",
+      "recursive_question_not_grouped"
+    ],
+    "question_preview": "Which of the following classes will compile correctly? abstract class Abs {",
+    "has_manual_override": false,
+    "override_key": "2019_state#16"
+  },
+  {
+    "id": 2337,
+    "exam_name": "2019_state",
+    "year": 2019,
+    "level": "state",
+    "question_number": 27,
+    "page_number": 8,
+    "group_id": "2019_2019_state_p8_q27",
+    "group_type": "single",
+    "source_test_pdf": "_archive_cache/2019-20260426T034546Z-3-001/2019/computer_sci_written_state.pdf",
+    "issues": [
+      "code_unbalanced_braces"
+    ],
+    "question_preview": "Which of the following should replace <code 1> in the add method shown on the right?",
+    "has_manual_override": false,
+    "override_key": "2019_state#27"
+  },
+  {
+    "id": 2339,
+    "exam_name": "2019_state",
+    "year": 2019,
+    "level": "state",
+    "question_number": 29,
+    "page_number": 8,
+    "group_id": "2019_2019_state_p8_shared_28_30",
+    "group_type": "shared_code",
+    "source_test_pdf": "_archive_cache/2019-20260426T034546Z-3-001/2019/computer_sci_written_state.pdf",
+    "issues": [
+      "code_unbalanced_braces"
+    ],
+    "question_preview": "Once all missing code has been correctly inserted into the class, what is the output of the client code shown here? UIL<String> uil=new U...",
+    "has_manual_override": false,
+    "override_key": "2019_state#29"
+  },
+  {
+    "id": 2340,
+    "exam_name": "2019_state",
+    "year": 2019,
+    "level": "state",
+    "question_number": 30,
+    "page_number": 8,
+    "group_id": "2019_2019_state_p8_shared_28_30",
+    "group_type": "shared_code",
+    "source_test_pdf": "_archive_cache/2019-20260426T034546Z-3-001/2019/computer_sci_written_state.pdf",
+    "issues": [
+      "code_unbalanced_braces"
+    ],
+    "question_preview": "Once all missing code has been correctly inserted into the class, what data structure does class UIL implement?",
+    "has_manual_override": false,
+    "override_key": "2019_state#30"
+  },
+  {
+    "id": 2341,
+    "exam_name": "2019_state",
+    "year": 2019,
+    "level": "state",
+    "question_number": 31,
+    "page_number": 9,
+    "group_id": "2019_2019_state_p9_q31",
+    "group_type": "single",
+    "source_test_pdf": "_archive_cache/2019-20260426T034546Z-3-001/2019/computer_sci_written_state.pdf",
+    "issues": [
+      "question_text_very_short"
+    ],
+    "question_preview": "What is the output of line #1 when len = 2?",
+    "has_manual_override": false,
+    "override_key": "2019_state#31"
+  },
+  {
+    "id": 2345,
+    "exam_name": "2019_state",
+    "year": 2019,
+    "level": "state",
+    "question_number": 35,
+    "page_number": 10,
+    "group_id": "2019_2019_state_p10_q35",
+    "group_type": "single",
+    "source_test_pdf": "_archive_cache/2019-20260426T034546Z-3-001/2019/computer_sci_written_state.pdf",
+    "issues": [
+      "recursive_question_not_grouped"
+    ],
+    "question_preview": "If x is a power of 2 then the method shown on the right returns the equivalent of _____.",
+    "has_manual_override": false,
+    "override_key": "2019_state#35"
+  },
+  {
     "id": 89,
     "exam_name": "2021_invitationala",
     "year": 2021,

@@ -1,4 +1,34 @@
 {
+  "2019/computer_sci_inv_a.pdf": {
+    "pdf_type": "combo",
+    "year": 2019,
+    "level": "invitational",
+    "exam_name": "2019_invitationala"
+  },
+  "2019/computer_sci_inv_b.pdf": {
+    "pdf_type": "combo",
+    "year": 2019,
+    "level": "invitational",
+    "exam_name": "2019_invitationalb"
+  },
+  "2019/computer_sci_written_district.pdf": {
+    "pdf_type": "combo",
+    "year": 2019,
+    "level": "district",
+    "exam_name": "2019_district"
+  },
+  "2019/computer_sci_written_region.pdf": {
+    "pdf_type": "combo",
+    "year": 2019,
+    "level": "regional",
+    "exam_name": "2019_regional"
+  },
+  "2019/computer_sci_written_state.pdf": {
+    "pdf_type": "combo",
+    "year": 2019,
+    "level": "state",
+    "exam_name": "2019_state"
+  },
   "2022/computer_science_a_22.pdf": {
     "pdf_type": "combo",
     "year": 2022,
