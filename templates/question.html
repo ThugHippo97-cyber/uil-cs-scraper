@@ -20,10 +20,21 @@
                     <div class="meta-chip">{{ question.year }} | {{ question.level }}</div>
                 </div>
 
-                <form class="report-form" method="post" action="{{ url_for('report_parse_issue', question_id=question.id) }}">
-                    <input type="hidden" name="return_to" value="{{ request.path }}">
-                    <button class="report-btn" type="submit">Report Parse Issue</button>
-                </form>
+                <div class="inline-actions">
+                    <form class="report-form" method="post" action="{{ url_for('report_parse_issue', question_id=question.id) }}">
+                        <input type="hidden" name="return_to" value="{{ request.path }}">
+                        <button class="report-btn" type="submit">Report Parse Issue</button>
+                    </form>
+                    {% if current_user %}
+                        <form class="report-form" method="post" action="{{ url_for('toggle_bookmark', question_id=question.id) }}">
+                            <input type="hidden" name="return_to" value="{{ request.path }}">
+                            <input type="hidden" name="action" value="{% if question.is_bookmarked %}remove{% else %}add{% endif %}">
+                            <button class="report-btn" type="submit">{% if question.is_bookmarked %}Saved{% else %}Save Question{% endif %}</button>
+                        </form>
+                    {% else %}
+                        <a class="report-btn report-form" href="{{ url_for('login', next=request.path) }}">Log In to Save</a>
+                    {% endif %}
+                </div>
 
                 <img src="{{ url_for('question_image', question_id=question.id) }}" class="question-img">
             </section>

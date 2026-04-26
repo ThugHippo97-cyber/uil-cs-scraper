@@ -8,13 +8,22 @@
 </head>
 <body>
     <div class="container">
-        <a class="back-link" href="{{ url_for('index') }}">&larr; Back to home</a>
+        <nav class="top-nav">
+            <a class="back-link" href="{{ url_for('index') }}">&larr; Back to home</a>
+            <div class="nav-actions">
+                {% if current_user %}
+                    <a class="report-btn" href="{{ url_for('dashboard') }}">Dashboard</a>
+                {% else %}
+                    <a class="report-btn" href="{{ url_for('login', next=request.full_path) }}">Log In to Save</a>
+                {% endif %}
+            </div>
+        </nav>
 
         <section class="hero test-hero">
             <div class="hero-copy">
                 <p class="eyebrow">Digital Test Mode</p>
                 <h1>{{ year }} {{ level }} | {{ exam_name }}</h1>
-                <p class="hero-text">Answer one question at a time. Your progress is saved in this browser.</p>
+                <p class="hero-text">Answer one question at a time. Your progress is saved in this browser{% if current_user %} and synced to your account when you finish{% endif %}.</p>
             </div>
             <div class="test-status-row">
                 <span class="pill" id="progress-pill">Question 1 / {{ total_questions }}</span>
@@ -63,6 +72,14 @@
     <script>
         const questions = {{ questions|tojson }};
         const examKey = {{ exam_key|tojson }};
+        const isLoggedIn = {{ (current_user is not none)|tojson }};
+        const testMeta = {
+            exam_key: examKey,
+            year: {{ year|tojson }},
+            level: {{ level|tojson }},
+            exam_name: {{ exam_name|tojson }},
+            total_questions: {{ total_questions|tojson }}
+        };
         const totalQuestions = questions.length;
         const storageKey = `uil_test_session::${examKey}`;
 
@@ -87,7 +104,9 @@
         const state = {
             currentIndex: 0,
             answers: {},
-            finished: false
+            finished: false,
+            startedAt: new Date().toISOString(),
+            savedAttemptId: null
         };
 
         function normalizeOpenResponse(value) {
@@ -123,6 +142,8 @@
                     state.answers = parsed.answers;
                 }
                 state.finished = Boolean(parsed.finished);
+                state.startedAt = parsed.startedAt || state.startedAt;
+                state.savedAttemptId = parsed.savedAttemptId || null;
             } catch (_) {
                 // Ignore malformed local state.
             }
@@ -305,8 +326,51 @@
             }
 
             const summary = computeSummary();
-            summaryTextEl.textContent = `You answered ${summary.answered} of ${totalQuestions} questions. Correct: ${summary.correct}. Final score: ${summary.pct}%.`;
+            const syncText = isLoggedIn
+                ? (state.savedAttemptId ? " Saved to your dashboard." : " Saving to your dashboard...")
+                : " Log in to save attempts across devices.";
+            summaryTextEl.textContent = `You answered ${summary.answered} of ${totalQuestions} questions. Correct: ${summary.correct}. Final score: ${summary.pct}%.${syncText}`;
             summaryPanelEl.style.display = "block";
+        }
+
+        async function submitAttempt() {
+            if (!isLoggedIn || state.savedAttemptId) return;
+
+            const answeredQuestions = [];
+            for (const question of questions) {
+                const entry = state.answers[getQuestionStateKey(question)];
+                if (!entry) continue;
+                answeredQuestions.push({
+                    question_id: question.id,
+                    question_number: question.question_number,
+                    response: entry.selected || entry.typed || "",
+                    correct: Boolean(entry.correct)
+                });
+            }
+
+            if (!answeredQuestions.length) return;
+
+            try {
+                const response = await fetch("/api/test_attempts", {
+                    method: "POST",
+                    headers: {"Content-Type": "application/json"},
+                    body: JSON.stringify({
+                        ...testMeta,
+                        started_at: state.startedAt,
+                        questions: answeredQuestions
+                    })
+                });
+                const result = await response.json();
+                if (result.ok) {
+                    state.savedAttemptId = result.attempt_id;
+                    saveState();
+                    renderSummary();
+                } else {
+                    summaryTextEl.textContent += ` Save failed: ${result.error || "unknown error"}`;
+                }
+            } catch (_) {
+                summaryTextEl.textContent += " Save failed: network error.";
+            }
         }
 
         prevBtn.addEventListener("click", () => {
@@ -327,6 +391,7 @@
             state.finished = true;
             saveState();
             renderSummary();
+            submitAttempt();
             window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" });
         });
 
@@ -335,11 +400,16 @@
             state.currentIndex = 0;
             state.answers = {};
             state.finished = false;
+            state.startedAt = new Date().toISOString();
+            state.savedAttemptId = null;
             renderQuestion();
         });
 
         loadState();
         renderQuestion();
+        if (state.finished) {
+            submitAttempt();
+        }
     </script>
 </body>
 </html>

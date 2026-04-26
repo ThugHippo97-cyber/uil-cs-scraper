@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Practice Dashboard</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <nav class="top-nav">
+            <a class="back-link" href="{{ url_for('index') }}">&larr; Back to home</a>
+            <form method="post" action="{{ url_for('logout') }}">
+                <button class="report-btn" type="submit">Log Out</button>
+            </form>
+        </nav>
+
+        <section class="hero">
+            <p class="eyebrow">Personal Analytics</p>
+            <h1>{{ current_user.username }} Dashboard</h1>
+            <p class="hero-text">A simple prototype view of practice history, missed topics, and saved questions.</p>
+        </section>
+
+        <section class="stats-grid">
+            <div class="stat-card">
+                <span>Attempts</span>
+                <strong>{{ summary.attempt_count or 0 }}</strong>
+            </div>
+            <div class="stat-card">
+                <span>Questions Tried</span>
+                <strong>{{ summary.total_questions or 0 }}</strong>
+            </div>
+            <div class="stat-card">
+                <span>Correct</span>
+                <strong>{{ summary.correct_count or 0 }}</strong>
+            </div>
+            <div class="stat-card">
+                <span>Average Score</span>
+                <strong>{{ "%.1f"|format(summary.average_score or 0) }}%</strong>
+            </div>
+        </section>
+
+        <section class="detail-grid dashboard-grid">
+            <div class="detail-panel">
+                <h3>Recent Test Attempts</h3>
+                {% if recent_attempts %}
+                    <div class="compact-list">
+                        {% for attempt in recent_attempts %}
+                            <div class="compact-row">
+                                <div>
+                                    <strong>{{ attempt.exam_name }}</strong>
+                                    <p class="muted">{{ attempt.year }} | {{ attempt.level }} | {{ attempt.completed_at }}</p>
+                                </div>
+                                <span class="pill">{{ attempt.correct_count }}/{{ attempt.total_questions }} ({{ "%.0f"|format(attempt.score_percent) }}%)</span>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <p class="muted">Finish a test while logged in and it will show up here.</p>
+                {% endif %}
+            </div>
+
+            <div class="detail-panel">
+                <h3>Missed Topic Signals</h3>
+                {% if weak_tags %}
+                    <div class="tag-row">
+                        {% for tag, count in weak_tags %}
+                            <span class="tag">{{ tag }} x{{ count }}</span>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <p class="muted">No missed-topic data yet.</p>
+                {% endif %}
+            </div>
+        </section>
+
+        <section class="detail-panel">
+            <h3>Saved Questions</h3>
+            {% if bookmarks %}
+                <div class="results">
+                    {% for q in bookmarks %}
+                        <a class="result-card" href="{{ url_for('question_detail', question_id=q.id) }}">
+                            <div class="meta">{{ q.exam_name }} | {{ q.year }} | {{ q.level }} | Q{{ q.question_number }}</div>
+                            <div class="preview">{{ (q.question_text or "Saved shared-context question")[:160] }}</div>
+                        </a>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <p class="muted">Bookmark questions from the question detail pages to build a review list.</p>
+            {% endif %}
+        </section>
+    </div>
+</body>
+</html>

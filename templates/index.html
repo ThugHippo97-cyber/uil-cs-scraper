@@ -8,6 +8,21 @@
 </head>
 <body>
     <div class="container">
+        <nav class="top-nav">
+            <div class="nav-brand">UIL CS Practice</div>
+            <div class="nav-actions">
+                {% if current_user %}
+                    <a class="report-btn" href="{{ url_for('dashboard') }}">Dashboard</a>
+                    <form method="post" action="{{ url_for('logout') }}">
+                        <button class="report-btn" type="submit">Log Out</button>
+                    </form>
+                {% else %}
+                    <a class="report-btn" href="{{ url_for('login') }}">Log In</a>
+                    <a class="response-submit nav-primary" href="{{ url_for('register') }}">Create Account</a>
+                {% endif %}
+            </div>
+        </nav>
+
         <section class="hero">
             <div class="hero-copy">
                 <p class="eyebrow">UIL Computer Science Practice</p>

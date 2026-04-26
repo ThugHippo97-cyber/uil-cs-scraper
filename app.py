@@ -1,4 +1,5 @@
-from flask import Flask, render_template, request, send_file, redirect, url_for
+from functools import wraps
+from flask import Flask, render_template, request, send_file, redirect, url_for, session, g, jsonify
 import sqlite3
 import re
 import pdfplumber
@@ -7,8 +8,10 @@ import os
 import json
 import random
 from datetime import datetime
+from werkzeug.security import check_password_hash, generate_password_hash
 
 app = Flask(__name__)
+app.secret_key = os.environ.get("UIL_CS_SECRET_KEY", "dev-team-practice-secret")
 DB_FILE = "uil_cs_questions_v2.db"
 QUESTION_OVERRIDE_FILE = "question_overrides.json"
 PARSE_FEEDBACK_FILE = "parse_feedback.jsonl"
@@ -175,6 +178,96 @@ def get_connection():
     conn.execute("PRAGMA temp_store=MEMORY")
     conn.row_factory = sqlite3.Row
     return conn
+
+
+def init_app_tables():
+    conn = get_connection()
+    conn.executescript("""
+    CREATE TABLE IF NOT EXISTS users (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        username TEXT NOT NULL UNIQUE,
+        password_hash TEXT NOT NULL,
+        created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+    );
+
+    CREATE TABLE IF NOT EXISTS test_attempts (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id INTEGER NOT NULL,
+        exam_key TEXT NOT NULL,
+        year INTEGER,
+        level TEXT,
+        exam_name TEXT,
+        total_questions INTEGER NOT NULL,
+        answered_count INTEGER NOT NULL,
+        correct_count INTEGER NOT NULL,
+        score_percent REAL NOT NULL,
+        started_at TEXT,
+        completed_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY(user_id) REFERENCES users(id)
+    );
+
+    CREATE TABLE IF NOT EXISTS attempt_questions (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        attempt_id INTEGER NOT NULL,
+        question_id INTEGER NOT NULL,
+        question_number INTEGER NOT NULL,
+        response TEXT,
+        correct INTEGER NOT NULL,
+        FOREIGN KEY(attempt_id) REFERENCES test_attempts(id),
+        FOREIGN KEY(question_id) REFERENCES questions(id)
+    );
+
+    CREATE TABLE IF NOT EXISTS question_bookmarks (
+        user_id INTEGER NOT NULL,
+        question_id INTEGER NOT NULL,
+        created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        PRIMARY KEY(user_id, question_id),
+        FOREIGN KEY(user_id) REFERENCES users(id),
+        FOREIGN KEY(question_id) REFERENCES questions(id)
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_test_attempts_user_completed
+        ON test_attempts(user_id, completed_at DESC);
+    CREATE INDEX IF NOT EXISTS idx_attempt_questions_question
+        ON attempt_questions(question_id);
+    """)
+    conn.commit()
+    conn.close()
+
+
+init_app_tables()
+
+
+@app.before_request
+def load_current_user():
+    user_id = session.get("user_id")
+    g.current_user = None
+    if not user_id:
+        return
+    conn = get_connection()
+    g.current_user = conn.execute(
+        "SELECT id, username FROM users WHERE id = ?",
+        (user_id,),
+    ).fetchone()
+    conn.close()
+
+
+@app.context_processor
+def inject_current_user():
+    return {"current_user": g.get("current_user")}
+
+
+def login_required(view_func):
+    @wraps(view_func)
+    def wrapped(*args, **kwargs):
+        if not g.get("current_user"):
+            return redirect(url_for("login", next=request.path))
+        return view_func(*args, **kwargs)
+    return wrapped
+
+
+def validate_username(username):
+    return bool(re.fullmatch(r"[A-Za-z0-9_]{3,32}", username or ""))
 
 
 def load_question_overrides():
@@ -1323,6 +1416,160 @@ def fetch_test_questions(year, level, exam_name):
     return test_questions
 
 
+def fetch_bookmark_ids(question_ids):
+    if not g.get("current_user") or not question_ids:
+        return set()
+    conn = get_connection()
+    placeholders = ",".join("?" for _ in question_ids)
+    rows = conn.execute(
+        f"""
+        SELECT question_id
+        FROM question_bookmarks
+        WHERE user_id = ? AND question_id IN ({placeholders})
+        """,
+        [g.current_user["id"], *question_ids],
+    ).fetchall()
+    conn.close()
+    return {int(row["question_id"]) for row in rows}
+
+
+@app.route("/register", methods=["GET", "POST"])
+def register():
+    error = ""
+    next_url = request.args.get("next") or url_for("index")
+
+    if request.method == "POST":
+        username = request.form.get("username", "").strip()
+        password = request.form.get("password", "")
+        next_url = request.form.get("next") or next_url
+
+        if not validate_username(username):
+            error = "Use 3-32 letters, numbers, or underscores."
+        elif len(password) < 8:
+            error = "Use at least 8 characters for the password."
+        else:
+            conn = get_connection()
+            try:
+                cursor = conn.execute(
+                    "INSERT INTO users (username, password_hash) VALUES (?, ?)",
+                    (username, generate_password_hash(password)),
+                )
+                conn.commit()
+                session["user_id"] = cursor.lastrowid
+                return redirect(next_url)
+            except sqlite3.IntegrityError:
+                error = "That username is already taken."
+            finally:
+                conn.close()
+
+    return render_template("auth.html", mode="register", error=error, next_url=next_url)
+
+
+@app.route("/login", methods=["GET", "POST"])
+def login():
+    error = ""
+    next_url = request.args.get("next") or url_for("index")
+
+    if request.method == "POST":
+        username = request.form.get("username", "").strip()
+        password = request.form.get("password", "")
+        next_url = request.form.get("next") or next_url
+
+        conn = get_connection()
+        user = conn.execute(
+            "SELECT id, username, password_hash FROM users WHERE username = ?",
+            (username,),
+        ).fetchone()
+        conn.close()
+
+        if user and check_password_hash(user["password_hash"], password):
+            session["user_id"] = user["id"]
+            return redirect(next_url)
+        error = "Username or password did not match."
+
+    return render_template("auth.html", mode="login", error=error, next_url=next_url)
+
+
+@app.route("/logout", methods=["POST"])
+def logout():
+    session.clear()
+    return redirect(url_for("index"))
+
+
+@app.route("/dashboard")
+@login_required
+def dashboard():
+    user_id = g.current_user["id"]
+    conn = get_connection()
+    summary = conn.execute(
+        """
+        SELECT
+            COUNT(*) AS attempt_count,
+            COALESCE(SUM(total_questions), 0) AS total_questions,
+            COALESCE(SUM(correct_count), 0) AS correct_count,
+            COALESCE(AVG(score_percent), 0) AS average_score
+        FROM test_attempts
+        WHERE user_id = ?
+        """,
+        (user_id,),
+    ).fetchone()
+    recent_attempts = conn.execute(
+        """
+        SELECT id, year, level, exam_name, total_questions, answered_count,
+               correct_count, score_percent, completed_at
+        FROM test_attempts
+        WHERE user_id = ?
+        ORDER BY completed_at DESC, id DESC
+        LIMIT 12
+        """,
+        (user_id,),
+    ).fetchall()
+    missed_rows = conn.execute(
+        """
+        SELECT q.question_text, q.code_block, q.shared_context
+        FROM attempt_questions aq
+        JOIN test_attempts ta ON ta.id = aq.attempt_id
+        JOIN questions q ON q.id = aq.question_id
+        WHERE ta.user_id = ? AND aq.correct = 0
+        ORDER BY ta.completed_at DESC
+        LIMIT 200
+        """,
+        (user_id,),
+    ).fetchall()
+    bookmarks = conn.execute(
+        """
+        SELECT q.id, q.exam_name, q.year, q.level, q.question_number,
+               q.question_text, q.group_id, q.group_type
+        FROM question_bookmarks qb
+        JOIN questions q ON q.id = qb.question_id
+        WHERE qb.user_id = ?
+        ORDER BY qb.created_at DESC
+        LIMIT 20
+        """,
+        (user_id,),
+    ).fetchall()
+    conn.close()
+
+    tag_counts = {}
+    for row in missed_rows:
+        tags = extract_search_tags(
+            row["question_text"] or "",
+            row["code_block"] or "",
+            row["shared_context"] or "",
+        )
+        for tag in tags:
+            tag_counts[tag] = tag_counts.get(tag, 0) + 1
+    weak_tags = sorted(tag_counts.items(), key=lambda item: (-item[1], item[0]))[:8]
+
+    return render_template(
+        "dashboard.html",
+        summary=summary,
+        recent_attempts=recent_attempts,
+        weak_tags=weak_tags,
+        bookmarks=bookmarks,
+    )
+
+
 @app.route("/")
 def index():
     keyword = request.args.get("keyword", "").strip()
@@ -1442,6 +1689,108 @@ def test_mode():
     )
 
 
+@app.route("/api/test_attempts", methods=["POST"])
+@login_required
+def save_test_attempt():
+    payload = request.get_json(silent=True) or {}
+    questions = payload.get("questions") if isinstance(payload.get("questions"), list) else []
+    total_questions = int(payload.get("total_questions") or len(questions) or 0)
+
+    normalized_rows = []
+    correct_count = 0
+    answered_count = 0
+    for item in questions:
+        if not isinstance(item, dict):
+            continue
+        try:
+            question_id = int(item.get("question_id"))
+            question_number = int(item.get("question_number"))
+        except (TypeError, ValueError):
+            continue
+        response = str(item.get("response") or "")[:500]
+        correct = 1 if item.get("correct") else 0
+        answered_count += 1
+        correct_count += correct
+        normalized_rows.append((question_id, question_number, response, correct))
+
+    if total_questions <= 0 or not normalized_rows:
+        return jsonify({"ok": False, "error": "No answered questions to save."}), 400
+
+    score_percent = round((correct_count / total_questions) * 100, 2)
+    conn = get_connection()
+    cursor = conn.execute(
+        """
+        INSERT INTO test_attempts
+        (user_id, exam_key, year, level, exam_name, total_questions,
+         answered_count, correct_count, score_percent, started_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """,
+        (
+            g.current_user["id"],
+            str(payload.get("exam_key") or ""),
+            int(payload.get("year") or 0) or None,
+            str(payload.get("level") or ""),
+            str(payload.get("exam_name") or ""),
+            total_questions,
+            answered_count,
+            correct_count,
+            score_percent,
+            str(payload.get("started_at") or ""),
+        ),
+    )
+    attempt_id = cursor.lastrowid
+    conn.executemany(
+        """
+        INSERT INTO attempt_questions
+        (attempt_id, question_id, question_number, response, correct)
+        VALUES (?, ?, ?, ?, ?)
+        """,
+        [
+            (attempt_id, question_id, question_number, response, correct)
+            for question_id, question_number, response, correct in normalized_rows
+        ],
+    )
+    conn.commit()
+    conn.close()
+
+    return jsonify({
+        "ok": True,
+        "attempt_id": attempt_id,
+        "correct_count": correct_count,
+        "answered_count": answered_count,
+        "score_percent": score_percent,
+    })
+
+
+@app.route("/bookmark/<int:question_id>", methods=["POST"])
+@login_required
+def toggle_bookmark(question_id):
+    action = request.form.get("action", "toggle")
+    return_to = request.form.get("return_to", "").strip()
+    conn = get_connection()
+    existing = conn.execute(
+        "SELECT 1 FROM question_bookmarks WHERE user_id = ? AND question_id = ?",
+        (g.current_user["id"], question_id),
+    ).fetchone()
+
+    if action == "remove" or existing:
+        conn.execute(
+            "DELETE FROM question_bookmarks WHERE user_id = ? AND question_id = ?",
+            (g.current_user["id"], question_id),
+        )
+    else:
+        conn.execute(
+            "INSERT OR IGNORE INTO question_bookmarks (user_id, question_id) VALUES (?, ?)",
+            (g.current_user["id"], question_id),
+        )
+    conn.commit()
+    conn.close()
+
+    if return_to:
+        return redirect(return_to)
+    return redirect(url_for("question_detail", question_id=question_id))
+
+
 @app.route("/question_image/<int:question_id>")
 def question_image(question_id):
     conn = get_connection()
@@ -1511,6 +1860,7 @@ def question_detail(question_id):
         return redirect(url_for("group_detail", group_id=row["group_id"]))
 
     question = prepare_question(row)
+    question["is_bookmarked"] = row["id"] in fetch_bookmark_ids([row["id"]])
     return render_template("question.html", question=question)
 
 
@@ -1527,7 +1877,12 @@ def group_detail(group_id):
     if not rows:
         return "Group not found", 404
 
-    prepared_questions = [prepare_question(row) for row in rows]
+    bookmark_ids = fetch_bookmark_ids([row["id"] for row in rows])
+    prepared_questions = []
+    for row in rows:
+        question = prepare_question(row)
+        question["is_bookmarked"] = row["id"] in bookmark_ids
+        prepared_questions.append(question)
 
     return render_template(
         "group.html",

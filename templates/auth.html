@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% if mode == 'register' %}Create Account{% else %}Log In{% endif %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container auth-container">
+        <a class="back-link" href="{{ url_for('index') }}">&larr; Back to home</a>
+
+        <section class="hero auth-card">
+            <p class="eyebrow">Team Practice</p>
+            <h1>{% if mode == 'register' %}Create Account{% else %}Log In{% endif %}</h1>
+            <p class="hero-text">Save full-test attempts, review missed questions, and build a personal practice history.</p>
+
+            {% if error %}
+                <div class="result-box incorrect">{{ error }}</div>
+            {% endif %}
+
+            <form class="auth-form" method="post">
+                <input type="hidden" name="next" value="{{ next_url }}">
+                <label>
+                    <span>Username</span>
+                    <input name="username" type="text" autocomplete="username" required autofocus>
+                </label>
+                <label>
+                    <span>Password</span>
+                    <input name="password" type="password" autocomplete="{% if mode == 'register' %}new-password{% else %}current-password{% endif %}" required>
+                </label>
+                <button class="response-submit" type="submit">
+                    {% if mode == 'register' %}Create Account{% else %}Log In{% endif %}
+                </button>
+            </form>
+
+            {% if mode == 'register' %}
+                <p class="muted">Already have an account? <a href="{{ url_for('login', next=next_url) }}">Log in</a>.</p>
+            {% else %}
+                <p class="muted">Need an account? <a href="{{ url_for('register', next=next_url) }}">Create one</a>.</p>
+            {% endif %}
+        </section>
+    </div>
+</body>
+</html>

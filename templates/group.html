@@ -39,10 +39,19 @@
                         <h3>Question {{ question.question_number }}</h3>
                     </div>
 
-                    <form class="report-form inline-report-form" method="post" action="{{ url_for('report_parse_issue', question_id=question.id) }}">
-                        <input type="hidden" name="return_to" value="{{ request.path }}">
-                        <button class="report-btn" type="submit">Report Parse Issue</button>
-                    </form>
+                    <div class="inline-actions">
+                        <form class="report-form inline-report-form" method="post" action="{{ url_for('report_parse_issue', question_id=question.id) }}">
+                            <input type="hidden" name="return_to" value="{{ request.path }}">
+                            <button class="report-btn" type="submit">Report Parse Issue</button>
+                        </form>
+                        {% if current_user %}
+                            <form class="report-form inline-report-form" method="post" action="{{ url_for('toggle_bookmark', question_id=question.id) }}">
+                                <input type="hidden" name="return_to" value="{{ request.path }}">
+                                <input type="hidden" name="action" value="{% if question.is_bookmarked %}remove{% else %}add{% endif %}">
+                                <button class="report-btn" type="submit">{% if question.is_bookmarked %}Saved{% else %}Save Question{% endif %}</button>
+                            </form>
+                        {% endif %}
+                    </div>
 
                     {% if question.question_text %}
                         <div class="detail-panel">

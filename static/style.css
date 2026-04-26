@@ -63,6 +63,45 @@ body::after {
     padding: 32px 20px 48px;
 }
 
+.top-nav {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 18px;
+}
+
+.nav-brand {
+    font-family: Consolas, "Courier New", monospace;
+    color: var(--accent);
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.nav-actions,
+.inline-actions {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.nav-actions form,
+.inline-actions form {
+    margin: 0;
+}
+
+.nav-actions a,
+.inline-actions a {
+    text-decoration: none;
+}
+
+.nav-primary {
+    display: inline-flex;
+    text-decoration: none;
+}
+
 .hero,
 .hero-card,
 .question-card,
@@ -423,6 +462,90 @@ h4 {
     box-shadow: 0 0 14px rgba(255, 205, 115, 0.12);
 }
 
+.auth-container {
+    max-width: 720px;
+}
+
+.auth-card {
+    display: grid;
+    gap: 16px;
+}
+
+.auth-form {
+    display: grid;
+    gap: 14px;
+    max-width: 460px;
+}
+
+.auth-form label {
+    display: grid;
+    gap: 8px;
+    color: var(--muted);
+    font-family: Consolas, "Courier New", monospace;
+    font-size: 14px;
+}
+
+.auth-form input {
+    width: 100%;
+    padding: 14px 16px;
+    border-radius: 14px;
+    border: 1px solid var(--line);
+    background: rgba(1, 10, 5, 0.92);
+    color: var(--ink);
+    font-size: 16px;
+}
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 14px;
+    margin-bottom: 18px;
+}
+
+.stat-card {
+    padding: 18px;
+    background: var(--paper);
+    border: 1px solid var(--line);
+    border-radius: 18px;
+    box-shadow: var(--shadow);
+}
+
+.stat-card span,
+.compact-row .muted {
+    display: block;
+    color: var(--muted);
+    font-size: 13px;
+}
+
+.stat-card strong {
+    display: block;
+    margin-top: 8px;
+    font-family: Consolas, "Courier New", monospace;
+    font-size: 1.7rem;
+    color: var(--ink);
+}
+
+.dashboard-grid {
+    margin-bottom: 18px;
+}
+
+.compact-list {
+    display: grid;
+    gap: 10px;
+}
+
+.compact-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 12px 0;
+    border-bottom: 1px solid rgba(109, 255, 139, 0.1);
+}
+
+.compact-row:last-child {
+    border-bottom: 0;
+}
+
 .detail-grid {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -685,14 +808,17 @@ code {
 @media (max-width: 900px) {
     .search-form,
     .test-launch-form,
-    .detail-grid {
+    .detail-grid,
+    .stats-grid {
         grid-template-columns: 1fr;
     }
 
     .results-head,
     .detail-header,
     .compact-header,
-    .result-topline {
+    .result-topline,
+    .top-nav,
+    .compact-row {
         flex-direction: column;
         align-items: flex-start;
     }
