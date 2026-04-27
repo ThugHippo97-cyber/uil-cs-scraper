@@ -266,6 +266,19 @@ class AccountWorkflowTests(unittest.TestCase):
         self.assertIn(b"id=\"reveal-answer-btn\"", response.data)
         self.assertIn(b"function revealAnswer(question)", response.data)
 
+    def test_test_mode_includes_report_parse_issue_link(self):
+        response = self.client.get("/test?year=2026&level=invitational&exam_name=sample_exam")
+        self.assertEqual(response.status_code, 200)
+        self.assertIn(b"Report Parse Issue", response.data)
+        self.assertIn(b"id=\"report-question-link\"", response.data)
+        self.assertIn(b"/report/${question.id}", response.data)
+
+    def test_test_mode_wrong_choice_does_not_reveal_correct_choice(self):
+        response = self.client.get("/test?year=2026&level=invitational&exam_name=sample_exam")
+        self.assertEqual(response.status_code, 200)
+        self.assertNotIn(b"Incorrect. Correct answer:", response.data)
+        self.assertIn(b"Incorrect. Use Reveal Answer to show the correct choice.", response.data)
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -36,6 +36,7 @@
             <div class="detail-header compact-header">
                 <h3 id="question-title">Question</h3>
                 <div class="test-nav">
+                    <a class="report-btn" id="report-question-link" href="#">Report Parse Issue</a>
                     <button class="response-submit" id="prev-btn" type="button">Previous</button>
                     <button class="response-submit" id="next-btn" type="button">Next</button>
                 </div>
@@ -111,6 +112,7 @@
         const nextBtn = document.getElementById("next-btn");
         const finishBtn = document.getElementById("finish-btn");
         const resetBtn = document.getElementById("reset-btn");
+        const reportQuestionLink = document.getElementById("report-question-link");
 
         const state = {
             currentIndex: 0,
@@ -263,15 +265,12 @@
                 if (letter === existingAnswer.selected) {
                     btn.classList.add(existingAnswer.correct ? "correct-btn" : "incorrect-btn");
                 }
-                if (letter === (question.answer || "").toUpperCase()) {
-                    btn.classList.add("correct-btn");
-                }
             });
 
             if (existingAnswer.correct) {
                 showResult("Correct.", true);
             } else {
-                showResult(`Incorrect. Correct answer: ${(question.answer || "").toUpperCase()}`, false);
+                showResult("Incorrect. Use Reveal Answer to show the correct choice.", false);
             }
         }
 
@@ -324,7 +323,7 @@
             if (existingAnswer.correct) {
                 showResult("Correct.", true);
             } else {
-                showResult(`Incorrect. Correct answer: ${question.answer}`, false);
+                showResult("Incorrect. Use Reveal Answer to show the correct answer.", false);
             }
         }
 
@@ -348,8 +347,10 @@
         function renderQuestion() {
             const question = questions[state.currentIndex];
             const answerEntry = state.answers[getQuestionStateKey(question)] || null;
+            const returnTo = `${window.location.pathname}${window.location.search}`;
 
             titleEl.textContent = `Question ${question.question_number}`;
+            reportQuestionLink.href = `/report/${question.id}?return_to=${encodeURIComponent(returnTo)}`;
             revealAnswerBtn.disabled = !(question.answer || "").trim();
             revealAnswerBtn.onclick = () => revealAnswer(question);
             renderSharedContext(question);
