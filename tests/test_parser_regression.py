@@ -289,6 +289,26 @@ class ParserRegressionTests(unittest.TestCase):
             ],
         )
 
+    def test_adjacent_empty_visual_choice_labels_are_preserved(self):
+        parsed = app.parse_choices("A) B) C)\nD) A and C\nE) A, B and C")
+
+        self.assertEqual([choice["letter"] for choice in parsed], ["A", "B", "C", "D", "E"])
+        self.assertEqual(parsed[3]["text"], "A and C")
+
+    def test_ocr_variant_choice_labels_are_normalized(self):
+        parsed = app.parse_choices("A) 20 B) 24 €) 25 OD) 30 E) 32")
+
+        self.assertEqual(
+            parsed,
+            [
+                {"letter": "A", "text": "20"},
+                {"letter": "B", "text": "24"},
+                {"letter": "C", "text": "25"},
+                {"letter": "D", "text": "30"},
+                {"letter": "E", "text": "32"},
+            ],
+        )
+
     def test_answer_sanity_flags_non_choice_key_for_choice_question(self):
         issues = main.evaluate_answer_sanity(
             "What is the output?",
@@ -306,6 +326,42 @@ class ParserRegressionTests(unittest.TestCase):
         )
 
         self.assertIn("answer_not_in_parsed_choices", issues)
+
+    def test_prepare_question_keeps_valid_short_choices_over_noisy_crop_recovery(self):
+        original = app.extract_question_crop_text
+        try:
+            app.extract_question_crop_text = lambda row: (
+                "Question 4.\nA) prior\nB) prior\nC) prior\nD) prior\nE) prior\n"
+                "Question 5.\nA) true B) false\nQuestion 6."
+            )
+            prepared = app.prepare_question({
+                "id": 0,
+                "exam_name": "2018_invitationalb",
+                "year": 2018,
+                "level": "invitational",
+                "question_number": 5,
+                "question_text": "What is the output?",
+                "code_block": "out.print(flag);",
+                "choices": "A) true B) false",
+                "answer": "A",
+                "group_id": "",
+                "group_type": "single",
+                "shared_context": "",
+                "source_test_pdf": "",
+                "page_number": 0,
+                "top_y": 0,
+                "bottom_y": 0,
+            })
+        finally:
+            app.extract_question_crop_text = original
+
+        self.assertEqual(
+            prepared["parsed_choices"],
+            [
+                {"letter": "A", "text": "true"},
+                {"letter": "B", "text": "false"},
+            ],
+        )
 
     def test_prepare_question_recovers_missing_trailing_choice_from_code_prefix(self):
         prepared = app.prepare_question({
@@ -355,6 +411,66 @@ class ParserRegressionTests(unittest.TestCase):
         self.assertEqual(prepared["visual_choice_labels"], ["A", "B", "C", "D", "E"])
         self.assertFalse(prepared["is_open_response"])
 
+    def test_visual_choice_fallback_handles_incomplete_ocr_choice_sets(self):
+        prepared = app.prepare_question({
+            "id": 0,
+            "exam_name": "2024_regional",
+            "year": 2024,
+            "level": "regional",
+            "question_number": 38,
+            "question_text": "What is output by the code to the right?",
+            "code_block": "",
+            "choices": "A) 21\nB) 25\n¢) 29\nD) 33\nE) 35\nout.print(C);",
+            "answer": "C",
+            "group_id": "",
+            "group_type": "single",
+            "shared_context": "",
+        })
+
+        self.assertTrue(prepared["is_visual_choice"])
+        self.assertEqual(prepared["visual_choice_labels"], ["A", "B", "C", "D", "E"])
+        self.assertEqual(prepared["parsed_choices"], [])
+        self.assertIn("cropped PDF image", " ".join(prepared["display_issues"]))
+
+    def test_visual_choice_fallback_handles_extended_choice_sets(self):
+        prepared = app.prepare_question({
+            "id": 0,
+            "exam_name": "2024_regional",
+            "year": 2024,
+            "level": "regional",
+            "question_number": 26,
+            "question_text": "Which token belongs in the blank?",
+            "code_block": "",
+            "choices": "A) int\nB) private\nC) public\nD) Regional\nF) String\nG) super\nH) void",
+            "answer": "F",
+            "group_id": "",
+            "group_type": "single",
+            "shared_context": "",
+        })
+
+        self.assertTrue(prepared["is_visual_choice"])
+        self.assertEqual(prepared["visual_choice_labels"], ["A", "B", "C", "D", "E", "F", "G", "H"])
+        self.assertEqual(prepared["parsed_choices"], [])
+
+    def test_two_choice_questions_keep_parsed_choices(self):
+        prepared = app.prepare_question({
+            "id": 0,
+            "exam_name": "sample",
+            "year": 2026,
+            "level": "practice",
+            "question_number": 1,
+            "question_text": "What is printed?",
+            "code_block": "",
+            "choices": "A) true B) false",
+            "answer": "A",
+            "group_id": "",
+            "group_type": "single",
+            "shared_context": "",
+        })
+
+        self.assertFalse(prepared["is_visual_choice"])
+        self.assertEqual([choice["letter"] for choice in prepared["parsed_choices"]], ["A", "B"])
+
     def test_extract_choice_block_from_crop_text_recovers_separate_choice_lines(self):
         crop_text = """Question 31.
 Which of the following is the output of the main method shown here?
@@ -383,6 +499,20 @@ Question 32.
         self.assertEqual(app.normalize_open_response_value("04"), "4")
         self.assertEqual(app.normalize_open_response_value("4.0"), "4")
         self.assertEqual(app.normalize_open_response_value(" 4 "), "4")
+
+    def test_trim_rendered_blank_tail_removes_footer_gap(self):
+        from PIL import Image, ImageDraw
+
+        image = Image.new("RGB", (500, 700), "white")
+        draw = ImageDraw.Draw(image)
+        draw.rectangle((40, 30, 460, 120), outline="black")
+        draw.text((55, 55), "Question 40", fill="black")
+        draw.line((40, 650, 460, 650), fill="black", width=2)
+
+        trimmed = app.trim_rendered_blank_tail(image, min_gap_px=90, padding_px=20, min_height_px=100)
+
+        self.assertLess(trimmed.height, 220)
+        self.assertGreaterEqual(trimmed.height, 100)
 
     def test_normalize_answer_does_not_collapse_long_sentence_to_first_letter(self):
         text = "Tests may not be turned in until 45 minutes have elapsed."

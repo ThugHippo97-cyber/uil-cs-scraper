@@ -8,7 +8,8 @@
 </head>
 <body>
     <div class="container">
-        <a class="back-link" href="{{ url_for('index') }}">&larr; Back to search</a>
+        {% set return_target = request.args.get('return_to') or url_for('index') %}
+        <a class="back-link" href="{{ return_target }}">&larr; Back to search</a>
 
         <div class="detail-shell">
             <section class="question-card hero-card">
@@ -21,22 +22,20 @@
                 </div>
 
                 <div class="inline-actions">
-                    <form class="report-form" method="post" action="{{ url_for('report_parse_issue', question_id=question.id) }}">
-                        <input type="hidden" name="return_to" value="{{ request.path }}">
-                        <button class="report-btn" type="submit">Report Parse Issue</button>
-                    </form>
+                    <a class="report-btn report-form" href="{{ url_for('report_parse_issue', question_id=question.id, return_to=request.full_path) }}">Report Parse Issue</a>
                     {% if current_user %}
                         <form class="report-form" method="post" action="{{ url_for('toggle_bookmark', question_id=question.id) }}">
-                            <input type="hidden" name="return_to" value="{{ request.path }}">
+                            <input type="hidden" name="return_to" value="{{ request.full_path }}">
                             <input type="hidden" name="action" value="{% if question.is_bookmarked %}remove{% else %}add{% endif %}">
                             <button class="report-btn" type="submit">{% if question.is_bookmarked %}Saved{% else %}Save Question{% endif %}</button>
                         </form>
                     {% else %}
-                        <a class="report-btn report-form" href="{{ url_for('login', next=request.path) }}">Log In to Save</a>
+                        <a class="report-btn report-form" href="{{ url_for('login', next=request.full_path) }}">Log In to Save</a>
                     {% endif %}
                 </div>
 
                 <img src="{{ url_for('question_image', question_id=question.id) }}" class="question-img">
+
             </section>
 
             <div class="detail-grid">
@@ -81,7 +80,9 @@
             <section class="question-card answer-panel">
                 <h3>{% if question.is_open_response %}Answer Response{% else %}Answer Choices{% endif %}</h3>
 
-                {% if question.parsed_choices %}
+                {% if not question.answer %}
+                    <p class="muted">Answer key unavailable for this question. Use the PDF crop for practice, but this item cannot be auto-graded yet.</p>
+                {% elif question.parsed_choices %}
                     <div class="choice-buttons choice-label-only">
                         {% for choice in question.parsed_choices %}
                             <button
@@ -115,6 +116,41 @@
                 {% endif %}
 
                 <div id="result-box" class="result-box" style="display:none;"></div>
+            </section>
+
+            <section class="detail-panel explanation-panel">
+                <div class="detail-header compact-header">
+                    <h3>Team Explanation</h3>
+                    {% if question.explanation %}
+                        <span class="meta-chip">Updated {{ question.explanation.updated_at }}</span>
+                    {% endif %}
+                </div>
+
+                {% if question.explanation %}
+                    <pre class="content-block explanation-block">{{ question.explanation.explanation }}</pre>
+                    <p class="muted">
+                        {% if question.explanation.author_username %}Started by {{ question.explanation.author_username }}{% endif %}
+                        {% if question.explanation.updated_by_username %} &middot; Last edited by {{ question.explanation.updated_by_username }}{% endif %}
+                    </p>
+                {% else %}
+                    <p class="muted">No team explanation yet.</p>
+                {% endif %}
+
+                {% if current_user %}
+                    <details class="collapsible-panel explanation-editor">
+                        <summary class="collapsible-summary">
+                            <span>{% if question.explanation %}Edit Explanation{% else %}Write Explanation{% endif %}</span>
+                            <span class="collapsible-hint">Open</span>
+                        </summary>
+                        <form class="feedback-form collapsible-content" method="post" action="{{ url_for('save_explanation', question_id=question.id) }}">
+                            <input type="hidden" name="return_to" value="{{ request.full_path }}">
+                            <textarea name="explanation" class="response-input feedback-textarea" required placeholder="Explain the reasoning, key concept, and why the correct answer works.">{% if question.explanation %}{{ question.explanation.explanation }}{% endif %}</textarea>
+                            <button class="response-submit" type="submit">Save Explanation</button>
+                        </form>
+                    </details>
+                {% else %}
+                    <a class="report-btn" href="{{ url_for('login', next=request.full_path) }}">Log In to Write Explanation</a>
+                {% endif %}
             </section>
         </div>
     </div>

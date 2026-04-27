@@ -7,7 +7,7 @@ import io
 import os
 import json
 import random
-from datetime import datetime
+from datetime import UTC, datetime
 from werkzeug.security import check_password_hash, generate_password_hash
 
 app = Flask(__name__)
@@ -226,6 +226,18 @@ def init_app_tables():
         FOREIGN KEY(question_id) REFERENCES questions(id)
     );
 
+    CREATE TABLE IF NOT EXISTS question_explanations (
+        question_id INTEGER PRIMARY KEY,
+        explanation TEXT NOT NULL,
+        author_user_id INTEGER,
+        updated_by_user_id INTEGER,
+        created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY(question_id) REFERENCES questions(id),
+        FOREIGN KEY(author_user_id) REFERENCES users(id),
+        FOREIGN KEY(updated_by_user_id) REFERENCES users(id)
+    );
+
     CREATE INDEX IF NOT EXISTS idx_test_attempts_user_completed
         ON test_attempts(user_id, completed_at DESC);
     CREATE INDEX IF NOT EXISTS idx_attempt_questions_question
@@ -364,6 +376,35 @@ def extract_declared_method_names(code_block):
     return method_names
 
 
+def has_recursive_self_call(code_block):
+    code = code_block or ""
+    declaration_pattern = re.compile(
+        r"(?im)^\s*(?:public|private|protected)?\s*(?:static\s+)?[\w<>\[\]]+\s+([A-Za-z_]\w*)\s*\([^)]*\)\s*\{"
+    )
+
+    for match in declaration_pattern.finditer(code):
+        method_name = match.group(1)
+        lowered = method_name.lower()
+        if lowered in {"if", "for", "while", "switch", "catch"}:
+            continue
+
+        body_start = match.end()
+        depth = 1
+        idx = body_start
+        while idx < len(code) and depth > 0:
+            if code[idx] == "{":
+                depth += 1
+            elif code[idx] == "}":
+                depth -= 1
+            idx += 1
+
+        body = code[body_start : idx - 1] if depth == 0 else code[body_start:]
+        if re.search(rf"(?<![\w.]){re.escape(method_name)}\s*\(", body):
+            return True
+
+    return False
+
+
 def clean_text_for_display(text):
     if not text:
         return ""
@@ -453,6 +494,10 @@ def normalize_choice_fragment(text):
 
 def parse_choice_label_sequence(text):
     return [label.upper() for label in re.findall(r"(?i)\b([A-E])[\.)](?=\s|$)", text or "")]
+
+
+def parse_extended_choice_label_sequence(text):
+    return [label.upper() for label in re.findall(r"(?i)\b([A-H])[\.)](?=\s|$)", text or "")]
 
 
 def split_choice_prefix_from_code_line(line):
@@ -554,6 +599,10 @@ def maybe_recover_choice_text(row, question_text, code_block, choices_text, answ
     normalized_choices = trim_to_first_choice_label(choices_text).strip()
     parsed = parse_choices(normalized_choices)
     answer_is_letter = bool(re.fullmatch(r"[A-E]", answer or "", re.IGNORECASE))
+    parsed_letters = [choice["letter"] for choice in parsed if choice["text"].strip()]
+    valid_short_choice_set = parsed_letters in (["A", "B"], ["A", "B", "C"])
+    if answer_is_letter and valid_short_choice_set and answer.upper() in parsed_letters:
+        return question_text, code_block, normalized_choices
 
     needs_recovery = (
         answer_is_letter and (
@@ -607,17 +656,59 @@ def maybe_recover_choice_text(row, question_text, code_block, choices_text, answ
     if not parsed or len(parsed) < 5 or any(not choice["text"].strip() for choice in parsed):
         crop_choices = extract_choice_block_from_crop_text(extract_question_crop_text(row), row["question_number"])
         if crop_choices:
-            normalized_choices = trim_to_first_choice_label(crop_choices)
+            crop_normalized = trim_to_first_choice_label(crop_choices)
+            crop_parsed = parse_choices(crop_normalized)
+            parsed_letters = [choice["letter"] for choice in parsed if choice["text"].strip()]
+            crop_letters = [choice["letter"] for choice in crop_parsed if choice["text"].strip()]
+            current_has_answer = answer.upper() in parsed_letters if answer else False
+            crop_has_answer = answer.upper() in crop_letters if answer else False
+            if len(crop_letters) > len(parsed_letters) and (crop_has_answer or not current_has_answer):
+                normalized_choices = crop_normalized
 
     return question_text, code_block, normalized_choices
 
 
-def infer_visual_choice_labels(answer):
+def infer_visual_choice_labels(answer, choices_text=""):
+    extended_labels = parse_extended_choice_label_sequence(choices_text)
+    if re.fullmatch(r"[A-H]", answer or "", re.IGNORECASE) and any(label in {"F", "G", "H"} for label in extended_labels):
+        last_label = max(extended_labels, key=lambda label: ord(label)) if extended_labels else "H"
+        return [chr(code) for code in range(ord("A"), ord(last_label) + 1)]
     if re.fullmatch(r"[A-E]", answer or "", re.IGNORECASE):
         return ["A", "B", "C", "D", "E"]
     if re.fullmatch(r"[TF]", answer or "", re.IGNORECASE):
         return ["T", "F"]
     return []
+
+
+def should_use_visual_choice_fallback(parsed_choices, answer, choices_text):
+    normalized_answer = (answer or "").strip().upper()
+    if not re.fullmatch(r"[A-H]", normalized_answer):
+        return False
+
+    parsed_labels = [
+        choice["letter"]
+        for choice in parsed_choices
+        if choice.get("text", "").strip()
+    ]
+    raw_labels = parse_choice_label_sequence(choices_text)
+    extended_labels = parse_extended_choice_label_sequence(choices_text)
+    if any(label in {"F", "G", "H"} for label in extended_labels):
+        return normalized_answer in extended_labels and (
+            normalized_answer not in parsed_labels
+            or len(set(parsed_labels)) < len(set(extended_labels))
+        )
+
+    has_five_choice_intent = (
+        normalized_answer in {"C", "D", "E"}
+        or (normalized_answer == "B" and len(set(parsed_labels)) <= 1 and raw_labels == ["A"])
+        or len(set(raw_labels)) >= 3
+        or any(label in {"C", "D", "E"} for label in raw_labels)
+        or any(label in {"C", "D", "E"} for label in parsed_labels)
+    )
+    if not has_five_choice_intent:
+        return False
+
+    return len(set(parsed_labels)) < 5 or normalized_answer not in parsed_labels
 
 
 def infer_display_issues(question_text, code_block, parsed_choices, answer, is_open_response, is_visual_choice):
@@ -642,9 +733,10 @@ def extract_search_tags(question_text, code_block, shared_context=""):
 
     normalized_code = combined_code.lower()
 
-    for method_name in extract_declared_method_names(combined_code):
-        if normalized_code.count(f"{method_name.lower()}(") > 1:
-            tags.update({"recursion", "recursive"})
+    if re.search(r"(?i)\brecurs(?:ion|ive|ively)?\b|\bbase\s+case\b|\bstack\s+overflow\b", combined_text):
+        tags.update({"recursion", "recursive"})
+    elif has_recursive_self_call(combined_code):
+        tags.update({"recursion", "recursive"})
 
     if re.search(r"(?i)\bclass\s+[A-Za-z_]\w*|\bextends\b|\bimplements\b", combined_code):
         tags.update({"class", "oop"})
@@ -665,6 +757,18 @@ def extract_search_tags(question_text, code_block, shared_context=""):
 def parse_choices(choices_text):
     if not choices_text:
         return []
+
+    def normalize_ocr_choice_labels(text):
+        normalized = text or ""
+        replacements = [
+            (r"(?im)(^|[\s\n])C[c¢€]\s*[\.)]\s*", r"\1C) "),
+            (r"(?im)(^|[\s\n])€\s*[\.)]\s*", r"\1C) "),
+            (r"(?im)(^|[\s\n])O[Dd]\s*[\.)]\s*", r"\1D) "),
+            (r"(?im)(^|[\s\n])0[Dd]\s*[\.)]\s*", r"\1D) "),
+        ]
+        for pattern, replacement in replacements:
+            normalized = re.sub(pattern, replacement, normalized)
+        return normalized
 
     def normalize_choice_label(label):
         label = (label or "").strip().upper()
@@ -796,7 +900,7 @@ def parse_choices(choices_text):
 
         return []
 
-    text = trim_to_first_choice_label(choices_text).replace("\r", "\n").strip()
+    text = trim_to_first_choice_label(normalize_ocr_choice_labels(choices_text)).replace("\r", "\n").strip()
     text = text.replace(chr(8722), "-").replace(chr(8211), "-").replace(chr(8212), "-")
     text = re.sub(r"(?<!\w)-\s+(?=\d)", "-", text)
     if not text:
@@ -836,7 +940,7 @@ def parse_choices(choices_text):
         matched_label = None
         for candidate_label in label_order[next_index:]:
             candidate_match = re.search(
-                rf"(?:(?<=\n)|(?<=\s)){choice_label_pattern(candidate_label)}[\.)]\s*",
+                rf"(?:(?<=\n)|(?<=\s)|^){choice_label_pattern(candidate_label)}[\.)]\s*",
                 text[content_start:],
                 re.IGNORECASE,
             )
@@ -947,13 +1051,20 @@ def prepare_question(row):
     normalized_answer = normalize_answer(display_answer)
     if parsed_choices and normalized_answer and not re.fullmatch(r"[A-ETF]", normalized_answer):
         normalized_answer = ""
+    visual_fallback_used = should_use_visual_choice_fallback(
+        parsed_choices,
+        normalized_answer,
+        final_choices_text,
+    )
+    if visual_fallback_used:
+        parsed_choices = []
     is_open_response = (
         not parsed_choices
         and not clean_text_for_display(final_choices_text)
         and bool(normalized_answer)
         and not re.fullmatch(r"[A-ETF]", normalized_answer)
     )
-    visual_choice_labels = infer_visual_choice_labels(normalized_answer) if (label_only_choices or not parsed_choices) and not is_open_response else []
+    visual_choice_labels = infer_visual_choice_labels(normalized_answer, final_choices_text) if (label_only_choices or visual_fallback_used or not parsed_choices) and not is_open_response else []
     is_visual_choice = bool(visual_choice_labels)
     display_issues = infer_display_issues(
         cleaned_question,
@@ -963,6 +1074,8 @@ def prepare_question(row):
         is_open_response,
         is_visual_choice,
     )
+    if visual_fallback_used:
+        display_issues.append("Parsed choices look incomplete, so the cropped PDF image is being used as the answer-choice source.")
     code_line_count = len([line for line in merged_code_text.splitlines() if line.strip()])
 
     return {
@@ -1262,6 +1375,48 @@ def infer_visual_end_question_number(conn, row):
     return max_qnum + 1
 
 
+def trim_rendered_blank_tail(image, min_gap_px=90, padding_px=18, min_height_px=180):
+    """Remove large blank tails before footer lines in last-on-page crops."""
+    rendered = image.convert("RGB")
+    width, height = rendered.size
+    if height <= min_height_px:
+        return rendered
+
+    pixels = rendered.load()
+    active_rows = []
+    row_threshold = max(8, int(width * 0.002))
+    for y in range(height):
+        dark_count = 0
+        for x in range(width):
+            r, g, b = pixels[x, y]
+            if r < 242 or g < 242 or b < 242:
+                dark_count += 1
+                if dark_count >= row_threshold:
+                    active_rows.append(y)
+                    break
+
+    if not active_rows:
+        return rendered
+
+    gaps = []
+    previous = active_rows[0]
+    for current in active_rows[1:]:
+        if current - previous > min_gap_px:
+            gaps.append((previous, current))
+        previous = current
+
+    if not gaps:
+        return rendered
+
+    first_content_row = active_rows[0]
+    for gap_start, gap_end in gaps:
+        crop_bottom = min(height, gap_start + padding_px)
+        if crop_bottom - first_content_row >= min_height_px and gap_end > height * 0.45:
+            return rendered.crop((0, 0, width, crop_bottom))
+
+    return rendered
+
+
 def render_pdf_crop(
     pdf_path,
     page_num,
@@ -1283,7 +1438,8 @@ def render_pdf_crop(
 
         page = pdf.pages[resolved_page_num]
         safe_top = max(0, top - 2)
-        safe_bottom = min(page.height, bottom)
+        safe_bottom = min(page.height, bottom + 2)
+        should_trim_blank_tail = not invalid_crop and bottom >= page.height - 1
 
         if safe_bottom >= page.height - 1:
             meaningful_bottom = max(
@@ -1297,6 +1453,8 @@ def render_pdf_crop(
                 default=safe_bottom,
             )
             safe_bottom = min(safe_bottom, meaningful_bottom + 10)
+
+        crop_height = safe_bottom - safe_top
 
         # Older archive-ingested rows may not have crop coordinates yet.
         # In that case, estimate a vertical crop from the question header
@@ -1325,38 +1483,153 @@ def render_pdf_crop(
         img_bytes = io.BytesIO()
         img.save(img_bytes, format="PNG")
         img_bytes.seek(0)
+
+        min_visual_height = 80
+        if not invalid_crop and crop_height < min_visual_height:
+            from PIL import Image
+
+            rendered = Image.open(img_bytes).convert("RGB")
+            padding_px = int((min_visual_height - crop_height) * resolution / 72)
+            if padding_px > 0:
+                padded = Image.new("RGB", (rendered.width, rendered.height + padding_px), "white")
+                padded.paste(rendered, (0, 0))
+                img_bytes = io.BytesIO()
+                padded.save(img_bytes, format="PNG")
+                img_bytes.seek(0)
+
+        if should_trim_blank_tail:
+            from PIL import Image
+
+            rendered = Image.open(img_bytes).convert("RGB")
+            trimmed = trim_rendered_blank_tail(rendered)
+            if trimmed.size != rendered.size:
+                img_bytes = io.BytesIO()
+                trimmed.save(img_bytes, format="PNG")
+                img_bytes.seek(0)
+
+        img_bytes.seek(0)
         return img_bytes
+
+
+def render_pdf_page(pdf_path, page_num, resolution=250):
+    with pdfplumber.open(pdf_path) as pdf:
+        resolved_page_num = page_num if 0 <= int(page_num or 0) < len(pdf.pages) else 0
+        img = pdf.pages[resolved_page_num].to_image(resolution=resolution)
+        img_bytes = io.BytesIO()
+        img.save(img_bytes, format="PNG")
+        img_bytes.seek(0)
+        return img_bytes
+
+
+def is_explanation_or_key_row(row):
+    question_text = row["question_text"] or ""
+    choices = row["choices"] or ""
+    answer = (row["answer"] or "").strip()
+    qnum = int(row["question_number"] or 0)
+    if choices.strip() or not answer or not qnum:
+        return False
+    if not re.fullmatch(r"[A-E]", answer, re.IGNORECASE):
+        return False
+    if not re.match(rf"(?is)^\s*{qnum}\.\s*{re.escape(answer)}\b", question_text):
+        return False
+    return len(question_text.strip()) > 40
+
+
+def needs_neighbor_context(row):
+    combined = "\n".join([
+        row["question_text"] or "",
+        row["code_block"] or "",
+        row["choices"] or "",
+    ])
+    return bool(re.search(r"(?i)\bline\s*#\d+\b|\bcomment\s*#\d+\b|<\*\d+>|client code", combined))
+
+
+def infer_neighbor_context_bounds(conn, row):
+    if not needs_neighbor_context(row):
+        return None
+
+    current_qnum = int(row["question_number"] or 0)
+    if not current_qnum:
+        return None
+
+    rows = conn.execute(
+        """
+        SELECT question_number, page_number, top_y, bottom_y
+        FROM questions
+        WHERE exam_name = ?
+          AND source_test_pdf = ?
+          AND page_number = ?
+          AND question_number BETWEEN ? AND ?
+        ORDER BY question_number
+        """,
+        (
+            row["exam_name"],
+            row["source_test_pdf"],
+            row["page_number"],
+            current_qnum - 1,
+            current_qnum + 1,
+        ),
+    ).fetchall()
+
+    valid_rows = [
+        candidate for candidate in rows
+        if float(candidate["bottom_y"] or 0) > float(candidate["top_y"] or 0)
+    ]
+    if len(valid_rows) < 2:
+        return None
+
+    return (
+        min(float(candidate["top_y"] or 0) for candidate in valid_rows),
+        max(float(candidate["bottom_y"] or 0) for candidate in valid_rows),
+        int(valid_rows[0]["question_number"] or current_qnum),
+    )
 
 
 def fetch_exam_catalog():
     conn = get_connection()
     rows = conn.execute(
         """
-        SELECT year, level, exam_name, COUNT(DISTINCT question_number) AS question_count,
-               MIN(source_test_pdf) AS source_test_pdf
+        SELECT *
         FROM questions
         WHERE year IS NOT NULL
           AND level IS NOT NULL
           AND exam_name IS NOT NULL
-        GROUP BY year, level, exam_name
         ORDER BY year DESC, level ASC, exam_name ASC
         """
     ).fetchall()
     conn.close()
 
-    return [
+    grouped = {}
+    for row in rows:
+        if is_explanation_or_key_row(row):
+            continue
+        key = (int(row["year"]), str(row["level"] or ""), str(row["exam_name"] or ""))
+        item = grouped.setdefault(
+            key,
+            {
+                "year": key[0],
+                "level": key[1],
+                "exam_name": key[2],
+                "question_numbers": set(),
+                "source_test_pdf": str(row["source_test_pdf"] or ""),
+            },
+        )
+        item["question_numbers"].add(int(row["question_number"] or 0))
+
+    catalog = [
         {
-            "year": int(row["year"]),
-            "level": str(row["level"] or ""),
-            "exam_name": str(row["exam_name"] or ""),
-            "question_count": int(row["question_count"] or 0),
+            "year": item["year"],
+            "level": item["level"],
+            "exam_name": item["exam_name"],
+            "question_count": len(item["question_numbers"]),
             "collection": classify_exam_collection(
-                str(row["exam_name"] or ""),
-                str(row["source_test_pdf"] or ""),
+                item["exam_name"],
+                item["source_test_pdf"],
             ),
         }
-        for row in rows
+        for item in grouped.values()
     ]
+    return sorted(catalog, key=lambda item: (-item["year"], item["level"], item["exam_name"]))
 
 
 def classify_exam_collection(exam_name, source_test_pdf=""):
@@ -1406,7 +1679,11 @@ def fetch_test_questions(year, level, exam_name):
         if qnum and qnum not in latest_by_number:
             latest_by_number[qnum] = row
 
-    ordered_rows = [latest_by_number[qnum] for qnum in sorted(latest_by_number.keys())]
+    ordered_rows = [
+        latest_by_number[qnum]
+        for qnum in sorted(latest_by_number.keys())
+        if not is_explanation_or_key_row(latest_by_number[qnum])
+    ]
     prepared = [prepare_question(row) for row in ordered_rows]
 
     group_anchor_seen = set()
@@ -1432,6 +1709,7 @@ def fetch_test_questions(year, level, exam_name):
                 "id": q["id"],
                 "question_number": q["question_number"],
                 "question_text": q["question_text"],
+                "code_block": q["code_block"],
                 "answer": (q["answer"] or "").strip().upper(),
                 "normalized_open_response_answer": q["normalized_open_response_answer"],
                 "is_open_response": bool(q["is_open_response"]),
@@ -1462,6 +1740,37 @@ def fetch_bookmark_ids(question_ids):
     ).fetchall()
     conn.close()
     return {int(row["question_id"]) for row in rows}
+
+
+def fetch_explanations(question_ids):
+    if not question_ids:
+        return {}
+    conn = get_connection()
+    placeholders = ",".join("?" for _ in question_ids)
+    rows = conn.execute(
+        f"""
+        SELECT qe.question_id, qe.explanation, qe.created_at, qe.updated_at,
+               author.username AS author_username,
+               updater.username AS updated_by_username
+        FROM question_explanations qe
+        LEFT JOIN users author ON author.id = qe.author_user_id
+        LEFT JOIN users updater ON updater.id = qe.updated_by_user_id
+        WHERE qe.question_id IN ({placeholders})
+        """,
+        question_ids,
+    ).fetchall()
+    conn.close()
+    return {int(row["question_id"]): dict(row) for row in rows}
+
+
+def attach_question_state(questions):
+    question_ids = [question["id"] for question in questions]
+    bookmark_ids = fetch_bookmark_ids(question_ids)
+    explanations = fetch_explanations(question_ids)
+    for question in questions:
+        question["is_bookmarked"] = question["id"] in bookmark_ids
+        question["explanation"] = explanations.get(question["id"])
+    return questions
 
 
 @app.route("/register", methods=["GET", "POST"])
@@ -1635,6 +1944,8 @@ def index():
 
         filtered = []
         for row in rows:
+            if is_explanation_or_key_row(row):
+                continue
             match = score_search_match(row, keyword)
             if match:
                 filtered.append((row, match))
@@ -1830,20 +2141,50 @@ def question_image(question_id):
     if not row:
         conn.close()
         return "Not found", 404
+    if is_explanation_or_key_row(row):
+        conn.close()
+        return "Question not available", 404
 
     end_question_number = infer_visual_end_question_number(conn, row)
+    context_bounds = infer_neighbor_context_bounds(conn, row)
     conn.close()
 
     pdf_path = resolve_pdf_path(row["source_test_pdf"])
+    if not os.path.exists(pdf_path):
+        return "Source PDF not found", 404
+
+    top = row["top_y"]
+    bottom = row["bottom_y"]
+    question_number = row["question_number"]
+    if context_bounds:
+        top, bottom, question_number = context_bounds
+
     img_bytes = render_pdf_crop(
         pdf_path,
         row["page_number"],
-        row["top_y"],
-        row["bottom_y"],
-        question_number=row["question_number"],
+        top,
+        bottom,
+        question_number=question_number,
         question_text=row["question_text"] or "",
         end_question_number=end_question_number,
     )
+    return send_file(img_bytes, mimetype="image/png")
+
+
+@app.route("/question_page_image/<int:question_id>")
+def question_page_image(question_id):
+    conn = get_connection()
+    row = conn.execute("SELECT * FROM questions WHERE id = ?", (question_id,)).fetchone()
+    conn.close()
+
+    if not row:
+        return "Not found", 404
+
+    pdf_path = resolve_pdf_path(row["source_test_pdf"])
+    if not os.path.exists(pdf_path):
+        return "Source PDF not found", 404
+
+    img_bytes = render_pdf_page(pdf_path, row["page_number"])
     return send_file(img_bytes, mimetype="image/png")
 
 
@@ -1855,6 +2196,7 @@ def group_image(group_id):
         WHERE group_id = ?
         ORDER BY question_number
     """, (group_id,)).fetchall()
+    rows = [row for row in rows if not is_explanation_or_key_row(row)]
     if not rows:
         conn.close()
         return "Group not found", 404
@@ -1862,9 +2204,13 @@ def group_image(group_id):
     first = rows[0]
     top = min(row["top_y"] for row in rows)
     bottom = max(row["bottom_y"] for row in rows)
+    if first["group_type"] and first["group_type"] != "single":
+        bottom = 999999
     pdf_path = resolve_pdf_path(first["source_test_pdf"])
     end_question_number = infer_visual_end_question_number(conn, rows[-1]) if rows else None
     conn.close()
+    if not os.path.exists(pdf_path):
+        return "Source PDF not found", 404
 
     img_bytes = render_pdf_crop(
         pdf_path,
@@ -1886,12 +2232,16 @@ def question_detail(question_id):
 
     if row is None:
         return "Question not found", 404
+    if is_explanation_or_key_row(row):
+        return "Question not available", 404
 
     if row["group_type"] and row["group_type"] != "single" and row["group_id"]:
+        return_to = request.args.get("return_to", "").strip()
+        if return_to:
+            return redirect(url_for("group_detail", group_id=row["group_id"], return_to=return_to))
         return redirect(url_for("group_detail", group_id=row["group_id"]))
 
-    question = prepare_question(row)
-    question["is_bookmarked"] = row["id"] in fetch_bookmark_ids([row["id"]])
+    question = attach_question_state([prepare_question(row)])[0]
     return render_template("question.html", question=question)
 
 
@@ -1904,16 +2254,15 @@ def group_detail(group_id):
         ORDER BY question_number
     """, (group_id,)).fetchall()
     conn.close()
+    rows = [row for row in rows if not is_explanation_or_key_row(row)]
 
     if not rows:
         return "Group not found", 404
 
-    bookmark_ids = fetch_bookmark_ids([row["id"] for row in rows])
     prepared_questions = []
     for row in rows:
-        question = prepare_question(row)
-        question["is_bookmarked"] = row["id"] in bookmark_ids
-        prepared_questions.append(question)
+        prepared_questions.append(prepare_question(row))
+    attach_question_state(prepared_questions)
 
     return render_template(
         "group.html",
@@ -1924,7 +2273,53 @@ def group_detail(group_id):
     )
 
 
-@app.route("/report/<int:question_id>", methods=["POST"])
+@app.route("/explanation/<int:question_id>", methods=["POST"])
+@login_required
+def save_explanation(question_id):
+    explanation = request.form.get("explanation", "").strip()
+    return_to = request.form.get("return_to", "").strip()
+    if not explanation:
+        if return_to:
+            return redirect(return_to)
+        return redirect(url_for("question_detail", question_id=question_id))
+
+    conn = get_connection()
+    row = conn.execute("SELECT id FROM questions WHERE id = ?", (question_id,)).fetchone()
+    if row is None:
+        conn.close()
+        return "Question not found", 404
+
+    existing = conn.execute(
+        "SELECT question_id FROM question_explanations WHERE question_id = ?",
+        (question_id,),
+    ).fetchone()
+    if existing:
+        conn.execute(
+            """
+            UPDATE question_explanations
+            SET explanation = ?, updated_by_user_id = ?, updated_at = CURRENT_TIMESTAMP
+            WHERE question_id = ?
+            """,
+            (explanation, g.current_user["id"], question_id),
+        )
+    else:
+        conn.execute(
+            """
+            INSERT INTO question_explanations
+            (question_id, explanation, author_user_id, updated_by_user_id)
+            VALUES (?, ?, ?, ?)
+            """,
+            (question_id, explanation, g.current_user["id"], g.current_user["id"]),
+        )
+    conn.commit()
+    conn.close()
+
+    if return_to:
+        return redirect(return_to)
+    return redirect(url_for("question_detail", question_id=question_id))
+
+
+@app.route("/report/<int:question_id>", methods=["GET", "POST"])
 def report_parse_issue(question_id):
     conn = get_connection()
     row = conn.execute("SELECT * FROM questions WHERE id = ?", (question_id,)).fetchone()
@@ -1932,10 +2327,28 @@ def report_parse_issue(question_id):
 
     if row is None:
         return "Question not found", 404
+    if is_explanation_or_key_row(row):
+        return "Question not available", 404
 
     prepared = prepare_question(row)
+    return_to = (
+        request.values.get("return_to", "").strip()
+        or request.referrer
+        or url_for("question_detail", question_id=question_id)
+    )
+
+    if request.method == "GET":
+        return render_template(
+            "report_issue.html",
+            question=prepared,
+            return_to=return_to,
+        )
+
+    issue_type = request.form.get("issue_type", "").strip()
+    detail = request.form.get("detail", "").strip()
+    reporter_context = request.form.get("reporter_context", "").strip()
     report_entry = {
-        "reported_at": datetime.utcnow().isoformat(timespec="seconds") + "Z",
+        "reported_at": datetime.now(UTC).isoformat(timespec="seconds").replace("+00:00", "Z"),
         "id": row["id"],
         "exam_name": row["exam_name"],
         "question_number": row["question_number"],
@@ -1948,17 +2361,19 @@ def report_parse_issue(question_id):
         "code_block": row["code_block"] or "",
         "choices": row["choices"] or "",
         "answer": row["answer"] or "",
+        "user_feedback": {
+            "issue_type": issue_type,
+            "detail": detail,
+            "reporter_context": reporter_context,
+            "return_to": return_to,
+        },
     }
 
     with open(PARSE_FEEDBACK_FILE, "a", encoding="utf-8") as f:
         f.write(json.dumps(report_entry) + "\n")
 
-    return_to = request.form.get("return_to", "").strip()
-    if return_to:
-        return redirect(return_to)
-    return redirect(url_for("question_detail", question_id=question_id))
+    return redirect(url_for("report_parse_issue", question_id=question_id, return_to=return_to, submitted="1"))
 
 
 if __name__ == "__main__":
-    app.run(debug=True)
-
+    app.run(debug=True, use_reloader=False)

@@ -42,6 +42,10 @@
             </div>
 
             <img id="test-question-image" class="question-img" alt="Question snippet">
+            <section id="question-text-fallback" class="detail-panel text-fallback-panel" style="display:none;">
+                <p id="fallback-question-text" class="question-text"></p>
+                <pre id="fallback-code-block" class="content-block code-surface" style="display:none;"></pre>
+            </section>
 
             <details id="shared-context-panel" class="detail-panel shared-panel collapsible-panel" style="display:none;">
                 <summary class="collapsible-summary">
@@ -85,6 +89,9 @@
 
         const titleEl = document.getElementById("question-title");
         const imageEl = document.getElementById("test-question-image");
+        const fallbackPanelEl = document.getElementById("question-text-fallback");
+        const fallbackQuestionTextEl = document.getElementById("fallback-question-text");
+        const fallbackCodeBlockEl = document.getElementById("fallback-code-block");
         const answerHeadingEl = document.getElementById("answer-heading");
         const answerBodyEl = document.getElementById("answer-body");
         const resultBoxEl = document.getElementById("result-box");
@@ -189,6 +196,12 @@
         function renderChoiceQuestion(question, existingAnswer) {
             answerHeadingEl.textContent = "Answer Choices";
             answerBodyEl.innerHTML = "";
+            if (!(question.answer || "").trim()) {
+                answerBodyEl.innerHTML = `<p class="muted">Answer key unavailable for this question. Skip it for scoring and use the PDF crop for review.</p>`;
+                clearResult();
+                return;
+            }
+
             const wrap = document.createElement("div");
             wrap.className = "choice-buttons choice-label-only";
 
@@ -240,6 +253,12 @@
 
         function renderOpenResponseQuestion(question, existingAnswer) {
             answerHeadingEl.textContent = "Answer Response";
+            if (!(question.answer || "").trim()) {
+                answerBodyEl.innerHTML = `<p class="muted">Answer key unavailable for this question. Skip it for scoring and use the PDF crop for review.</p>`;
+                clearResult();
+                return;
+            }
+
             answerBodyEl.innerHTML = `
                 <div class="response-form">
                     <label class="response-label" for="open-response-input">Enter your answer</label>
@@ -295,6 +314,13 @@
             }
         }
 
+        function renderTextFallback(question) {
+            fallbackQuestionTextEl.textContent = question.question_text || "Question text is unavailable.";
+            const codeBlock = question.code_block || "";
+            fallbackCodeBlockEl.textContent = codeBlock;
+            fallbackCodeBlockEl.style.display = codeBlock.trim() ? "block" : "none";
+        }
+
         function renderQuestion() {
             const question = questions[state.currentIndex];
             const answerEntry = state.answers[getQuestionStateKey(question)] || null;
@@ -302,9 +328,20 @@
             titleEl.textContent = `Question ${question.question_number}`;
             renderSharedContext(question);
 
-            const imageUrl = question.is_shared_group && question.is_group_anchor
+            const imageUrl = question.is_shared_group
                 ? `/group_image/${encodeURIComponent(question.group_id)}`
                 : `/question_image/${question.id}`;
+            imageEl.style.display = "block";
+            fallbackPanelEl.style.display = "none";
+            imageEl.onerror = () => {
+                imageEl.style.display = "none";
+                fallbackPanelEl.style.display = "block";
+                renderTextFallback(question);
+            };
+            imageEl.onload = () => {
+                fallbackPanelEl.style.display = "none";
+                imageEl.style.display = "block";
+            };
             imageEl.src = imageUrl;
 
             if (question.is_open_response) {

@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Report Q{{ question.question_number }}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <a class="back-link" href="{{ return_to }}">&larr; Back to question</a>
+
+        <section class="hero report-hero">
+            <div class="hero-copy">
+                <p class="eyebrow">Question Feedback</p>
+                <h1>Report Q{{ question.question_number }}</h1>
+                <p class="hero-text">{{ question.exam_name }} | {{ question.year }} | {{ question.level }}</p>
+            </div>
+        </section>
+
+        {% if request.args.get('submitted') %}
+            <section class="detail-panel success-panel">
+                <h3>Feedback Saved</h3>
+                <p class="hero-text">Thanks. This report is now in the local review queue.</p>
+                <a class="response-submit" href="{{ return_to }}">Return to Question</a>
+            </section>
+        {% else %}
+            <section class="question-card">
+                <img src="{{ url_for('question_image', question_id=question.id) }}" class="question-img" alt="Question snippet">
+            </section>
+
+            <section class="detail-panel">
+                <form class="feedback-form" method="post" action="{{ url_for('report_parse_issue', question_id=question.id) }}">
+                    <input type="hidden" name="return_to" value="{{ return_to }}">
+
+                    <label class="response-label" for="issue-type">Issue Type</label>
+                    <select id="issue-type" name="issue_type" class="response-input">
+                        <option value="crop_or_image">Crop/image looks wrong</option>
+                        <option value="missing_text">Question text/code is missing</option>
+                        <option value="answer_choices">Answer choices are wrong</option>
+                        <option value="answer_key">Answer key seems wrong</option>
+                        <option value="search_tag">Search/topic tag is wrong</option>
+                        <option value="other">Other</option>
+                    </select>
+
+                    <label class="response-label" for="detail">What looks wrong?</label>
+                    <textarea id="detail" name="detail" class="response-input feedback-textarea" required placeholder="Example: The crop cuts off choice E, or this shows up under recursion but is inheritance."></textarea>
+
+                    <label class="response-label" for="reporter-context">Optional Name / Context</label>
+                    <input id="reporter-context" name="reporter_context" class="response-input" type="text" placeholder="Optional">
+
+                    <div class="inline-actions feedback-actions">
+                        <button class="response-submit" type="submit">Submit Feedback</button>
+                        <a class="report-btn" href="{{ return_to }}">Cancel</a>
+                    </div>
+                </form>
+            </section>
+
+            <section class="detail-grid">
+                <section class="detail-panel">
+                    <h3>Parsed Prompt</h3>
+                    {% if question.question_text %}
+                        <pre class="content-block">{{ question.question_text }}</pre>
+                    {% else %}
+                        <p class="muted">No parsed prompt text available.</p>
+                    {% endif %}
+                </section>
+                <section class="detail-panel">
+                    <h3>Parsed Code</h3>
+                    {% if question.code_block %}
+                        <pre class="content-block code-surface">{{ question.code_block }}</pre>
+                    {% else %}
+                        <p class="muted">No parsed code snippet available.</p>
+                    {% endif %}
+                </section>
+            </section>
+        {% endif %}
+    </div>
+    <script src="{{ url_for('static', filename='theme.js') }}"></script>
+</body>
+</html>

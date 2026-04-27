@@ -1,6 +1,7 @@
 import unittest
 
 import main
+import official_explanations
 
 
 class KeyParsingTests(unittest.TestCase):
@@ -150,6 +151,34 @@ double a = 4.99, b = 3.5;
             rebuilt,
             "A) -5.0\nB) 5.0\nC) -5.5\nD) 6.0\nE) -6.0",
         )
+
+    def test_parse_official_explanations_from_numbered_section(self):
+        text = """Answer Key
+1) A 2) B
+
+Explanations:
+1. A 64 + 16 + 8 + 4 + 1 = 93
+2. D 15-10/5+8*2 = 29
+This spans another line.
+3. A The escape sequence prints a quote.
+"""
+
+        explanations = official_explanations.parse_explanations_from_text(text)
+
+        self.assertEqual(explanations[1], "A 64 + 16 + 8 + 4 + 1 = 93")
+        self.assertEqual(explanations[2], "D 15-10/5+8*2 = 29\nThis spans another line.")
+        self.assertEqual(explanations[3], "A The escape sequence prints a quote.")
+
+    def test_parse_official_explanations_ignores_grader_notes(self):
+        text = """#2324-14 KEY
+1) A 2) B
+Note to Graders:
+All code is syntactically correct unless otherwise stated.
+"""
+
+        explanations = official_explanations.parse_explanations_from_text(text)
+
+        self.assertEqual(explanations, {})
 
 
 if __name__ == "__main__":

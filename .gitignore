@@ -2,6 +2,8 @@
 __pycache__/
 *.py[cod]
 tests/__pycache__/
+.pytest_cache/
+pytest-cache-files-*/
 
 # Virtual environments
 .venv/
@@ -19,6 +21,7 @@ _archive_cache/
 archive_scan_report.json
 .tmp/
 .run/
+reports/
 
 # OS/editor noise
 .DS_Store

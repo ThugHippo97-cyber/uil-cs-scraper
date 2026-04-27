@@ -87,6 +87,26 @@ class SearchRelevanceTests(unittest.TestCase):
         self.assertGreaterEqual(match["score"], 60)
         self.assertIn("recursion tag", " ".join(match["reasons"]))
 
+    def test_overridden_methods_do_not_count_as_recursion(self):
+        row = self.make_row(
+            question_text="What is the output of this client code?",
+            code_block="""
+public class Panda {
+    public String toString() {
+        return name;
+    }
+}
+class RedPanda extends Panda {
+    public String toString() {
+        return name + " " + color;
+    }
+}
+""",
+        )
+
+        self.assertNotIn("recursion", app.extract_search_tags(row["question_text"], row["code_block"]))
+        self.assertIsNone(app.score_search_match(row, "recursion"))
+
     def test_priority_queue_search_matches_heap_style_question(self):
         row = self.make_row(
             question_text="What value is removed next from the heap?",
