@@ -12,6 +12,7 @@ from werkzeug.security import check_password_hash, generate_password_hash
 
 app = Flask(__name__)
 DEFAULT_DEV_SECRET_KEY = "dev-team-practice-secret"
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 
 def get_secret_key():
@@ -24,7 +25,7 @@ def get_secret_key():
 
 
 app.secret_key = get_secret_key()
-DB_FILE = os.environ.get("UIL_CS_DB_FILE", "uil_cs_questions_v2.db")
+DB_FILE = os.environ.get("UIL_CS_DB_FILE", os.path.join(BASE_DIR, "uil_cs_questions_v2.db"))
 QUESTION_OVERRIDE_FILE = "question_overrides.json"
 PARSE_FEEDBACK_FILE = "parse_feedback.jsonl"
 _QUESTION_OVERRIDES_CACHE = None
@@ -334,9 +335,17 @@ def resolve_pdf_path(stored_path):
     if os.path.exists(stored_path):
         return stored_path
 
+    project_candidate = os.path.join(BASE_DIR, stored_path)
+    if os.path.exists(project_candidate):
+        return project_candidate
+
     candidate = os.path.join("data", stored_path)
     if os.path.exists(candidate):
         return candidate
+
+    project_data_candidate = os.path.join(BASE_DIR, "data", stored_path)
+    if os.path.exists(project_data_candidate):
+        return project_data_candidate
 
     return stored_path
 
