@@ -11,8 +11,20 @@ from datetime import UTC, datetime
 from werkzeug.security import check_password_hash, generate_password_hash
 
 app = Flask(__name__)
-app.secret_key = os.environ.get("UIL_CS_SECRET_KEY", "dev-team-practice-secret")
-DB_FILE = "uil_cs_questions_v2.db"
+DEFAULT_DEV_SECRET_KEY = "dev-team-practice-secret"
+
+
+def get_secret_key():
+    secret_key = os.environ.get("UIL_CS_SECRET_KEY")
+    if secret_key:
+        return secret_key
+    if os.environ.get("UIL_CS_REQUIRE_SECRET") == "1":
+        raise RuntimeError("UIL_CS_SECRET_KEY must be set when UIL_CS_REQUIRE_SECRET=1.")
+    return DEFAULT_DEV_SECRET_KEY
+
+
+app.secret_key = get_secret_key()
+DB_FILE = os.environ.get("UIL_CS_DB_FILE", "uil_cs_questions_v2.db")
 QUESTION_OVERRIDE_FILE = "question_overrides.json"
 PARSE_FEEDBACK_FILE = "parse_feedback.jsonl"
 _QUESTION_OVERRIDES_CACHE = None
@@ -2376,4 +2388,9 @@ def report_parse_issue(question_id):
 
 
 if __name__ == "__main__":
-    app.run(debug=True, use_reloader=False)
+    app.run(
+        host=os.environ.get("HOST", "127.0.0.1"),
+        port=int(os.environ.get("PORT", "5000")),
+        debug=os.environ.get("FLASK_DEBUG") == "1",
+        use_reloader=False,
+    )
