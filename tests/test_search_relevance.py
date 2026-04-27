@@ -4,8 +4,9 @@ import app
 
 
 class SearchRelevanceTests(unittest.TestCase):
-    def make_row(self, question_text="", code_block="", choices="", answer="", shared_context=""):
+    def make_row(self, question_text="", code_block="", choices="", answer="", shared_context="", year=None):
         return {
+            "year": year,
             "question_text": question_text,
             "code_block": code_block,
             "choices": choices,
@@ -132,6 +133,25 @@ class RedPanda extends Panda {
         )
 
         self.assertTrue(app.row_matches_terms(row, ["big o", *app.expand_keyword("big o")]))
+
+    def test_numeric_keyword_matches_question_year(self):
+        row = self.make_row(
+            year=2025,
+            question_text="What is printed by the loop?",
+            code_block="for (int i = 0; i < 3; i++) {}",
+        )
+
+        self.assertTrue(app.row_matches_terms(row, ["2025", *app.expand_keyword("2025")]))
+        match = app.score_search_match(row, "2025")
+        self.assertIsNotNone(match)
+        self.assertEqual(match["confidence"], "High")
+        self.assertIn("year 2025 match", match["reasons"])
+
+    def test_numeric_keyword_does_not_match_other_years(self):
+        row = self.make_row(year=2024, question_text="What is printed?")
+
+        self.assertFalse(app.row_matches_terms(row, ["2025", *app.expand_keyword("2025")]))
+        self.assertIsNone(app.score_search_match(row, "2025"))
 
 
 if __name__ == "__main__":

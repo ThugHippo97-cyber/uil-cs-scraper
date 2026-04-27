@@ -259,6 +259,13 @@ class AccountWorkflowTests(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertIn(b"Answer key unavailable", response.data)
 
+    def test_test_mode_includes_reveal_answer_control(self):
+        response = self.client.get("/test?year=2026&level=invitational&exam_name=sample_exam")
+        self.assertEqual(response.status_code, 200)
+        self.assertIn(b"Reveal Answer", response.data)
+        self.assertIn(b"id=\"reveal-answer-btn\"", response.data)
+        self.assertIn(b"function revealAnswer(question)", response.data)
+
 
 if __name__ == "__main__":
     unittest.main()

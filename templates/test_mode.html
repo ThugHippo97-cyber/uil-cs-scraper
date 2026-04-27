@@ -56,7 +56,10 @@
             </details>
 
             <section class="detail-panel answer-panel">
-                <h4 id="answer-heading">Answer Choices</h4>
+                <div class="answer-panel-head">
+                    <h4 id="answer-heading">Answer Choices</h4>
+                    <button class="response-submit secondary-action" id="reveal-answer-btn" type="button">Reveal Answer</button>
+                </div>
                 <div id="answer-body"></div>
                 <div id="result-box" class="result-box" style="display:none;"></div>
             </section>
@@ -95,6 +98,7 @@
         const answerHeadingEl = document.getElementById("answer-heading");
         const answerBodyEl = document.getElementById("answer-body");
         const resultBoxEl = document.getElementById("result-box");
+        const revealAnswerBtn = document.getElementById("reveal-answer-btn");
         const progressPillEl = document.getElementById("progress-pill");
         const answeredPillEl = document.getElementById("answered-pill");
         const scorePillEl = document.getElementById("score-pill");
@@ -191,6 +195,26 @@
             resultBoxEl.style.display = "none";
             resultBoxEl.textContent = "";
             resultBoxEl.className = "result-box";
+        }
+
+        function revealAnswer(question) {
+            const answer = (question.answer || "").trim();
+            if (!answer) {
+                showResult("Answer key unavailable for this question.", false);
+                return;
+            }
+
+            const normalizedAnswer = question.is_open_response ? answer : answer.toUpperCase();
+            showResult(`Answer: ${normalizedAnswer}`, true);
+
+            if (!question.is_open_response) {
+                const buttons = Array.from(answerBodyEl.querySelectorAll(".choice-btn"));
+                buttons.forEach(btn => {
+                    if ((btn.dataset.choiceLetter || "").toUpperCase() === normalizedAnswer) {
+                        btn.classList.add("correct-btn");
+                    }
+                });
+            }
         }
 
         function renderChoiceQuestion(question, existingAnswer) {
@@ -326,6 +350,8 @@
             const answerEntry = state.answers[getQuestionStateKey(question)] || null;
 
             titleEl.textContent = `Question ${question.question_number}`;
+            revealAnswerBtn.disabled = !(question.answer || "").trim();
+            revealAnswerBtn.onclick = () => revealAnswer(question);
             renderSharedContext(question);
 
             const imageUrl = question.is_shared_group

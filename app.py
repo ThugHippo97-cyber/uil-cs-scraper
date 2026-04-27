@@ -1135,6 +1135,8 @@ def row_matches_terms(row, terms):
     keyword = (terms[0] if terms else "").strip().lower()
     if not keyword:
         return False
+    if keyword.isdigit() and str(row_value(row, "year", "")).strip() == keyword:
+        return True
 
     core_hit = contains_search_term(core_text, keyword)
     choices_hit = contains_search_term(choices, keyword)
@@ -1162,6 +1164,14 @@ def score_search_match(row, keyword):
     keyword = (keyword or "").strip().lower()
     if not keyword:
         return None
+
+    if keyword.isdigit() and str(row_value(row, "year", "")).strip() == keyword:
+        return {
+            "score": 86,
+            "confidence": confidence_label_for_score(86),
+            "matched_terms": [keyword],
+            "reasons": [f"year {keyword} match"],
+        }
 
     expanded_terms = [keyword, *expand_keyword(keyword)]
     question_text = str(row["question_text"] or "")
