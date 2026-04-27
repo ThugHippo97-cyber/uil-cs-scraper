@@ -10,11 +10,17 @@ pytest-cache-files-*/
 venv/
 env/
 
+# Local environment/secrets
+.env
+.env.*
+!.env.example
+
 # Local databases and journals
 *.db
 *.db-journal
 *.sqlite
 *.sqlite3
+instance/
 
 # Generated archive artifacts
 _archive_cache/
