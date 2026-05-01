@@ -7,6 +7,7 @@ import io
 import os
 import json
 import random
+import hashlib
 from datetime import UTC, datetime
 from werkzeug.security import check_password_hash, generate_password_hash
 
@@ -25,9 +26,18 @@ def get_secret_key():
 
 
 app.secret_key = get_secret_key()
-DB_FILE = os.environ.get("UIL_CS_DB_FILE", os.path.join(BASE_DIR, "uil_cs_questions_v2.db"))
-QUESTION_OVERRIDE_FILE = "question_overrides.json"
-PARSE_FEEDBACK_FILE = "parse_feedback.jsonl"
+
+
+def resolve_app_state_path(path, default_name):
+    selected = path or os.path.join(BASE_DIR, default_name)
+    if os.path.isabs(selected):
+        return selected
+    return os.path.join(BASE_DIR, selected)
+
+
+DB_FILE = resolve_app_state_path(os.environ.get("UIL_CS_DB_FILE"), "uil_cs_questions_v2.db")
+QUESTION_OVERRIDE_FILE = resolve_app_state_path("question_overrides.json", "question_overrides.json")
+PARSE_FEEDBACK_FILE = resolve_app_state_path("parse_feedback.jsonl", "parse_feedback.jsonl")
 _QUESTION_OVERRIDES_CACHE = None
 _CROP_TEXT_CACHE = {}
 
@@ -251,10 +261,28 @@ def init_app_tables():
         FOREIGN KEY(updated_by_user_id) REFERENCES users(id)
     );
 
+    CREATE TABLE IF NOT EXISTS parse_issue_reports (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        reported_at TEXT NOT NULL,
+        question_id INTEGER,
+        exam_name TEXT,
+        question_number INTEGER,
+        issue_type TEXT,
+        detail TEXT,
+        reporter_context TEXT,
+        return_to TEXT,
+        raw_json TEXT NOT NULL,
+        report_hash TEXT NOT NULL UNIQUE,
+        created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY(question_id) REFERENCES questions(id)
+    );
+
     CREATE INDEX IF NOT EXISTS idx_test_attempts_user_completed
         ON test_attempts(user_id, completed_at DESC);
     CREATE INDEX IF NOT EXISTS idx_attempt_questions_question
         ON attempt_questions(question_id);
+    CREATE INDEX IF NOT EXISTS idx_parse_issue_reports_question
+        ON parse_issue_reports(question_id, reported_at DESC);
     """)
     conn.commit()
     conn.close()
@@ -319,6 +347,32 @@ def get_question_override(row):
     question_number = row["question_number"]
     override_key = f"{exam_name}#{question_number}"
     return load_question_overrides().get(override_key, {})
+
+
+def save_parse_issue_report(conn, report_entry):
+    feedback = report_entry.get("user_feedback") or {}
+    raw_json = json.dumps(report_entry, sort_keys=True)
+    report_hash = hashlib.sha256(raw_json.encode("utf-8")).hexdigest()
+    conn.execute(
+        """
+        INSERT OR IGNORE INTO parse_issue_reports
+        (reported_at, question_id, exam_name, question_number, issue_type,
+         detail, reporter_context, return_to, raw_json, report_hash)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """,
+        (
+            str(report_entry.get("reported_at") or ""),
+            report_entry.get("id"),
+            report_entry.get("exam_name"),
+            report_entry.get("question_number"),
+            str(feedback.get("issue_type") or ""),
+            str(feedback.get("detail") or ""),
+            str(feedback.get("reporter_context") or ""),
+            str(feedback.get("return_to") or ""),
+            raw_json,
+            report_hash,
+        ),
+    )
 
 
 def row_value(row, key, default=""):
@@ -1747,7 +1801,7 @@ def fetch_test_questions(year, level, exam_name):
                 "is_shared_group": is_shared_group,
                 "group_id": group_id,
                 "is_group_anchor": is_group_anchor,
-                "shared_context": q["shared_context"] if is_group_anchor else "",
+                "shared_context": q["shared_context"] if is_shared_group else "",
                 "choice_letters": choice_letters,
                 "display_issues": q["display_issues"],
             }
@@ -2402,6 +2456,11 @@ def report_parse_issue(question_id):
 
     with open(PARSE_FEEDBACK_FILE, "a", encoding="utf-8") as f:
         f.write(json.dumps(report_entry) + "\n")
+
+    conn = get_connection()
+    save_parse_issue_report(conn, report_entry)
+    conn.commit()
+    conn.close()
 
     return redirect(url_for("report_parse_issue", question_id=question_id, return_to=return_to, submitted="1"))
 

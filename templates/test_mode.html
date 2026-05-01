@@ -328,7 +328,7 @@
         }
 
         function renderSharedContext(question) {
-            if (question.is_shared_group && question.is_group_anchor && question.shared_context) {
+            if (question.is_shared_group && question.shared_context) {
                 sharedPanelEl.style.display = "block";
                 sharedContextTextEl.textContent = question.shared_context;
             } else {

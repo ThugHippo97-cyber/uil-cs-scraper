@@ -115,6 +115,21 @@ class AccountWorkflowTests(unittest.TestCase):
                 saved = f.read()
             self.assertIn("search_tag", saved)
             self.assertIn("prototype tester", saved)
+
+            conn = sqlite3.connect(self.db_file)
+            saved_report = conn.execute(
+                """
+                SELECT question_id, issue_type, detail, reporter_context
+                FROM parse_issue_reports
+                """
+            ).fetchone()
+            conn.close()
+            self.assertEqual(saved_report, (
+                1,
+                "search_tag",
+                "This question should not appear for recursion.",
+                "prototype tester",
+            ))
         finally:
             app.PARSE_FEEDBACK_FILE = old_feedback_file
             if os.path.exists(feedback_file):
@@ -272,6 +287,27 @@ class AccountWorkflowTests(unittest.TestCase):
         self.assertIn(b"Report Parse Issue", response.data)
         self.assertIn(b"id=\"report-question-link\"", response.data)
         self.assertIn(b"/report/${question.id}", response.data)
+
+    def test_test_mode_sends_shared_context_for_every_group_member(self):
+        conn = sqlite3.connect(self.db_file)
+        conn.execute(
+            """
+            UPDATE questions
+            SET group_id = 'sample_shared_2_3',
+                group_type = 'shared_code',
+                shared_context = ?
+            WHERE id IN (4, 5)
+            """,
+            ("int x = 1;\nout.println(x);",),
+        )
+        conn.commit()
+        conn.close()
+
+        questions = app.fetch_test_questions(2025, "district", "2025_district")
+        by_number = {question["question_number"]: question for question in questions}
+
+        self.assertEqual(by_number[2]["shared_context"], "int x = 1;\nout.println(x);")
+        self.assertEqual(by_number[3]["shared_context"], "int x = 1;\nout.println(x);")
 
     def test_test_mode_wrong_choice_does_not_reveal_correct_choice(self):
         response = self.client.get("/test?year=2026&level=invitational&exam_name=sample_exam")

@@ -88,6 +88,35 @@ class ParserRegressionTests(unittest.TestCase):
         self.assertEqual(questions[25]["group_type"], "single")
         self.assertEqual(questions[26]["group_type"], "single")
 
+    def test_line_marker_questions_share_prior_code_context(self):
+        parsed = [
+            {
+                "question_number": 16,
+                "page_number": 5,
+                "top_y": 100,
+                "bottom_y": 220,
+                "question_text": "What is output by line //1 in the code to the right?",
+                "code_block": "Map<Integer, Character> m;\nm = new HashMap<>();\nm.put(22, 'Z');\nm.put(7, 'w');",
+                "choices": "A) w B) r C) e D) Z E) error",
+            },
+            {
+                "question_number": 17,
+                "page_number": 5,
+                "top_y": 220,
+                "bottom_y": 340,
+                "question_text": "What is output by line //2 in the code to the right?",
+                "code_block": "m.put(7,(char)101); //1\nout.println(m.size()); //2",
+                "choices": "A) 4 B) 2 C) 3 D) 5 E) error",
+            },
+        ]
+
+        grouped = main.assign_groups(parsed, "sample", 2026)
+
+        self.assertEqual(grouped[0]["group_id"], grouped[1]["group_id"])
+        self.assertEqual(grouped[0]["group_type"], "shared_code")
+        self.assertIn("Map<Integer, Character> m;", grouped[0]["shared_context"])
+        self.assertIn("out.println(m.size()); //2", grouped[1]["shared_context"])
+
     def test_2017_invitational_a_question_9_keeps_all_answer_choices(self):
         questions = self.load_grouped_questions("2017_invitationalA_test.pdf.pdf")
         q9 = questions[9]

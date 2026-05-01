@@ -22,5 +22,17 @@
   },
   "2024_regional#31": {
     "answer": "D"
+  },
+  "2018_district#9": {
+    "answer": "B"
+  },
+  "2025_invitationala#31": {
+    "question_text": "Assume that the elements to the right are inserted into an Unbalanced Binary Search Tree where duplicate elements are not added to the tree.\n\nElements: 34, 86, 28, 29, 33, 14, 52, 31, 92, 14, 15, 92, 31, 92, 105, 95, 97, 118\n\nHow many internal nodes will the tree have?"
+  },
+  "2025_invitationala#33": {
+    "question_text": "Under the same assumption as Question 31, what is the diameter of the tree?\n\nElements: 34, 86, 28, 29, 33, 14, 52, 31, 92, 14, 15, 92, 31, 92, 105, 95, 97, 118"
+  },
+  "2025_invitationala#40": {
+    "answer": "ADFCGA"
   }
 }

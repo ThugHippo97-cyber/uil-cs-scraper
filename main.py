@@ -905,7 +905,9 @@ def looks_like_explicit_shared_reference(text):
         "compiles and functions as intended",
         "functions correctly",
     ]
-    return any(p in text for p in phrases)
+    return any(p in text for p in phrases) or bool(
+        re.search(r"\b(?:line|comment)\s*(?:#|//)?\s*\d+\b|//\s*\d+\b", text)
+    )
 
 
 def code_block_size(text):
@@ -1099,6 +1101,7 @@ def question_can_anchor_shared_group(question):
     return (
         code_block_size(code_block) >= 3 and
         (
+            looks_like_shared_reference(question_text) or
             looks_like_explicit_shared_reference(question_text) or
             code_block_declares_shared_usage(code_block) or
             code_block_declares_reusable_definition(code_block)
