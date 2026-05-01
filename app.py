@@ -568,11 +568,11 @@ def normalize_choice_fragment(text):
 
 
 def parse_choice_label_sequence(text):
-    return [label.upper() for label in re.findall(r"(?i)\b([A-E])[\.)](?=\s|$)", text or "")]
+    return [label.upper() for label in re.findall(r"(?i)\b([A-L])[\.)](?=\s|$)", text or "")]
 
 
 def parse_extended_choice_label_sequence(text):
-    return [label.upper() for label in re.findall(r"(?i)\b([A-H])[\.)](?=\s|$)", text or "")]
+    return [label.upper() for label in re.findall(r"(?i)\b([A-L])[\.)](?=\s|$)", text or "")]
 
 
 def split_choice_prefix_from_code_line(line):
@@ -597,7 +597,7 @@ def explode_inline_choice_labels(text):
         return ""
 
     return re.sub(
-        r'(?<!^)(?<!\n)\s+((?:[A-E]|TRUE|FALSE|T|F)[\.)]\s+)',
+        r'(?<!^)(?<!\n)\s+((?:[A-L]|TRUE|FALSE|T|F)[\.)]\s+)',
         r'\n\1',
         text.strip(),
         flags=re.IGNORECASE,
@@ -609,7 +609,7 @@ def trim_to_first_choice_label(text):
         return ""
 
     normalized = text.replace("\r", "\n")
-    match = re.search(r"(?im)^\s*((?:[A-E]|TRUE|FALSE|T|F)[\.)]\s+)", normalized)
+    match = re.search(r"(?im)^\s*((?:[A-L]|TRUE|FALSE|T|F)[\.)]\s+)", normalized)
     if match:
         return normalized[match.start(1):].strip()
     return normalized.strip()
@@ -663,7 +663,7 @@ def extract_choice_block_from_crop_text(crop_text, question_number):
     if next_question_match:
         block = block[:next_question_match.start()]
 
-    label_match = re.search(r"(?im)^\s*((?:[A-E]|TRUE|FALSE|T|F)[\.)]\s+)", block)
+    label_match = re.search(r"(?im)^\s*((?:[A-L]|TRUE|FALSE|T|F)[\.)]\s+)", block)
     if not label_match:
         return ""
 
@@ -673,7 +673,7 @@ def extract_choice_block_from_crop_text(crop_text, question_number):
 def maybe_recover_choice_text(row, question_text, code_block, choices_text, answer):
     normalized_choices = trim_to_first_choice_label(choices_text).strip()
     parsed = parse_choices(normalized_choices)
-    answer_is_letter = bool(re.fullmatch(r"[A-E]", answer or "", re.IGNORECASE))
+    answer_is_letter = bool(re.fullmatch(r"[A-L]", answer or "", re.IGNORECASE))
     parsed_letters = [choice["letter"] for choice in parsed if choice["text"].strip()]
     valid_short_choice_set = parsed_letters in (["A", "B"], ["A", "B", "C"])
     if answer_is_letter and valid_short_choice_set and answer.upper() in parsed_letters:
@@ -691,7 +691,7 @@ def maybe_recover_choice_text(row, question_text, code_block, choices_text, answ
 
     question_lines = [line for line in (question_text or "").splitlines() if line.strip()]
     trailing_question_choices = []
-    while question_lines and re.match(r"(?i)^\s*[A-E][\.)]\s*", question_lines[-1]):
+    while question_lines and re.match(r"(?i)^\s*[A-L][\.)]\s*", question_lines[-1]):
         trailing_question_choices.insert(0, question_lines.pop())
     if trailing_question_choices:
         normalized_choices = "\n".join(trailing_question_choices + ([normalized_choices] if normalized_choices else [])).strip()
@@ -701,7 +701,7 @@ def maybe_recover_choice_text(row, question_text, code_block, choices_text, answ
     parsed_by_letter = {choice["letter"]: choice["text"].strip() for choice in parsed}
     missing_letters = [
         letter
-        for letter in ["A", "B", "C", "D", "E"]
+        for letter in [chr(code) for code in range(ord("A"), ord("L") + 1)]
         if not parsed_by_letter.get(letter)
     ]
     code_lines = []
@@ -745,8 +745,8 @@ def maybe_recover_choice_text(row, question_text, code_block, choices_text, answ
 
 def infer_visual_choice_labels(answer, choices_text=""):
     extended_labels = parse_extended_choice_label_sequence(choices_text)
-    if re.fullmatch(r"[A-H]", answer or "", re.IGNORECASE) and any(label in {"F", "G", "H"} for label in extended_labels):
-        last_label = max(extended_labels, key=lambda label: ord(label)) if extended_labels else "H"
+    if re.fullmatch(r"[A-L]", answer or "", re.IGNORECASE) and any(label in {"F", "G", "H", "I", "J", "K", "L"} for label in extended_labels):
+        last_label = max(extended_labels, key=lambda label: ord(label)) if extended_labels else "L"
         return [chr(code) for code in range(ord("A"), ord(last_label) + 1)]
     if re.fullmatch(r"[A-E]", answer or "", re.IGNORECASE):
         return ["A", "B", "C", "D", "E"]
@@ -757,7 +757,7 @@ def infer_visual_choice_labels(answer, choices_text=""):
 
 def should_use_visual_choice_fallback(parsed_choices, answer, choices_text):
     normalized_answer = (answer or "").strip().upper()
-    if not re.fullmatch(r"[A-H]", normalized_answer):
+    if not re.fullmatch(r"[A-L]", normalized_answer):
         return False
 
     parsed_labels = [
@@ -767,10 +767,13 @@ def should_use_visual_choice_fallback(parsed_choices, answer, choices_text):
     ]
     raw_labels = parse_choice_label_sequence(choices_text)
     extended_labels = parse_extended_choice_label_sequence(choices_text)
-    if any(label in {"F", "G", "H"} for label in extended_labels):
+    if any(label in {"F", "G", "H", "I", "J", "K", "L"} for label in extended_labels):
+        last_label = max(extended_labels, key=lambda label: ord(label))
+        expected_labels = [chr(code) for code in range(ord("A"), ord(last_label) + 1)]
         return normalized_answer in extended_labels and (
             normalized_answer not in parsed_labels
             or len(set(parsed_labels)) < len(set(extended_labels))
+            or sorted(set(extended_labels)) != expected_labels
         )
 
     has_five_choice_intent = (
@@ -875,7 +878,7 @@ def parse_choices(choices_text):
         signed_label = None
 
         for line in lines:
-            label_matches = list(re.finditer(r"(?i)\b([A-E])[\.)](?=\s|$)", line))
+            label_matches = list(re.finditer(r"(?i)\b([A-L])[\.)](?=\s|$)", line))
             if label_matches:
                 for idx, match in enumerate(label_matches):
                     label = match.group(1).upper()
@@ -918,7 +921,7 @@ def parse_choices(choices_text):
             return []
 
         parsed_grid = []
-        for label in ["A", "B", "C", "D", "E"]:
+        for label in [chr(code) for code in range(ord("A"), ord("L") + 1)]:
             value = normalize_choice_fragment(choice_values.get(label, ""))
             if value:
                 parsed_grid.append({"letter": label, "text": value})
@@ -993,7 +996,7 @@ def parse_choices(choices_text):
     if first_label in {"T", "F"}:
         label_order = ["T", "F"]
     else:
-        label_order = ["A", "B", "C", "D", "E"]
+        label_order = [chr(code) for code in range(ord("A"), ord("L") + 1)]
 
     try:
         current_index = label_order.index(first_label)
@@ -1048,30 +1051,33 @@ def normalize_answer(answer_text):
         return "T"
     if re.fullmatch(r"(?:FALSE|F)", raw):
         return "F"
-    if re.fullmatch(r"[A-E]", raw):
+    if re.fullmatch(r"[A-L]", raw):
         return raw
 
-    prefixed = re.match(r"^\*?\s*(?:\d+\s*[\.)]\s*)?([A-E]|TRUE|FALSE|T|F)\b", raw, re.IGNORECASE)
+    prefixed = re.match(r"^\*?\s*(?:\d+\s*[\.)]\s*)?([A-L]|TRUE|FALSE|T|F)\b", raw, re.IGNORECASE)
     if prefixed:
-        token = prefixed.group(1).upper()
-        if token == "TRUE":
-            return "T"
-        if token == "FALSE":
-            return "F"
-        return token
+        rest = raw[prefixed.end():].strip()
+        if not rest:
+            token = prefixed.group(1).upper()
+            if token == "TRUE":
+                return "T"
+            if token == "FALSE":
+                return "F"
+            return token
 
     return raw
 
 
 def normalize_open_response_value(value):
-    text = (value or "").strip().upper()
+    text = (value or "").replace(chr(8722), "-").replace(chr(8211), "-").replace(chr(8212), "-")
+    text = text.strip().upper()
     text = re.sub(r"[,\s]+", "", text)
     text = re.sub(r"[.;:!?]+$", "", text)
     if re.fullmatch(r"[+-]?\d+(?:\.0+)?", text):
         return str(int(float(text)))
     if re.fullmatch(r"[+-]?\d+\.\d+", text):
         text = text.rstrip("0").rstrip(".")
-    return re.sub(r"[^A-Z0-9+\-*/.=]", "", text)
+    return re.sub(r"[^A-Z0-9+\-*/.=!&|^()]", "", text)
 
 
 def prepare_question(row):
@@ -1119,12 +1125,12 @@ def prepare_question(row):
         normalize_answer(display_answer),
     )
     parsed_choices = parse_choices(final_choices_text)
-    labels_only_text = re.sub(r"(?i)\b(?:[A-E]|TRUE|FALSE|T|F)[\.)](?=\s|$)", " ", final_choices_text or "")
+    labels_only_text = re.sub(r"(?i)\b(?:[A-L]|TRUE|FALSE|T|F)[\.)](?=\s|$)", " ", final_choices_text or "")
     label_only_choices = bool(parse_choice_label_sequence(final_choices_text)) and not labels_only_text.strip()
     if label_only_choices:
         parsed_choices = []
     normalized_answer = normalize_answer(display_answer)
-    if parsed_choices and normalized_answer and not re.fullmatch(r"[A-ETF]", normalized_answer):
+    if parsed_choices and normalized_answer and not re.fullmatch(r"[A-LTF]", normalized_answer):
         normalized_answer = ""
     visual_fallback_used = should_use_visual_choice_fallback(
         parsed_choices,
@@ -1137,7 +1143,7 @@ def prepare_question(row):
         not parsed_choices
         and not clean_text_for_display(final_choices_text)
         and bool(normalized_answer)
-        and not re.fullmatch(r"[A-ETF]", normalized_answer)
+        and not re.fullmatch(r"[A-LTF]", normalized_answer)
     )
     visual_choice_labels = infer_visual_choice_labels(normalized_answer, final_choices_text) if (label_only_choices or visual_fallback_used or not parsed_choices) and not is_open_response else []
     is_visual_choice = bool(visual_choice_labels)

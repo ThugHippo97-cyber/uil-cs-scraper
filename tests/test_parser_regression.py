@@ -529,6 +529,16 @@ Question 32.
         self.assertEqual(app.normalize_open_response_value("4.0"), "4")
         self.assertEqual(app.normalize_open_response_value(" 4 "), "4")
 
+    def test_open_response_normalization_keeps_boolean_and_expression_operators(self):
+        self.assertEqual(
+            app.normalize_open_response_value("A ^ !C | !B or !A ^ C | !B"),
+            "A^!C|!BOR!A^C|!B",
+        )
+        self.assertEqual(
+            app.normalize_open_response_value("A B + C * D E – F G + * /"),
+            "AB+C*DE-FG+*/",
+        )
+
     def test_trim_rendered_blank_tail_removes_footer_gap(self):
         from PIL import Image, ImageDraw
 
@@ -546,6 +556,10 @@ Question 32.
     def test_normalize_answer_does_not_collapse_long_sentence_to_first_letter(self):
         text = "Tests may not be turned in until 45 minutes have elapsed."
         self.assertEqual(app.normalize_answer(text), text.upper())
+
+    def test_normalize_answer_keeps_open_response_expression_starting_with_letter(self):
+        self.assertEqual(app.normalize_answer("A ^ !C | !B"), "A ^ !C | !B")
+        self.assertEqual(app.normalize_answer("D-B-G-C-A"), "D-B-G-C-A")
 
     def test_method_reference_questions_can_share_following_method_definition(self):
         parsed = [

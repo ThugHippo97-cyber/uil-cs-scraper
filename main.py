@@ -12,12 +12,22 @@ from datetime import UTC, datetime
 import subprocess
 import tempfile
 
-DB_FILE = "uil_cs_questions_v2.db"
-DATA_FOLDER = "data"
-ARCHIVE_OVERRIDE_FILE = "archive_overrides.json"
-QUESTION_OVERRIDE_FILE = "question_overrides.json"
-ARCHIVE_CACHE_ROOT = "_archive_cache"
-ANSWER_SANITY_FILE = "answer_sanity_queue.jsonl"
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
+
+def resolve_project_path(path, default_name):
+    selected = path or os.path.join(BASE_DIR, default_name)
+    if os.path.isabs(selected):
+        return selected
+    return os.path.join(BASE_DIR, selected)
+
+
+DB_FILE = resolve_project_path(os.environ.get("UIL_CS_DB_FILE"), "uil_cs_questions_v2.db")
+DATA_FOLDER = resolve_project_path("data", "data")
+ARCHIVE_OVERRIDE_FILE = resolve_project_path("archive_overrides.json", "archive_overrides.json")
+QUESTION_OVERRIDE_FILE = resolve_project_path("question_overrides.json", "question_overrides.json")
+ARCHIVE_CACHE_ROOT = resolve_project_path("_archive_cache", "_archive_cache")
+ANSWER_SANITY_FILE = resolve_project_path("answer_sanity_queue.jsonl", "answer_sanity_queue.jsonl")
 _OCR_UNAVAILABLE_WARNED = False
 
 
@@ -1665,7 +1675,7 @@ def parse_answers_from_text(answer_text: str):
     def answer_quality(value: str):
         if not value:
             return 0
-        if re.fullmatch(r"[A-E]", value, re.IGNORECASE):
+        if re.fullmatch(r"[A-L]", value, re.IGNORECASE):
             return 100
         if re.fullmatch(r"(?:TRUE|FALSE|T|F)", value, re.IGNORECASE):
             return 95
@@ -1680,7 +1690,7 @@ def parse_answers_from_text(answer_text: str):
         if not value:
             return ""
 
-        letter_match = re.match(r"^([A-E])\b", value, re.IGNORECASE)
+        letter_match = re.match(r"^([A-L])\b", value, re.IGNORECASE)
         if letter_match:
             return letter_match.group(1).upper()
         numeric_with_explanation = re.match(r"^([+-]?\d+(?:\.\d+)?)\s+[A-Za-z]", value)
@@ -1698,8 +1708,8 @@ def parse_answers_from_text(answer_text: str):
         if not line:
             continue
 
-        likely_choice_text = bool(re.search(r"(?i)\b[A-E][\.)]\s+", line))
-        compact_pairs = re.findall(r"(?<!\w)(\d{1,2})\s+([A-E]|TRUE|FALSE|T|F)\b", line, re.IGNORECASE)
+        likely_choice_text = bool(re.search(r"(?i)\b[A-L][\.)]\s+", line))
+        compact_pairs = re.findall(r"(?<!\w)(\d{1,2})\s+([A-L]|TRUE|FALSE|T|F)\b", line, re.IGNORECASE)
         if (
             len(compact_pairs) >= 2
             and re.match(r"^\*?\s*\d", line)
@@ -1772,7 +1782,7 @@ def evaluate_answer_sanity(question_text: str, choices_text: str, answer: str):
 
     parsed_choices = parse_choices(choices_text)
     parsed_labels = [choice["letter"] for choice in parsed_choices if choice.get("text", "").strip()]
-    has_choice_markers = bool(re.search(r"(?i)\b(?:[A-E]|TRUE|FALSE|T|F)[\.)](?=\s|$)", choices_text))
+    has_choice_markers = bool(re.search(r"(?i)\b(?:[A-L]|TRUE|FALSE|T|F)[\.)](?=\s|$)", choices_text))
     likely_choice_question = bool(parsed_labels) or has_choice_markers
 
     if not normalized_answer:
@@ -1780,14 +1790,14 @@ def evaluate_answer_sanity(question_text: str, choices_text: str, answer: str):
         return issues
 
     if likely_choice_question:
-        if not re.fullmatch(r"[A-ETF]", normalized_answer, re.IGNORECASE):
+        if not re.fullmatch(r"[A-LTF]", normalized_answer, re.IGNORECASE):
             issues.append("choice_question_non_choice_answer")
         elif parsed_labels and normalized_answer not in parsed_labels:
             issues.append("answer_not_in_parsed_choices")
         elif not parsed_labels:
             issues.append("choice_labels_not_parsed")
     else:
-        if re.fullmatch(r"[A-ETF]", normalized_answer, re.IGNORECASE):
+        if re.fullmatch(r"[A-LTF]", normalized_answer, re.IGNORECASE):
             # Open-response rows with letter answers are usually parse mistakes.
             if len(question_text.strip()) > 0:
                 issues.append("open_response_letter_answer")

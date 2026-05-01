@@ -34,5 +34,17 @@
   },
   "2025_invitationala#40": {
     "answer": "ADFCGA"
+  },
+  "2026_stacey_tests_test_02#39": {
+    "answer": "A ^ !C | !B or !A ^ C | !B"
+  },
+  "2026_stacey_tests_test_05#38": {
+    "answer": "D-B-G-C-A"
+  },
+  "2026_stacey_tests_test_06#40": {
+    "answer": "A * (B + C)"
+  },
+  "2026_stacey_tests_test_15#40": {
+    "answer": "A B + C * D E - F G + * /"
   }
 }

@@ -123,7 +123,7 @@
         };
 
         function normalizeOpenResponse(value) {
-            let text = (value || "").toString().trim().toUpperCase();
+            let text = (value || "").toString().replace(/[−–—]/g, "-").trim().toUpperCase();
             text = text.replace(/[,\s]+/g, "");
             text = text.replace(/[.;:!?]+$/g, "");
 
@@ -135,7 +135,7 @@
                 text = text.replace(/0+$/g, "").replace(/\.$/g, "");
             }
 
-            return text.replace(/[^A-Z0-9+\-*/.=]/g, "");
+            return text.replace(/[^A-Z0-9+\-*/.=!&|^()]/g, "");
         }
 
         function getQuestionStateKey(question) {

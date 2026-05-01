@@ -94,5 +94,29 @@
     "year": 2022,
     "level": "state",
     "exam_name": "2022_state"
+  },
+  "2026/compsci_written_sm_d_26.pdf": {
+    "pdf_type": "combo",
+    "year": 2026,
+    "level": "district",
+    "exam_name": "2026_district"
+  },
+  "2026/compsci_writtentest_sm_a_26.pdf": {
+    "pdf_type": "combo",
+    "year": 2026,
+    "level": "invitational",
+    "exam_name": "2026_invitationala"
+  },
+  "2026/compsci_writtentest_sm_b_26.pdf": {
+    "pdf_type": "combo",
+    "year": 2026,
+    "level": "invitational",
+    "exam_name": "2026_invitationalb"
+  },
+  "2026/compsci_written_sm_r_16.pdf": {
+    "pdf_type": "combo",
+    "year": 2026,
+    "level": "regional",
+    "exam_name": "2026_regional"
   }
 }
