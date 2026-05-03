@@ -71,5 +71,13 @@
   },
   "2025_district#34": {
     "code_block": "public static int rec(int r, int c) {\nif(c > r) {\nreturn 0;\n} else if(c <= 1 || r <= 1) {\nreturn 1;\n}\nreturn rec(r-1, c) + rec(r-1, c-1);\n}\n////////////// client code //////////////\nout.println(rec(3,2)); //q32\nout.println(rec(8,5)); //q33\nout.println(rec(10,6) + rec(10,5)); //q34"
+  },
+  "2026_college_station#17": {
+    "question_text": "What is output by the line marked //q17 code to the right?",
+    "choices": "B) [0, 9, 17]\nC) true\nD) false\nE) There is no output due to an error."
+  },
+  "2026_college_station#25": {
+    "question_text": "Assuming that <1*> and <2*> are filled correctly, what is output by the line marked //q25?",
+    "choices": "A) 9\nB) 10\nC) 8\nD) 6\nE) There is no output due to an error."
   }
 }
