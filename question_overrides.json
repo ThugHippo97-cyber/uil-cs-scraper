@@ -46,5 +46,30 @@
   },
   "2026_stacey_tests_test_15#40": {
     "answer": "A B + C * D E - F G + * /"
+  },
+  "2025_district#39": {
+    "question_text": "Consider that you have an array of integers of size n named arr that you wish to convert into a PriorityQueue<Integer> named pq by calling pq.offer(arr[i]) for each i in the range 0 through n-1. What is the tightest asymptotic upper bound on this set of operations? Express your answer in Big-Θ notation in terms of n.",
+    "answer": "O(n log n)"
+  },
+  "2025_district#20": {
+    "choices": "A) Dijkstra's Algorithm\nB) Bellman-Ford Algorithm\nC) Floyd-Warshall Algorithm\nD) Both B and C\nE) All of the above."
+  },
+  "2025_district#28": {
+    "question_text": "Which of the following are equivalent to the Logic Circuit to the right? (This question requires the original PDF — the circuit diagram cannot be rendered as text. Options A-H are Boolean expressions; the grouped answer choices are below.)",
+    "choices": "A) Options A, C, E, and G\nB) Options B, D, F, and H\nC) None of the above\nD) Options A, C, E, and G AND Options B, D, F, and H\nE) Cannot be determined without the circuit",
+    "answer": "A"
+  },
+  "2025_district#29": {
+    "question_text": "The process of going from Option A to Option C in Question 28 is an example of which Boolean Algebra Identity?",
+    "choices": "A) Law of Absorption\nB) Exclusive NOR Law\nC) DeMorgan's Law\nD) Double Negative Law\nE) Disappearing Opposite"
+  },
+  "2025_district#32": {
+    "code_block": "public static int rec(int r, int c) {\nif(c > r) {\nreturn 0;\n} else if(c <= 1 || r <= 1) {\nreturn 1;\n}\nreturn rec(r-1, c) + rec(r-1, c-1);\n}\n////////////// client code //////////////\nout.println(rec(3,2)); //q32\nout.println(rec(8,5)); //q33\nout.println(rec(10,6) + rec(10,5)); //q34"
+  },
+  "2025_district#33": {
+    "code_block": "public static int rec(int r, int c) {\nif(c > r) {\nreturn 0;\n} else if(c <= 1 || r <= 1) {\nreturn 1;\n}\nreturn rec(r-1, c) + rec(r-1, c-1);\n}\n////////////// client code //////////////\nout.println(rec(3,2)); //q32\nout.println(rec(8,5)); //q33\nout.println(rec(10,6) + rec(10,5)); //q34"
+  },
+  "2025_district#34": {
+    "code_block": "public static int rec(int r, int c) {\nif(c > r) {\nreturn 0;\n} else if(c <= 1 || r <= 1) {\nreturn 1;\n}\nreturn rec(r-1, c) + rec(r-1, c-1);\n}\n////////////// client code //////////////\nout.println(rec(3,2)); //q32\nout.println(rec(8,5)); //q33\nout.println(rec(10,6) + rec(10,5)); //q34"
   }
 }
