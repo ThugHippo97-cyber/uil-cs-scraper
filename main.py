@@ -977,32 +977,35 @@ def code_blocks_overlap(text1, text2):
 
 
 def merge_code_blocks(*blocks):
-    merged_lines = []
-    seen = set()
+    def get_lines(block):
+        result = []
+        for line in (block or "").splitlines():
+            line = line.strip()
+            if not line or line.lower().startswith("written test"):
+                continue
+            result.append(line)
+        return result
 
-    for block in blocks:
-        if not block:
+    non_empty = [get_lines(b) for b in blocks if b and b.strip()]
+    if not non_empty:
+        return ""
+
+    result_lines = non_empty[0]
+
+    for new_lines in non_empty[1:]:
+        if not new_lines:
             continue
+        best_overlap = 0
+        max_check = min(len(result_lines), len(new_lines), 20)
+        for k in range(max_check, 0, -1):
+            r_norm = [normalize_code_line(l) for l in result_lines[-k:]]
+            n_norm = [normalize_code_line(l) for l in new_lines[:k]]
+            if r_norm and r_norm == n_norm and all(r_norm):
+                best_overlap = k
+                break
+        result_lines = result_lines + new_lines[best_overlap:]
 
-        for raw_line in block.splitlines():
-            line = raw_line.strip()
-            if not line:
-                continue
-            if line.lower().startswith("written test"):
-                continue
-
-            key = normalize_code_line(line)
-            should_dedupe = key not in {"{", "}"}
-
-            if not should_dedupe:
-                merged_lines.append(line)
-                continue
-
-            if key and key not in seen:
-                seen.add(key)
-                merged_lines.append(line)
-
-    return "\n".join(merged_lines).strip()
+    return "\n".join(result_lines).strip()
 
 
 def extract_declared_method_names(code_block):
@@ -1015,6 +1018,16 @@ def extract_declared_method_names(code_block):
         if lowered not in {"if", "for", "while", "switch", "catch"}:
             method_names.add(lowered)
     return method_names
+
+
+def code_block_calls_declared_method(code_block, method_names):
+    if not code_block or not method_names:
+        return False
+    code_lower = code_block.lower()
+    return any(
+        bool(re.search(rf"\b{re.escape(name)}\s*\(", code_lower))
+        for name in method_names
+    )
 
 
 def question_references_method_name(question_text, method_names):
@@ -1873,12 +1886,14 @@ def assign_groups(parsed_questions, exam_name, year):
                 same_page = next_q["page_number"] == q["page_number"]
                 close_number = next_q["question_number"] == members[-1]["question_number"] + 1
                 overlaps_shared_code = code_blocks_overlap(shared_code, next_q.get("code_block", ""))
+                shared_method_names = extract_declared_method_names(shared_code)
                 references_shared = (
                     looks_like_explicit_shared_reference(next_q.get("question_text", ""))
                     and (
                         overlaps_shared_code
                         or code_block_size(next_q.get("code_block", "")) < 3
                         or question_uses_fill_in_placeholder(next_q.get("question_text", ""))
+                        or code_block_calls_declared_method(next_q.get("code_block", ""), shared_method_names)
                     )
                 )
                 placeholder_chain = (
