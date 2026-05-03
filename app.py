@@ -1018,7 +1018,7 @@ def parse_choices(choices_text):
         matched_label = None
         for candidate_label in label_order[next_index:]:
             candidate_match = re.search(
-                rf"(?:(?<=\n)|(?<=\s)|^){choice_label_pattern(candidate_label)}[\.)]\s*",
+                rf"(?:(?<=\n)|(?<=\s)|^){choice_label_pattern(candidate_label)}(?:[)]\s*|[.](?=\s|$))",
                 text[content_start:],
                 re.IGNORECASE,
             )

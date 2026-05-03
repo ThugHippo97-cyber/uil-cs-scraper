@@ -1791,7 +1791,7 @@ def evaluate_answer_sanity(question_text: str, choices_text: str, answer: str):
     question_text = question_text or ""
     choices_text = choices_text or ""
 
-    from app import parse_choices  # Keep sanity checks aligned with runtime choice parsing.
+    from app import parse_choices, should_use_visual_choice_fallback  # Keep sanity checks aligned with runtime choice parsing.
 
     parsed_choices = parse_choices(choices_text)
     parsed_labels = [choice["letter"] for choice in parsed_choices if choice.get("text", "").strip()]
@@ -1806,9 +1806,11 @@ def evaluate_answer_sanity(question_text: str, choices_text: str, answer: str):
         if not re.fullmatch(r"[A-LTF]", normalized_answer, re.IGNORECASE):
             issues.append("choice_question_non_choice_answer")
         elif parsed_labels and normalized_answer not in parsed_labels:
-            issues.append("answer_not_in_parsed_choices")
+            if not should_use_visual_choice_fallback(parsed_choices, normalized_answer, choices_text):
+                issues.append("answer_not_in_parsed_choices")
         elif not parsed_labels:
-            issues.append("choice_labels_not_parsed")
+            if not should_use_visual_choice_fallback(parsed_choices, normalized_answer, choices_text):
+                issues.append("choice_labels_not_parsed")
     else:
         if re.fullmatch(r"[A-LTF]", normalized_answer, re.IGNORECASE):
             # Open-response rows with letter answers are usually parse mistakes.
