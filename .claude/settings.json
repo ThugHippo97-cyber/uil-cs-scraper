@@ -1,0 +1,14 @@
+{
+  "hooks": {
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "echo '{\"systemMessage\": \"SESSION REMINDER: Before closing, please update SESSION_NOTES.md. You can ask Claude to summarize the session and write the update for you.\"}'"
+          }
+        ]
+      }
+    ]
+  }
+}
