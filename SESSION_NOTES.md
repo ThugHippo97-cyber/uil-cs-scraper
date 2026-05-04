@@ -6,6 +6,14 @@ _Update this at the end of every session. Claude will offer to do it for you._
 
 ## Last Worked On
 
+- **2026-05-03** (evening 2) — UI overhaul session. Used the `ui-ux-pro-max` skill to redesign question content presentation. One commit pushed (`ad1967f`):
+  - **Terminal-frame PDF images**: exam question crops now sit inside a styled window frame (traffic-light dots + "EXAM QUESTION" label) so they feel part of the UI rather than dropped in raw. Applied to both `question.html` and `test_mode.html` (with JS fallback handling).
+  - **IDE-style code panels**: code blocks get a terminal title bar (dots + "Java" label). Long collapsible code uses the panel bar itself as the toggle. Shared context panels in test mode get same treatment.
+  - **Keycap choice buttons**: A/B/C/D buttons styled as keyboard keys with 3D bottom shadow, lift-on-hover, press-on-active.
+  - **Result box icons**: ✓/✗ prefix via CSS `::before`.
+  - **`prefers-reduced-motion`** support added for all new animations.
+  - Also fixed the desktop `.bat` launcher (was crashing on open due to `exec` replacing bash; now uses `-l` login shell + `; exec bash` to keep terminal open).
+
 - **2026-05-03** — Major parse quality session. Worked through the `answer_sanity_queue.jsonl`
   starting with the largest category. Three commits pushed:
   1. **Shared code group detection** (`merge_code_blocks` overlap merging + `code_block_calls_declared_method`): improves grouping for questions whose code block calls a method defined in the shared context. All 80 tests pass.
@@ -27,7 +35,7 @@ _Update this at the end of every session. Claude will offer to do it for you._
   - 6 × `choice_question_non_choice_answer`
   - 2 × `missing_answer`
   - 1 × `choice_labels_not_parsed`
-- 3 commits ahead of origin — **push needed** (`git push`, needs credentials).
+- **4 commits ahead of origin** — push needed (`git push`, needs credentials).
 
 ## Active Blockers
 
@@ -35,12 +43,13 @@ _Update this at the end of every session. Claude will offer to do it for you._
 
 ## Next Steps
 
+- Push 4 pending commits to origin (`git push`)
+- Deploy updated code to PythonAnywhere
 - Finish the remaining 9 sanity queue entries:
   1. `choice_question_non_choice_answer` (6) — answer is H/non-letter on a choice question
   2. `missing_answer` (2) — key PDF didn't yield an answer
   3. `choice_labels_not_parsed` (1) — choice text present but labels not parsed
-- Deploy fixes to PythonAnywhere (re-ingest affected exams if needed, or patch DB directly)
-- Spot-check a few questions from fixed exams in the live app
+- Spot-check UI changes on the live app after deploy
 
 ## Decisions Made
 
@@ -57,4 +66,4 @@ _Update this at the end of every session. Claude will offer to do it for you._
 
 ---
 
-_Last updated: 2026-05-03 (evening)_
+_Last updated: 2026-05-03 (evening 2)_
