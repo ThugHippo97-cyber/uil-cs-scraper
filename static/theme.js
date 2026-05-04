@@ -1,48 +1,73 @@
 (function () {
-    const themes = [
-        ["matrix", "Matrix"],
-        ["tanuki", "Tanuki Sunset"],
-        ["mono", "Black & White"],
-        ["ember", "Red Ember"],
-        ["nebula", "Blue Nebula"]
-    ];
     const storageKey = "uil_theme";
+    const darkValue = "dark";
 
     function applyTheme(theme) {
-        const selected = themes.some(([value]) => value === theme) ? theme : "matrix";
-        document.body.dataset.theme = selected;
-        localStorage.setItem(storageKey, selected);
+        if (theme === darkValue) {
+            document.body.dataset.theme = darkValue;
+        } else {
+            delete document.body.dataset.theme;
+        }
     }
 
-    function buildPicker() {
-        const picker = document.createElement("div");
-        picker.className = "theme-picker";
+    function savedTheme() {
+        return localStorage.getItem(storageKey) === darkValue ? darkValue : "light";
+    }
 
-        const label = document.createElement("label");
-        label.htmlFor = "theme-select";
-        label.textContent = "Theme";
+    function setSavedTheme(theme) {
+        if (theme === darkValue) {
+            localStorage.setItem(storageKey, darkValue);
+        } else {
+            localStorage.removeItem(storageKey);
+        }
+    }
 
-        const select = document.createElement("select");
-        select.id = "theme-select";
-        for (const [value, text] of themes) {
-            const option = document.createElement("option");
-            option.value = value;
-            option.textContent = text;
-            select.appendChild(option);
+    function labelFor(theme) {
+        return theme === darkValue ? "Dark" : "Light";
+    }
+
+    function buildToggle() {
+        const navTarget = document.querySelector(".nav-actions") || document.querySelector(".top-nav");
+        if (!navTarget || document.querySelector(".theme-toggle")) return;
+
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = "theme-toggle";
+
+        const text = document.createElement("span");
+        text.className = "theme-toggle-label";
+
+        const track = document.createElement("span");
+        track.className = "theme-toggle-track";
+        track.setAttribute("aria-hidden", "true");
+
+        button.appendChild(text);
+        button.appendChild(track);
+
+        function sync(theme) {
+            const isDark = theme === darkValue;
+            button.setAttribute("aria-pressed", String(isDark));
+            button.setAttribute("aria-label", `Switch to ${isDark ? "light" : "dark"} mode`);
+            text.textContent = labelFor(theme);
         }
 
-        const savedTheme = localStorage.getItem(storageKey) || "matrix";
-        select.value = savedTheme;
-        applyTheme(savedTheme);
+        let current = savedTheme();
+        applyTheme(current);
+        sync(current);
 
-        select.addEventListener("change", () => {
-            applyTheme(select.value);
+        button.addEventListener("click", () => {
+            current = current === darkValue ? "light" : darkValue;
+            applyTheme(current);
+            setSavedTheme(current);
+            sync(current);
         });
 
-        picker.appendChild(label);
-        picker.appendChild(select);
-        document.body.appendChild(picker);
+        navTarget.insertBefore(button, navTarget.firstChild);
     }
 
-    document.addEventListener("DOMContentLoaded", buildPicker);
+    if (document.readyState === "loading") {
+        document.addEventListener("DOMContentLoaded", buildToggle);
+    } else {
+        buildToggle();
+    }
 })();
