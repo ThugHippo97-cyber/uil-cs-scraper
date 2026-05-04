@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% if mode == 'register' %}Create Account{% else %}Log In{% endif %}</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css', v=static_v) }}">
 </head>
 <body>
     <div class="container auth-container">
@@ -41,6 +41,6 @@
             {% endif %}
         </section>
     </div>
-    <script src="{{ url_for('static', filename='theme.js') }}"></script>
+    <script src="{{ url_for('static', filename='theme.js', v=static_v) }}"></script>
 </body>
 </html>

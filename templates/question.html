@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ question.exam_name }} Q{{ question.question_number }}</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css', v=static_v) }}">
 </head>
 <body>
     <div class="container">
@@ -317,7 +317,7 @@
             resultBox.style.display = "block";
         }
     </script>
-    <script src="{{ url_for('static', filename='theme.js') }}"></script>
+    <script src="{{ url_for('static', filename='theme.js', v=static_v) }}"></script>
     <script>
         function openFullscreen() {
             const modal = document.getElementById("fullscreen-modal");

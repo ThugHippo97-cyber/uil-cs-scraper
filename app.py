@@ -15,6 +15,18 @@ app = Flask(__name__)
 DEFAULT_DEV_SECRET_KEY = "dev-team-practice-secret"
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
+def _git_version():
+    try:
+        import subprocess
+        return subprocess.check_output(
+            ["git", "rev-parse", "--short", "HEAD"],
+            cwd=BASE_DIR, stderr=subprocess.DEVNULL
+        ).decode().strip()
+    except Exception:
+        return "0"
+
+STATIC_VERSION = _git_version()
+
 
 def get_secret_key():
     secret_key = os.environ.get("UIL_CS_SECRET_KEY")
@@ -307,7 +319,7 @@ def load_current_user():
 
 @app.context_processor
 def inject_current_user():
-    return {"current_user": g.get("current_user")}
+    return {"current_user": g.get("current_user"), "static_v": STATIC_VERSION}
 
 
 def login_required(view_func):
