@@ -6,6 +6,10 @@ _Update this at the end of every session. Claude will offer to do it for you._
 
 ## Last Worked On
 
+- **2026-05-04** — Missed question drill mode + dashboard QoL. Two commits pushed (`7a37ea7`, `0a5a1b5`):
+  - **Drill mode** (`7a37ea7`): Full missed-question drill feature. New `user_drill_queue` table (user_id, question_id, miss_count, last_seen_at). `update_drill_queue()` fires after every regular test — finds missed questions matching the user's top-8 weak tags, upserts with group expansion, evicts lowest-miss_count when over 100. `update_drill_queue_from_drill()` fires after drill completions — correct answers decrement/remove from queue, wrong answers increment. New `/drill` route assembles questions from queue using same group-cohesion logic as regular tests. `test_mode.html` gains `is_drill` flag (adjusts header, uses `question.id` as JS state key to avoid cross-exam question_number collisions). `drill_empty.html` for users with no queue. Dashboard shows "Missed Question Drill" section with count, top topic tags, and "Start Drill" button. All 80 tests pass.
+  - **Attempts collapse** (`0a5a1b5`): Dashboard "Recent Test Attempts" now shows 3 by default with a "See N more" toggle that expands the rest inline. Pure frontend — no backend change.
+
 - **2026-05-04** — Parse audit skill design + Pass 1 run. No code commits:
   - Collaborated with a web-based LLM to draft a two-pass parse audit skill (`parse_audit_skill/SKILL.md`). Reviewed the draft and fixed 6 bugs before activating: wrong model name (`claude-opus-4-5` → `claude-sonnet-4-6`), wrong JSON report key (`issues` → `report["findings"]`), off-by-one page number indexing, incorrect issue type names that wouldn't match real audit output, missing Pass 1→2 ID bridge, and a broken `write_final_report` key structure.
   - Ran Pass 1 (heuristic audit) against all 4,064 questions — 724 findings, same profile as last session (HIGH 43, MEDIUM 486, LOW 195). No regressions.
@@ -69,11 +73,14 @@ _Update this at the end of every session. Claude will offer to do it for you._
 ## Active Blockers
 
 - Pass 2 vision audit requires `ANTHROPIC_API_KEY` set in the local environment — not currently available
+- Drill queue will be empty for all users until they complete a test post-deploy (expected, not a bug)
 
 ## Next Steps
 
+- **Feature 2 (Leaderboard)**: Global leaderboard accessible from homepage. Columns: questions answered correctly (all-time), tests taken, average test score. Decisions needed: opt-in vs. automatic, how many rows to show, whether to filter out drill attempts from stats.
+- **Feature 3 (Coach/Student accounts)**: Coach accounts can build a team and assign questions/tests to students. Students see everything. Guests are just unauthenticated users (no separate account type needed). Open questions: what "assign" looks like for students (required drill on dashboard? notification?), whether coaches see per-question student results or just high-level stats, one team per coach or multiple groups.
 - When API key is available: run Pass 2 on the 43 `garbled_text` questions — IDs already in `reports/pass2_garbled_results.json`. Script will need `ANTHROPIC_API_KEY` exported in the shell before running (`! export ANTHROPIC_API_KEY=...` in Claude Code prompt).
-- Deploy to PythonAnywhere (`git pull` + reload)
+- Deploy latest commits to PythonAnywhere if not already done (`git pull` + reload)
 - Fix `answer_not_in_choices` × 3 for Sample Test 2 Q39 (Roman numeral Big-O question; choices parsed as empty — "I." at start gets parsed as choice label; needs PDF investigation)
 - Address remaining `parse_feedback.jsonl` items:
   - `2025_district` Q17/19/20/21: graph/expression images missing — visual-only, not fixable without OCR
