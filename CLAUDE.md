@@ -57,6 +57,7 @@ LAUNCH.md                # Production deployment notes
 | `UIL_CS_REQUIRE_SECRET` | Set to `1` in prod to enforce secret key |
 | `UIL_CS_DB_FILE` | Path to SQLite DB (defaults to `uil_cs_questions_v2.db`) |
 | `FLASK_DEBUG` | Set to `0` in prod |
+| `UIL_CS_ADMIN_USER` | Username that can access `/admin/feedback` (parse report download) |
 
 ## Coding Conventions
 

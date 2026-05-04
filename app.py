@@ -2749,6 +2749,37 @@ def report_parse_issue(question_id):
     return redirect(url_for("report_parse_issue", question_id=question_id, return_to=return_to, submitted="1"))
 
 
+ADMIN_USER = os.environ.get("UIL_CS_ADMIN_USER", "")
+
+
+def admin_required(view_func):
+    @wraps(view_func)
+    def wrapped(*args, **kwargs):
+        user = g.get("current_user")
+        if not user:
+            return redirect(url_for("login", next=request.path))
+        if not ADMIN_USER or user["username"] != ADMIN_USER:
+            return "Forbidden", 403
+        return view_func(*args, **kwargs)
+    return wrapped
+
+
+@app.route("/admin/feedback")
+@admin_required
+def admin_download_feedback():
+    conn = get_connection()
+    rows = conn.execute(
+        "SELECT raw_json FROM parse_issue_reports ORDER BY reported_at ASC"
+    ).fetchall()
+    conn.close()
+    body = "\n".join(r["raw_json"] for r in rows)
+    return app.response_class(
+        body,
+        mimetype="application/x-ndjson",
+        headers={"Content-Disposition": "attachment; filename=parse_feedback.jsonl"},
+    )
+
+
 if __name__ == "__main__":
     app.run(
         host=os.environ.get("HOST", "127.0.0.1"),
