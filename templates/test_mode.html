@@ -42,7 +42,18 @@
                 </div>
             </div>
 
-            <img id="test-question-image" class="question-img" alt="Question snippet">
+            <div id="question-img-frame-wrap" class="question-img-frame">
+                <div class="question-img-bar">
+                    <span class="question-img-dots">
+                        <span class="question-img-dot"></span>
+                        <span class="question-img-dot"></span>
+                        <span class="question-img-dot"></span>
+                    </span>
+                    <span class="question-img-label">Exam Question</span>
+                    <span></span>
+                </div>
+                <img id="test-question-image" class="question-img" alt="Question snippet">
+            </div>
             <section id="question-text-fallback" class="detail-panel text-fallback-panel" style="display:none;">
                 <p id="fallback-question-text" class="question-text"></p>
                 <pre id="fallback-code-block" class="content-block code-surface" style="display:none;"></pre>
@@ -53,7 +64,17 @@
                     <span>Shared Context (shown once for this group)</span>
                     <span class="collapsible-hint">Show</span>
                 </summary>
-                <pre id="shared-context-text" class="content-block code-surface collapsible-content"></pre>
+                <div class="code-panel collapsible-content">
+                    <div class="code-panel-bar">
+                        <span class="code-panel-dots">
+                            <span class="code-dot"></span>
+                            <span class="code-dot"></span>
+                            <span class="code-dot"></span>
+                        </span>
+                        <span class="code-panel-label">Shared Context</span>
+                    </div>
+                    <pre id="shared-context-text" class="content-block code-surface"></pre>
+                </div>
             </details>
 
             <section class="detail-panel answer-panel">
@@ -108,6 +129,7 @@
         const summaryPanelEl = document.getElementById("summary-panel");
         const summaryTextEl = document.getElementById("summary-text");
 
+        const imgFrameEl = document.getElementById("question-img-frame-wrap");
         const prevBtn = document.getElementById("prev-btn");
         const nextBtn = document.getElementById("next-btn");
         const finishBtn = document.getElementById("finish-btn");
@@ -358,14 +380,17 @@
             const imageUrl = question.is_shared_group
                 ? `/group_image/${encodeURIComponent(question.group_id)}`
                 : `/question_image/${question.id}`;
+            imgFrameEl.style.display = "block";
             imageEl.style.display = "block";
             fallbackPanelEl.style.display = "none";
             imageEl.onerror = () => {
+                imgFrameEl.style.display = "none";
                 imageEl.style.display = "none";
                 fallbackPanelEl.style.display = "block";
                 renderTextFallback(question);
             };
             imageEl.onload = () => {
+                imgFrameEl.style.display = "block";
                 fallbackPanelEl.style.display = "none";
                 imageEl.style.display = "block";
             };

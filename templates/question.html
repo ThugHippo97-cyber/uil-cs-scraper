@@ -34,7 +34,18 @@
                     {% endif %}
                 </div>
 
-                <img src="{{ url_for('question_image', question_id=question.id) }}" class="question-img">
+                <div class="question-img-frame">
+                    <div class="question-img-bar">
+                        <span class="question-img-dots">
+                            <span class="question-img-dot"></span>
+                            <span class="question-img-dot"></span>
+                            <span class="question-img-dot"></span>
+                        </span>
+                        <span class="question-img-label">Exam Question</span>
+                        <span></span>
+                    </div>
+                    <img src="{{ url_for('question_image', question_id=question.id) }}" class="question-img" alt="Exam question crop">
+                </div>
 
             </section>
 
@@ -52,15 +63,30 @@
                     <h3>Code Snippet</h3>
                     {% if question.code_block %}
                         {% if question.code_line_count > 8 %}
-                            <details class="collapsible-panel">
-                                <summary class="collapsible-summary">
-                                    <span>Show Parsed Code</span>
-                                    <span class="collapsible-hint">{{ question.code_line_count }} lines</span>
+                            <details class="code-panel collapsible-code-panel">
+                                <summary class="code-panel-bar">
+                                    <span class="code-panel-dots">
+                                        <span class="code-dot"></span>
+                                        <span class="code-dot"></span>
+                                        <span class="code-dot"></span>
+                                    </span>
+                                    <span class="code-panel-label">Java &mdash; {{ question.code_line_count }} lines</span>
+                                    <span class="code-panel-expand-icon">&#9656;</span>
                                 </summary>
-                                <pre class="content-block code-surface collapsible-content">{{ question.code_block }}</pre>
+                                <pre class="content-block code-surface">{{ question.code_block }}</pre>
                             </details>
                         {% else %}
-                            <pre class="content-block code-surface">{{ question.code_block }}</pre>
+                            <div class="code-panel">
+                                <div class="code-panel-bar">
+                                    <span class="code-panel-dots">
+                                        <span class="code-dot"></span>
+                                        <span class="code-dot"></span>
+                                        <span class="code-dot"></span>
+                                    </span>
+                                    <span class="code-panel-label">Java</span>
+                                </div>
+                                <pre class="content-block code-surface">{{ question.code_block }}</pre>
+                            </div>
                         {% endif %}
                     {% else %}
                         <p class="muted">No parsed code snippet for this question.</p>
