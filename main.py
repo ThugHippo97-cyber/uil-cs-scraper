@@ -1703,6 +1703,11 @@ def parse_answers_from_text(answer_text: str):
         if not value:
             return ""
 
+        # Strip common OCR artifacts that corrupt single-letter answers (e.g. "£E" → "E", "&B" → "B").
+        ocr_stripped = re.sub(r"^[^A-Za-z0-9+\-]+", "", value)
+        if re.fullmatch(r"[A-L]", ocr_stripped, re.IGNORECASE):
+            value = ocr_stripped
+
         letter_match = re.match(r"^([A-L])\b", value, re.IGNORECASE)
         if letter_match:
             return letter_match.group(1).upper()
