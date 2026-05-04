@@ -1255,6 +1255,20 @@ code {
     }
 }
 
+.see-more-btn {
+    margin-top: 10px;
+    background: none;
+    border: none;
+    color: var(--accent);
+    font-size: 0.85rem;
+    cursor: pointer;
+    padding: 0;
+}
+
+.see-more-btn:hover {
+    text-decoration: underline;
+}
+
 .drill-panel-head {
     display: flex;
     align-items: center;

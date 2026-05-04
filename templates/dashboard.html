@@ -46,7 +46,7 @@
                 {% if recent_attempts %}
                     <div class="compact-list">
                         {% for attempt in recent_attempts %}
-                            <div class="compact-row">
+                            <div class="compact-row{% if loop.index > 3 %} attempts-overflow" style="display:none{% endif %}">
                                 <div>
                                     <strong>{{ attempt.exam_name }}</strong>
                                     <p class="muted">{{ attempt.year }} | {{ attempt.level }} | {{ attempt.completed_at }}</p>
@@ -55,6 +55,9 @@
                             </div>
                         {% endfor %}
                     </div>
+                    {% if recent_attempts|length > 3 %}
+                        <button class="see-more-btn" id="attempts-toggle" type="button" onclick="toggleAttempts()">See {{ recent_attempts|length - 3 }} more</button>
+                    {% endif %}
                 {% else %}
                     <p class="muted">Finish a test while logged in and it will show up here.</p>
                 {% endif %}
@@ -109,5 +112,14 @@
         </section>
     </div>
     <script src="{{ url_for('static', filename='theme.js', v=static_v) }}"></script>
+    <script>
+        function toggleAttempts() {
+            const rows = document.querySelectorAll(".attempts-overflow");
+            const btn = document.getElementById("attempts-toggle");
+            const hidden = rows[0].style.display === "none";
+            rows.forEach(r => r.style.display = hidden ? "" : "none");
+            btn.textContent = hidden ? "See less" : "See " + rows.length + " more";
+        }
+    </script>
 </body>
 </html>
