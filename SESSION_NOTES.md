@@ -6,6 +6,15 @@ _Update this at the end of every session. Claude will offer to do it for you._
 
 ## Last Worked On
 
+- **2026-05-04** — Shared context fixes + UI features. Several commits pushed:
+  - **Fullscreen expand** (`a76c9b0`): Added expand button (⛶) to exam question image bar. Opens a full-screen modal with enlarged PDF crop + interactive answer choices. Works in both practice mode (`question.html`) and test mode (`test_mode.html`). `checkAnswer` scoped via `btn.closest` so page and modal buttons don't interfere.
+  - **Static file cache-busting** (`53d1ea9`): `app.py` now computes git commit hash at startup (`STATIC_VERSION`) and appends `?v=<hash>` to `style.css` and `theme.js` URLs. Fixes browser serving stale CSS after deploy.
+  - **Shared context recompute** (`5f6722b`): Reran `merge_code_blocks` across all 349 `shared_code` groups; 197 had stale/malformed `shared_context` from before the merge deduplication fix. Key improvements:
+    - `2025_invitationala` Q35-38 DataStruct class now merges cleanly (no extra braces)
+    - `2018_invitationalb` Q23-27 restored with full class definition (extracted directly from PDF page text) + client code
+    - `prepare_question` now supports `shared_context` in `question_overrides.json` for future patches without DB changes
+  - All 80 tests pass. Pushed to origin.
+
 - **2026-05-03** (evening 3) — DB duplicate purge + OCR fix session. One commit pushed (`b31f40b`):
   - **Deleted 270 duplicate DB rows** across 7 exams (2017/2023a/2023b/2024a/2025a/2026_district/2026_invitationalb) that were double-ingested from the archive cache. HIGH severity findings: 313 → 43.
   - **OCR artifact normalization** in `normalize_answer_value`: strips leading non-alphanum chars (£, &) so garbled single-letter answers normalize correctly.
@@ -39,8 +48,8 @@ _Update this at the end of every session. Claude will offer to do it for you._
 
 - App is **live on PythonAnywhere** — used by a UIL CS competition team for practice before state competition.
 - DB has **4064 questions** across ~100 exams. Sanity queue is empty.
-- Audit: 721 findings (HIGH 43, MEDIUM 483, LOW 195). Remaining HIGH issues are structural (image-only scan, Sample Test 2 Q39).
-- **1 commit ahead of origin** — push needed.
+- Audit: 721 findings (HIGH 43, MEDIUM 483, LOW 195).
+- **All commits pushed to origin.** Deploy to PythonAnywhere pending.
 
 ## Active Blockers
 
@@ -48,16 +57,20 @@ _Update this at the end of every session. Claude will offer to do it for you._
 
 ## Next Steps
 
-- Push pending commit to origin (`git push`)
-- Deploy updated code to PythonAnywhere
-- Fix `answer_not_in_choices` × 3 for Sample Test 2 Q39 (Roman numeral Big-O question; choices parsed as empty; needs PDF investigation)
-- Investigate `invalid_crop_bounds` × 40 for `2026_college_station`: image-only scan, would need OCR re-ingestion to get crop data — low priority unless team specifically needs those questions
-- Address MEDIUM findings (choice_labels_out_of_order 187, duplicate_choice_labels 119, footer_or_header_leakage 53) in future sessions
+- Deploy to PythonAnywhere (`git pull` + reload)
+- Fix `answer_not_in_choices` × 3 for Sample Test 2 Q39 (Roman numeral Big-O question; choices parsed as empty — "I." at start gets parsed as choice label; needs PDF investigation)
+- Address remaining `parse_feedback.jsonl` items:
+  - `2025_district` Q17/19/20/21: graph/expression images missing — visual-only, not fixable without OCR
+  - `2025_stacey_tests_test_07` Q16 / `2019_invitationala` Q27: crop shows partial code but text shared_context panel has full code — likely acceptable; users may just not notice the shared context panel
+  - `2017_invitationalc` Q39: open-response with garbled choices — low priority
+  - `2018_district` Q9: answer dispute already overridden as B
+- Continue MEDIUM audit findings: `choice_labels_out_of_order` (187), `duplicate_choice_labels` (119), `footer_or_header_leakage` (53)
 
 ## Decisions Made
 
 | Date | Decision | Reason |
 |------|----------|--------|
+| 2026-05-04 | shared_context recompute: only update DB directly when anchor code_block is empty | question_overrides.json now supports shared_context field for future patches without DB changes |
 | 2026-05-04 | Leave 2026_college_station crop bounds unfixed for now | PDF is fully image-only (0 text chars); fixing requires full OCR re-ingestion; not worth it unless team specifically needs those Qs |
 | 2026-05-03 | Align `evaluate_answer_sanity` with `should_use_visual_choice_fallback` | Sanity checker was flagging questions the UI handles fine via visual fallback — false positives |
 | 2026-05-03 | Clear unrecoverable MCQ entries from sanity queue without fixing | Choices were never in the PDF text; visual fallback handles display; re-ingestion won't help |
@@ -70,4 +83,4 @@ _Update this at the end of every session. Claude will offer to do it for you._
 
 ---
 
-_Last updated: 2026-05-04 (evening 3)_
+_Last updated: 2026-05-04_
