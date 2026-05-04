@@ -74,6 +74,24 @@
             </div>
         </section>
 
+        <section class="detail-panel drill-panel">
+            <div class="drill-panel-head">
+                <h3>Missed Question Drill</h3>
+                {% if drill_queue_count > 0 %}
+                    <a class="response-submit" href="{{ url_for('drill_mode') }}">Start Drill ({{ drill_queue_count }} question{{ 's' if drill_queue_count != 1 }})</a>
+                {% endif %}
+            </div>
+            {% if drill_queue_count > 0 %}
+                <div class="tag-row">
+                    {% for tag, count in drill_top_tags %}
+                        <span class="tag">{{ tag }} x{{ count }}</span>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <p class="muted">Complete a test to build your drill queue. Missed questions matching your weak topics will appear here.</p>
+            {% endif %}
+        </section>
+
         <section class="detail-panel">
             <h3>Saved Questions</h3>
             {% if bookmarks %}

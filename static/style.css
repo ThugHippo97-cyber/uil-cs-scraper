@@ -1254,3 +1254,15 @@ code {
         to { opacity: 1; }
     }
 }
+
+.drill-panel-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 12px;
+}
+
+.drill-panel-head h3 {
+    margin: 0;
+}

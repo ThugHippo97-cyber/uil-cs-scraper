@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ exam_name }} Test Mode</title>
+    <title>{% if is_drill %}Drill Practice{% else %}{{ exam_name }} Test Mode{% endif %}</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css', v=static_v) }}">
 </head>
 <body>
@@ -21,9 +21,9 @@
 
         <section class="hero test-hero">
             <div class="hero-copy">
-                <p class="eyebrow">Test Mode</p>
-                <h1>{{ year }} {{ level }} | {{ exam_name }}</h1>
-                <p class="hero-text">Answer one question at a time. Your progress is saved in this browser{% if current_user %} and synced to your account when you finish{% endif %}.</p>
+                <p class="eyebrow">{% if is_drill %}Drill Practice{% else %}Test Mode{% endif %}</p>
+                <h1>{% if is_drill %}Missed Question Drill{% else %}{{ year }} {{ level }} | {{ exam_name }}{% endif %}</h1>
+                <p class="hero-text">{% if is_drill %}Practice your weakest topics. Correct answers reduce a question's priority in the drill.{% else %}Answer one question at a time. Your progress is saved in this browser{% if current_user %} and synced to your account when you finish{% endif %}.{% endif %}</p>
             </div>
             <div class="test-status-row">
                 <span class="pill" id="progress-pill">Question 1 / {{ total_questions }}</span>
@@ -125,6 +125,7 @@
     <script>
         const questions = {{ questions|tojson }};
         const examKey = {{ exam_key|tojson }};
+        const isDrill = {{ is_drill|tojson }};
         const isLoggedIn = {{ (current_user is not none)|tojson }};
         const testMeta = {
             exam_key: examKey,
@@ -185,7 +186,7 @@
         }
 
         function getQuestionStateKey(question) {
-            return String(question.question_number);
+            return isDrill ? String(question.id) : String(question.question_number);
         }
 
         function loadState() {

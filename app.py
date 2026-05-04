@@ -289,12 +289,25 @@ def init_app_tables():
         FOREIGN KEY(question_id) REFERENCES questions(id)
     );
 
+    CREATE TABLE IF NOT EXISTS user_drill_queue (
+        user_id     INTEGER NOT NULL,
+        question_id INTEGER NOT NULL,
+        miss_count  INTEGER NOT NULL DEFAULT 1,
+        added_at    TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        last_seen_at TEXT,
+        PRIMARY KEY (user_id, question_id),
+        FOREIGN KEY(user_id)     REFERENCES users(id),
+        FOREIGN KEY(question_id) REFERENCES questions(id)
+    );
+
     CREATE INDEX IF NOT EXISTS idx_test_attempts_user_completed
         ON test_attempts(user_id, completed_at DESC);
     CREATE INDEX IF NOT EXISTS idx_attempt_questions_question
         ON attempt_questions(question_id);
     CREATE INDEX IF NOT EXISTS idx_parse_issue_reports_question
         ON parse_issue_reports(question_id, reported_at DESC);
+    CREATE INDEX IF NOT EXISTS idx_user_drill_queue_user_miss
+        ON user_drill_queue(user_id, miss_count DESC);
     """)
     conn.commit()
     conn.close()
@@ -1992,6 +2005,18 @@ def dashboard():
         """,
         (user_id,),
     ).fetchall()
+    drill_queue_count = conn.execute(
+        "SELECT COUNT(*) FROM user_drill_queue WHERE user_id = ?", (user_id,)
+    ).fetchone()[0]
+    drill_tag_rows = conn.execute(
+        """
+        SELECT q.question_text, q.code_block, q.shared_context
+        FROM user_drill_queue udq
+        JOIN questions q ON q.id = udq.question_id
+        WHERE udq.user_id = ?
+        """,
+        (user_id,),
+    ).fetchall()
     conn.close()
 
     tag_counts = {}
@@ -2005,12 +2030,22 @@ def dashboard():
             tag_counts[tag] = tag_counts.get(tag, 0) + 1
     weak_tags = sorted(tag_counts.items(), key=lambda item: (-item[1], item[0]))[:8]
 
+    drill_tag_counts = {}
+    for row in drill_tag_rows:
+        for tag in extract_search_tags(
+            row["question_text"] or "", row["code_block"] or "", row["shared_context"] or ""
+        ):
+            drill_tag_counts[tag] = drill_tag_counts.get(tag, 0) + 1
+    drill_top_tags = sorted(drill_tag_counts.items(), key=lambda kv: (-kv[1], kv[0]))[:5]
+
     return render_template(
         "dashboard.html",
         summary=summary,
         recent_attempts=recent_attempts,
         weak_tags=weak_tags,
         bookmarks=bookmarks,
+        drill_queue_count=drill_queue_count,
+        drill_top_tags=drill_top_tags,
     )
 
 
@@ -2132,7 +2167,225 @@ def test_mode():
         exam_key=exam_key,
         total_questions=len(questions),
         questions=questions,
+        is_drill=False,
     )
+
+
+@app.route("/drill")
+@login_required
+def drill_mode():
+    user_id = g.current_user["id"]
+    conn = get_connection()
+    queue_rows = conn.execute(
+        """
+        SELECT question_id FROM user_drill_queue
+        WHERE user_id = ?
+        ORDER BY miss_count DESC, last_seen_at ASC NULLS FIRST, added_at ASC
+        LIMIT 100
+        """,
+        (user_id,),
+    ).fetchall()
+
+    if not queue_rows:
+        conn.close()
+        return render_template("drill_empty.html")
+
+    question_ids = [r["question_id"] for r in queue_rows]
+    placeholders = ",".join("?" * len(question_ids))
+    rows = conn.execute(
+        f"SELECT * FROM questions WHERE id IN ({placeholders})",
+        question_ids,
+    ).fetchall()
+    conn.close()
+
+    row_by_id = {row["id"]: row for row in rows}
+    ordered_rows = [
+        row_by_id[qid]
+        for qid in question_ids
+        if qid in row_by_id and not is_explanation_or_key_row(row_by_id[qid])
+    ]
+    prepared = [prepare_question(row) for row in ordered_rows]
+
+    group_anchor_seen = set()
+    drill_questions = []
+    for q in prepared:
+        is_shared_group = q["group_type"] != "single" and bool(q["group_id"])
+        group_id = q["group_id"] if is_shared_group else ""
+        is_group_anchor = False
+        if is_shared_group and group_id not in group_anchor_seen:
+            is_group_anchor = True
+            group_anchor_seen.add(group_id)
+
+        if q["parsed_choices"]:
+            choice_letters = [choice["letter"] for choice in q["parsed_choices"]]
+        elif q["visual_choice_labels"]:
+            choice_letters = list(q["visual_choice_labels"])
+        else:
+            labels = parse_choice_label_sequence(q["choices"])
+            choice_letters = labels if labels else (
+                ["A", "B", "C", "D", "E"]
+                if re.fullmatch(r"[A-E]", q["answer"] or "", re.IGNORECASE)
+                else []
+            )
+
+        drill_questions.append({
+            "id": q["id"],
+            "question_number": q["question_number"],
+            "question_text": q["question_text"],
+            "code_block": q["code_block"],
+            "answer": (q["answer"] or "").strip().upper(),
+            "normalized_open_response_answer": q["normalized_open_response_answer"],
+            "is_open_response": bool(q["is_open_response"]),
+            "is_shared_group": is_shared_group,
+            "group_id": group_id,
+            "is_group_anchor": is_group_anchor,
+            "shared_context": q["shared_context"] if is_shared_group else "",
+            "choice_letters": choice_letters,
+            "display_issues": q["display_issues"],
+        })
+
+    return render_template(
+        "test_mode.html",
+        year=None,
+        level="",
+        exam_name="Drill Practice",
+        exam_key="drill",
+        total_questions=len(drill_questions),
+        questions=drill_questions,
+        is_drill=True,
+    )
+
+
+DRILL_CAP = 100
+
+
+def update_drill_queue(user_id, attempt_id, conn):
+    missed_rows = conn.execute(
+        """
+        SELECT q.question_text, q.code_block, q.shared_context
+        FROM attempt_questions aq
+        JOIN test_attempts ta ON ta.id = aq.attempt_id
+        JOIN questions q ON q.id = aq.question_id
+        WHERE ta.user_id = ? AND aq.correct = 0
+        ORDER BY ta.completed_at DESC
+        LIMIT 200
+        """,
+        (user_id,),
+    ).fetchall()
+
+    tag_counts = {}
+    for row in missed_rows:
+        for tag in extract_search_tags(
+            row["question_text"] or "", row["code_block"] or "", row["shared_context"] or ""
+        ):
+            tag_counts[tag] = tag_counts.get(tag, 0) + 1
+    weak_tags = {tag for tag, _ in sorted(tag_counts.items(), key=lambda kv: (-kv[1], kv[0]))[:8]}
+    if not weak_tags:
+        return
+
+    attempt_missed = conn.execute(
+        """
+        SELECT q.id, q.question_text, q.code_block, q.shared_context,
+               q.group_id, q.group_type
+        FROM attempt_questions aq
+        JOIN questions q ON q.id = aq.question_id
+        WHERE aq.attempt_id = ? AND aq.correct = 0
+        """,
+        (attempt_id,),
+    ).fetchall()
+
+    candidate_ids = set()
+    group_ids_to_expand = set()
+    for row in attempt_missed:
+        if is_explanation_or_key_row(row):
+            continue
+        tags = extract_search_tags(
+            row["question_text"] or "", row["code_block"] or "", row["shared_context"] or ""
+        )
+        if weak_tags & set(tags):
+            candidate_ids.add(row["id"])
+            if row["group_id"] and row["group_type"] != "single":
+                group_ids_to_expand.add(row["group_id"])
+
+    if group_ids_to_expand:
+        placeholders = ",".join("?" * len(group_ids_to_expand))
+        siblings = conn.execute(
+            f"SELECT id, question_text, code_block, choices, answer, group_id, group_type"
+            f" FROM questions WHERE group_id IN ({placeholders})",
+            list(group_ids_to_expand),
+        ).fetchall()
+        for row in siblings:
+            if not is_explanation_or_key_row(row):
+                candidate_ids.add(row["id"])
+
+    for qid in candidate_ids:
+        conn.execute(
+            """
+            INSERT INTO user_drill_queue (user_id, question_id, miss_count, added_at)
+            VALUES (?, ?, 1, CURRENT_TIMESTAMP)
+            ON CONFLICT(user_id, question_id)
+            DO UPDATE SET miss_count = miss_count + 1
+            """,
+            (user_id, qid),
+        )
+
+    current_count = conn.execute(
+        "SELECT COUNT(*) FROM user_drill_queue WHERE user_id = ?", (user_id,)
+    ).fetchone()[0]
+    overflow = current_count - DRILL_CAP
+    if overflow > 0:
+        evict_rows = conn.execute(
+            """
+            SELECT rowid FROM user_drill_queue
+            WHERE user_id = ?
+            ORDER BY miss_count ASC, last_seen_at DESC NULLS LAST, added_at ASC
+            LIMIT ?
+            """,
+            (user_id, overflow),
+        ).fetchall()
+        if evict_rows:
+            placeholders = ",".join("?" * len(evict_rows))
+            conn.execute(
+                f"DELETE FROM user_drill_queue WHERE rowid IN ({placeholders})",
+                [r[0] for r in evict_rows],
+            )
+
+    conn.commit()
+
+
+def update_drill_queue_from_drill(user_id, attempt_id, conn):
+    drill_results = conn.execute(
+        "SELECT question_id, correct FROM attempt_questions WHERE attempt_id = ?",
+        (attempt_id,),
+    ).fetchall()
+
+    now = datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%S")
+    for row in drill_results:
+        qid = row["question_id"]
+        if row["correct"]:
+            conn.execute(
+                """
+                UPDATE user_drill_queue
+                SET miss_count = miss_count - 1, last_seen_at = ?
+                WHERE user_id = ? AND question_id = ? AND miss_count > 1
+                """,
+                (now, user_id, qid),
+            )
+            conn.execute(
+                "DELETE FROM user_drill_queue WHERE user_id = ? AND question_id = ? AND miss_count <= 1",
+                (user_id, qid),
+            )
+        else:
+            conn.execute(
+                """
+                UPDATE user_drill_queue
+                SET miss_count = miss_count + 1, last_seen_at = ?
+                WHERE user_id = ? AND question_id = ?
+                """,
+                (now, user_id, qid),
+            )
+
+    conn.commit()
 
 
 @app.route("/api/test_attempts", methods=["POST"])
@@ -2197,6 +2450,18 @@ def save_test_attempt():
         ],
     )
     conn.commit()
+
+    is_drill_attempt = str(payload.get("exam_key") or "") == "drill"
+    try:
+        if is_drill_attempt:
+            update_drill_queue_from_drill(g.current_user["id"], attempt_id, conn)
+        else:
+            update_drill_queue(g.current_user["id"], attempt_id, conn)
+    except Exception:
+        app.logger.exception(
+            "drill queue update failed user=%s attempt=%s", g.current_user["id"], attempt_id
+        )
+
     conn.close()
 
     return jsonify({

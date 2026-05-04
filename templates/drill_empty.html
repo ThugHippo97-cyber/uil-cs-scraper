@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Drill Practice</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css', v=static_v) }}">
+</head>
+<body>
+    <div class="container">
+        <nav class="top-nav">
+            <a class="back-link" href="{{ url_for('dashboard') }}">&larr; Back to dashboard</a>
+        </nav>
+        <section class="hero">
+            <p class="eyebrow">Drill Practice</p>
+            <h1>No drill questions yet.</h1>
+            <p class="hero-text">Complete a test to build your drill queue. Questions you miss that match your weak topics will be collected here for focused practice.</p>
+            <a class="response-submit" href="{{ url_for('index') }}">Find a test to take</a>
+        </section>
+    </div>
+    <script src="{{ url_for('static', filename='theme.js', v=static_v) }}"></script>
+</body>
+</html>

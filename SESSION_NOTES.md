@@ -6,6 +6,12 @@ _Update this at the end of every session. Claude will offer to do it for you._
 
 ## Last Worked On
 
+- **2026-05-04** — Parse audit skill design + Pass 1 run. No code commits:
+  - Collaborated with a web-based LLM to draft a two-pass parse audit skill (`parse_audit_skill/SKILL.md`). Reviewed the draft and fixed 6 bugs before activating: wrong model name (`claude-opus-4-5` → `claude-sonnet-4-6`), wrong JSON report key (`issues` → `report["findings"]`), off-by-one page number indexing, incorrect issue type names that wouldn't match real audit output, missing Pass 1→2 ID bridge, and a broken `write_final_report` key structure.
+  - Ran Pass 1 (heuristic audit) against all 4,064 questions — 724 findings, same profile as last session (HIGH 43, MEDIUM 486, LOW 195). No regressions.
+  - Attempted Pass 2 vision audit on 43 `garbled_text` questions — blocked because `ANTHROPIC_API_KEY` is not set in the local venv environment. The 43 question IDs are saved in `reports/pass2_garbled_results.json` (as errors) for future runs.
+  - Installed `anthropic` SDK into the project venv for when Pass 2 is ready to run.
+
 - **2026-05-04** — Clean academic UI redesign. One local commit created (`cdec25f`, not pushed yet):
   - Replaced the flashy matrix/theme-heavy look with a compact academic practice-tool interface: neutral light background, white cards, subtle borders, restrained shadows, and a navy accent.
   - Removed novelty theme selector behavior. Added a simple Light/Dark toggle in the top nav for users who want lower brightness; dark mode is an inverse high-contrast version of the same UI, not a separate visual theme.
@@ -62,10 +68,11 @@ _Update this at the end of every session. Claude will offer to do it for you._
 
 ## Active Blockers
 
-- None
+- Pass 2 vision audit requires `ANTHROPIC_API_KEY` set in the local environment — not currently available
 
 ## Next Steps
 
+- When API key is available: run Pass 2 on the 43 `garbled_text` questions — IDs already in `reports/pass2_garbled_results.json`. Script will need `ANTHROPIC_API_KEY` exported in the shell before running (`! export ANTHROPIC_API_KEY=...` in Claude Code prompt).
 - Deploy to PythonAnywhere (`git pull` + reload)
 - Fix `answer_not_in_choices` × 3 for Sample Test 2 Q39 (Roman numeral Big-O question; choices parsed as empty — "I." at start gets parsed as choice label; needs PDF investigation)
 - Address remaining `parse_feedback.jsonl` items:
