@@ -1098,7 +1098,8 @@ def prepare_question(row):
     display_code = override.get("code_block", row["code_block"] or "")
     display_choices = override.get("choices", row["choices"] or "")
     display_answer = override.get("answer", row["answer"] or "")
-    is_shared_group = (row["group_type"] or "single") != "single" and bool(row["shared_context"])
+    display_shared_context = override.get("shared_context", row["shared_context"] or "")
+    is_shared_group = (row["group_type"] or "single") != "single" and bool(display_shared_context)
 
     if is_shared_group:
         cleaned_question = clean_text_for_display(display_question)
@@ -1109,8 +1110,8 @@ def prepare_question(row):
     cleaned_choices = trim_to_first_choice_label(cleaned_choices)
 
     merged_code_parts = []
-    if is_shared_group and row["shared_context"]:
-        merged_code_parts.append((row["shared_context"] or "").strip())
+    if is_shared_group and display_shared_context:
+        merged_code_parts.append(display_shared_context.strip())
     elif display_code.strip():
         merged_code_parts.append(display_code.strip())
     if extra_code_from_question.strip():
@@ -1190,7 +1191,7 @@ def prepare_question(row):
         "code_line_count": code_line_count,
         "group_id": row["group_id"] or "",
         "group_type": row["group_type"] or "single",
-        "shared_context": clean_text_for_display(row["shared_context"] or ""),
+        "shared_context": clean_text_for_display(display_shared_context),
     }
 
 
