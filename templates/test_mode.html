@@ -50,7 +50,7 @@
                         <span class="question-img-dot"></span>
                     </span>
                     <span class="question-img-label">Exam Question</span>
-                    <span></span>
+                    <button class="expand-btn" onclick="openTestFullscreen()" title="Expand question">&#x26F6;</button>
                 </div>
                 <img id="test-question-image" class="question-img" alt="Question snippet">
             </div>
@@ -96,6 +96,30 @@
             <h3>Final Results</h3>
             <p class="hero-text" id="summary-text"></p>
         </section>
+    </div>
+
+    <div id="test-fullscreen-modal" class="fullscreen-modal" role="dialog" aria-modal="true" aria-label="Expanded question view">
+        <div class="fullscreen-modal-inner">
+            <button class="fullscreen-modal-close" onclick="closeTestFullscreen()" aria-label="Close">&times;</button>
+
+            <div class="fullscreen-modal-frame">
+                <div class="fullscreen-modal-bar">
+                    <span class="question-img-dots">
+                        <span class="question-img-dot"></span>
+                        <span class="question-img-dot"></span>
+                        <span class="question-img-dot"></span>
+                    </span>
+                    <span class="question-img-label">Exam Question</span>
+                </div>
+                <img id="modal-test-question-image" class="fullscreen-modal-img" alt="Question snippet">
+            </div>
+
+            <div class="fullscreen-modal-choices">
+                <h3 id="modal-answer-heading">Answer Choices</h3>
+                <div id="modal-answer-body"></div>
+                <div id="modal-result-box" class="result-box" style="display:none;"></div>
+            </div>
+        </div>
     </div>
 
     <script>
@@ -239,6 +263,7 @@
                     }
                 });
             }
+            syncModal();
         }
 
         function renderChoiceQuestion(question, existingAnswer) {
@@ -406,6 +431,7 @@
             nextBtn.disabled = state.currentIndex >= totalQuestions - 1;
             updateHeaderStats();
             renderSummary();
+            syncModal();
         }
 
         function renderSummary() {
@@ -499,6 +525,69 @@
         if (state.finished) {
             submitAttempt();
         }
+
+        function openTestFullscreen() {
+            document.getElementById("test-fullscreen-modal").classList.add("open");
+            document.body.style.overflow = "hidden";
+            syncModal();
+        }
+
+        function closeTestFullscreen() {
+            document.getElementById("test-fullscreen-modal").classList.remove("open");
+            document.body.style.overflow = "";
+        }
+
+        function syncModal() {
+            const modal = document.getElementById("test-fullscreen-modal");
+            if (!modal.classList.contains("open")) return;
+
+            const question = questions[state.currentIndex];
+            const answerEntry = state.answers[getQuestionStateKey(question)] || null;
+
+            document.getElementById("modal-test-question-image").src = imageEl.src;
+            document.getElementById("modal-answer-heading").textContent = answerHeadingEl.textContent;
+
+            const modalBody = document.getElementById("modal-answer-body");
+            modalBody.innerHTML = answerBodyEl.innerHTML;
+
+            // Fix duplicate IDs introduced by cloning open-response elements
+            const modalInput = modalBody.querySelector("#open-response-input");
+            const modalSubmit = modalBody.querySelector("#open-response-submit");
+            if (modalInput) modalInput.id = "modal-open-response-input";
+            if (modalSubmit) modalSubmit.id = "modal-open-response-submit";
+
+            // Delegate unanswered choice button clicks to the originals
+            const origBtns = Array.from(answerBodyEl.querySelectorAll(".choice-btn"));
+            modalBody.querySelectorAll(".choice-btn").forEach((btn, i) => {
+                if (origBtns[i] && !origBtns[i].disabled) {
+                    btn.addEventListener("click", () => origBtns[i].click());
+                }
+            });
+
+            // Proxy open-response submit through the original input
+            const newModalSubmit = modalBody.querySelector("#modal-open-response-submit");
+            const origSubmitEl = answerBodyEl.querySelector("#open-response-submit");
+            const origInputEl = answerBodyEl.querySelector("#open-response-input");
+            if (newModalSubmit && origSubmitEl && origInputEl) {
+                newModalSubmit.onclick = () => {
+                    origInputEl.value = document.getElementById("modal-open-response-input").value;
+                    origSubmitEl.click();
+                };
+            }
+
+            const modalResultBox = document.getElementById("modal-result-box");
+            modalResultBox.textContent = resultBoxEl.textContent;
+            modalResultBox.className = resultBoxEl.className;
+            modalResultBox.style.display = resultBoxEl.style.display;
+        }
+
+        document.getElementById("test-fullscreen-modal").addEventListener("click", function(e) {
+            if (e.target === this) closeTestFullscreen();
+        });
+
+        document.addEventListener("keydown", function(e) {
+            if (e.key === "Escape") closeTestFullscreen();
+        });
     </script>
     <script src="{{ url_for('static', filename='theme.js', v=static_v) }}"></script>
 </body>
