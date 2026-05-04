@@ -6,6 +6,15 @@ _Update this at the end of every session. Claude will offer to do it for you._
 
 ## Last Worked On
 
+- **2026-05-04** — Clean academic UI redesign. One local commit created (`cdec25f`, not pushed yet):
+  - Replaced the flashy matrix/theme-heavy look with a compact academic practice-tool interface: neutral light background, white cards, subtle borders, restrained shadows, and a navy accent.
+  - Removed novelty theme selector behavior. Added a simple Light/Dark toggle in the top nav for users who want lower brightness; dark mode is an inverse high-contrast version of the same UI, not a separate visual theme.
+  - Kept **Start Full Test** as the primary home-page action and **Topic Practice Search** as the secondary workflow.
+  - Simplified marketing/prototype copy in `auth.html`, `dashboard.html`, and `test_mode.html`.
+  - Reworked shared component styling in `static/style.css`: buttons, pills, result cards, answer keycaps, status/result boxes, forms, dashboard stats, image/code frames, and fullscreen modal.
+  - `static/theme.js` now injects the light/dark toggle and persists dark mode with `localStorage`.
+  - Verification: `PYTHONPATH=.; pytest` passed with **80 tests**.
+
 - **2026-05-04** — Shared context fixes + UI features. Several commits pushed:
   - **Fullscreen expand** (`a76c9b0`): Added expand button (⛶) to exam question image bar. Opens a full-screen modal with enlarged PDF crop + interactive answer choices. Works in both practice mode (`question.html`) and test mode (`test_mode.html`). `checkAnswer` scoped via `btn.closest` so page and modal buttons don't interfere.
   - **Static file cache-busting** (`53d1ea9`): `app.py` now computes git commit hash at startup (`STATIC_VERSION`) and appends `?v=<hash>` to `style.css` and `theme.js` URLs. Fixes browser serving stale CSS after deploy.
@@ -49,7 +58,7 @@ _Update this at the end of every session. Claude will offer to do it for you._
 - App is **live on PythonAnywhere** — used by a UIL CS competition team for practice before state competition.
 - DB has **4064 questions** across ~100 exams. Sanity queue is empty.
 - Audit: 721 findings (HIGH 43, MEDIUM 483, LOW 195).
-- **All commits pushed to origin.** Deploy to PythonAnywhere pending.
+- Branch is ahead of `origin/main` with local UI/session-note commits not pushed yet. Deploy to PythonAnywhere pending after push.
 
 ## Active Blockers
 
@@ -70,6 +79,7 @@ _Update this at the end of every session. Claude will offer to do it for you._
 
 | Date | Decision | Reason |
 |------|----------|--------|
+| 2026-05-04 | Use one traditional Light/Dark toggle instead of multiple novelty themes | Keeps the interface practical and academic while still supporting users who prefer lower brightness |
 | 2026-05-04 | shared_context recompute: only update DB directly when anchor code_block is empty | question_overrides.json now supports shared_context field for future patches without DB changes |
 | 2026-05-04 | Leave 2026_college_station crop bounds unfixed for now | PDF is fully image-only (0 text chars); fixing requires full OCR re-ingestion; not worth it unless team specifically needs those Qs |
 | 2026-05-03 | Align `evaluate_answer_sanity` with `should_use_visual_choice_fallback` | Sanity checker was flagging questions the UI handles fine via visual fallback — false positives |
