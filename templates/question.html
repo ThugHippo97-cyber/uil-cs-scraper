@@ -42,7 +42,7 @@
                             <span class="question-img-dot"></span>
                         </span>
                         <span class="question-img-label">Exam Question</span>
-                        <span></span>
+                        <button class="expand-btn" onclick="openFullscreen()" title="Expand question">&#x26F6;</button>
                     </div>
                     <img src="{{ url_for('question_image', question_id=question.id) }}" class="question-img" alt="Exam question crop">
                 </div>
@@ -181,10 +181,71 @@
         </div>
     </div>
 
+    <div id="fullscreen-modal" class="fullscreen-modal" role="dialog" aria-modal="true" aria-label="Expanded question view">
+        <div class="fullscreen-modal-inner">
+            <button class="fullscreen-modal-close" onclick="closeFullscreen()" aria-label="Close">&times;</button>
+
+            <div class="fullscreen-modal-frame">
+                <div class="fullscreen-modal-bar">
+                    <span class="question-img-dots">
+                        <span class="question-img-dot"></span>
+                        <span class="question-img-dot"></span>
+                        <span class="question-img-dot"></span>
+                    </span>
+                    <span class="question-img-label">Exam Question</span>
+                </div>
+                <img src="{{ url_for('question_image', question_id=question.id) }}" class="fullscreen-modal-img" alt="Exam question crop">
+            </div>
+
+            <div class="fullscreen-modal-choices">
+                <h3>{% if question.is_open_response %}Answer Response{% else %}Answer Choices{% endif %}</h3>
+
+                {% if not question.answer %}
+                    <p class="muted">Answer key unavailable for this question.</p>
+                {% elif question.parsed_choices %}
+                    <div class="choice-buttons choice-label-only">
+                        {% for choice in question.parsed_choices %}
+                            <button
+                                class="choice-btn"
+                                data-choice-letter="{{ choice.letter|trim|upper }}"
+                                onclick="checkAnswer('{{ choice.letter }}', '{{ question.answer|trim|upper }}', this, 'modal-result-box')"
+                            >
+                                <strong>{{ choice.letter }}.</strong>
+                            </button>
+                        {% endfor %}
+                    </div>
+                {% elif question.is_visual_choice %}
+                    <div class="choice-buttons visual-choice-buttons">
+                        {% for label in question.visual_choice_labels %}
+                            <button
+                                class="choice-btn visual-choice-btn"
+                                onclick="checkAnswer('{{ label }}', '{{ question.answer|trim|upper }}', this, 'modal-result-box')"
+                            >
+                                <strong>{{ label }}</strong>
+                            </button>
+                        {% endfor %}
+                    </div>
+                {% elif question.choices %}
+                    <pre class="content-block">{{ question.choices }}</pre>
+                {% elif question.is_open_response %}
+                    <div class="response-form">
+                        <label class="response-label" for="modal-response-input">Enter your answer</label>
+                        <input id="modal-response-input" class="response-input" type="text" autocomplete="off" spellcheck="false">
+                        <button class="response-submit" type="button" onclick='checkOpenResponse("modal-response-input", {{ question.answer|tojson }}, {{ question.normalized_open_response_answer|tojson }}, "modal-result-box")'>Check Answer</button>
+                    </div>
+                {% endif %}
+
+                <div id="modal-result-box" class="result-box" style="display:none;"></div>
+            </div>
+        </div>
+    </div>
+
     <script>
-        function checkAnswer(selected, correct, btn) {
-            const buttons = document.querySelectorAll(".choice-btn");
-            const resultBox = document.getElementById("result-box");
+        function checkAnswer(selected, correct, btn, resultBoxId) {
+            const resultBoxElementId = resultBoxId || "result-box";
+            const container = btn.closest(".choice-buttons");
+            const buttons = container ? container.querySelectorAll(".choice-btn") : document.querySelectorAll(".choice-btn");
+            const resultBox = document.getElementById(resultBoxElementId);
 
             buttons.forEach(button => {
                 button.disabled = true;
@@ -257,5 +318,26 @@
         }
     </script>
     <script src="{{ url_for('static', filename='theme.js') }}"></script>
+    <script>
+        function openFullscreen() {
+            const modal = document.getElementById("fullscreen-modal");
+            modal.classList.add("open");
+            document.body.style.overflow = "hidden";
+        }
+
+        function closeFullscreen() {
+            const modal = document.getElementById("fullscreen-modal");
+            modal.classList.remove("open");
+            document.body.style.overflow = "";
+        }
+
+        document.getElementById("fullscreen-modal").addEventListener("click", function(e) {
+            if (e.target === this) closeFullscreen();
+        });
+
+        document.addEventListener("keydown", function(e) {
+            if (e.key === "Escape") closeFullscreen();
+        });
+    </script>
 </body>
 </html>
