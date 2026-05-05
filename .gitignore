@@ -22,6 +22,9 @@ env/
 *.sqlite3
 instance/
 
+# Rendered PDF image cache
+.crop_cache/
+
 # Generated archive artifacts
 _archive_cache/
 archive_scan_report.json

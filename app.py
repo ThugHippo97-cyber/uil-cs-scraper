@@ -50,6 +50,8 @@ def resolve_app_state_path(path, default_name):
 DB_FILE = resolve_app_state_path(os.environ.get("UIL_CS_DB_FILE"), "uil_cs_questions_v2.db")
 QUESTION_OVERRIDE_FILE = resolve_app_state_path("question_overrides.json", "question_overrides.json")
 PARSE_FEEDBACK_FILE = resolve_app_state_path("parse_feedback.jsonl", "parse_feedback.jsonl")
+CROP_CACHE_DIR = os.path.join(BASE_DIR, ".crop_cache")
+os.makedirs(CROP_CACHE_DIR, exist_ok=True)
 _QUESTION_OVERRIDES_CACHE = None
 _CROP_TEXT_CACHE = {}
 
@@ -2502,6 +2504,23 @@ def toggle_bookmark(question_id):
     return redirect(url_for("question_detail", question_id=question_id))
 
 
+def serve_image(cache_key, render_fn):
+    cache_path = os.path.join(CROP_CACHE_DIR, f"{cache_key}.png")
+    if os.path.exists(cache_path):
+        response = send_file(cache_path, mimetype="image/png")
+    else:
+        img_bytes = render_fn()
+        try:
+            with open(cache_path, "wb") as f:
+                f.write(img_bytes.getvalue())
+        except OSError:
+            pass
+        img_bytes.seek(0)
+        response = send_file(img_bytes, mimetype="image/png")
+    response.headers["Cache-Control"] = "public, max-age=86400"
+    return response
+
+
 @app.route("/question_image/<int:question_id>")
 def question_image(question_id):
     conn = get_connection()
@@ -2528,7 +2547,8 @@ def question_image(question_id):
     if context_bounds:
         top, bottom, question_number = context_bounds
 
-    img_bytes = render_pdf_crop(
+    cache_key = f"q_{question_id}_{int(top)}_{int(bottom)}"
+    return serve_image(cache_key, lambda: render_pdf_crop(
         pdf_path,
         row["page_number"],
         top,
@@ -2536,8 +2556,7 @@ def question_image(question_id):
         question_number=question_number,
         question_text=row["question_text"] or "",
         end_question_number=end_question_number,
-    )
-    return send_file(img_bytes, mimetype="image/png")
+    ))
 
 
 @app.route("/question_page_image/<int:question_id>")
@@ -2553,8 +2572,7 @@ def question_page_image(question_id):
     if not os.path.exists(pdf_path):
         return "Source PDF not found", 404
 
-    img_bytes = render_pdf_page(pdf_path, row["page_number"])
-    return send_file(img_bytes, mimetype="image/png")
+    return serve_image(f"page_{question_id}", lambda: render_pdf_page(pdf_path, row["page_number"]))
 
 
 @app.route("/group_image/<group_id>")
@@ -2581,7 +2599,8 @@ def group_image(group_id):
     if not os.path.exists(pdf_path):
         return "Source PDF not found", 404
 
-    img_bytes = render_pdf_crop(
+    cache_key = f"grp_{group_id.replace('/', '_')}_{int(top)}_{int(bottom)}"
+    return serve_image(cache_key, lambda: render_pdf_crop(
         pdf_path,
         first["page_number"],
         top,
@@ -2589,8 +2608,7 @@ def group_image(group_id):
         question_number=first["question_number"],
         question_text=first["question_text"] or "",
         end_question_number=end_question_number,
-    )
-    return send_file(img_bytes, mimetype="image/png")
+    ))
 
 
 @app.route("/question/<int:question_id>")
