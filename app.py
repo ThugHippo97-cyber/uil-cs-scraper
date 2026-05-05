@@ -1660,7 +1660,7 @@ def needs_neighbor_context(row):
         row["code_block"] or "",
         row["choices"] or "",
     ])
-    return bool(re.search(r"(?i)\bline\s*#\d+\b|\bcomment\s*#\d+\b|<\*\d+>|client code", combined))
+    return bool(re.search(r"(?i)\bline\s*#\d+\b|\bcomment\s*#\d+\b|<\*\d+>", combined))
 
 
 def infer_neighbor_context_bounds(conn, row):

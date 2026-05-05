@@ -6,104 +6,72 @@ _Update this at the end of every session. Claude will offer to do it for you._
 
 ## Last Worked On
 
+- **2026-05-04** — Parse feedback infrastructure + 2026_district bulk fix session. Several commits pushed:
+  - **Admin feedback download** (`4aa2cfe`): Added `/admin/feedback` route that dumps the entire `parse_issue_reports` DB table as a downloadable JSONL file. Gated by `UIL_CS_ADMIN_USER` env var (set in PythonAnywhere WSGI file). Also documented that all reports were being saved to the DB table all along — the local `parse_feedback.jsonl` was stale because teammates used the live site. Synced the local file with the full server history (52 reports).
+  - **2026_district parse fixes** (`a75abe7`): Bulk `question_overrides.json` fixes for 20 reported issues across the exam. Fixes: Q4 code_block trimmed (Q5's boolean code leaked in); Q10 code_block trimmed (Scanner code leaked in); Q11 OCR artifact `is new File` fixed; Q15 question_text and code_block reconstructed (ArrayList init leaked into question_text, leading catch/finally stripped); Q16 code_block restructured (try/catch order inverted); Q17-19 correct shared_context (full LinkedHashSet code); Q27/Q28 shared_context added (complete mystery() function, question_text cleaned); Q29 question_text cleaned (function signature leaked in); Q34-Q37 shared_context added (full HashSet<byte[]> code); Q38 question_text fixed (BST element list from Q39/40 leaked in, threading code reordered); Q40 question_text fixed (first half of BST element list was missing).
+  - **2026_district DB grouping migration 1** (`b7859f7`): `migrations/fix_2026_district_grouping.py` — un-groups Q4/Q5 and Q10/Q11 (two separate unrelated questions falsely merged on same page); de-groups Q15/Q16 from Q17-19 (they're standalone, not part of the LinkedHashSet group); renames Q17-19 group_id to `p6_shared_17_19`. Must be run with correct DB path: `UIL_CS_DB_FILE=.../instance/uil_cs_questions_v2.db python migrations/fix_2026_district_grouping.py`. **Already run on PythonAnywhere.**
+  - **Image disk cache + browser cache headers** (`8c61825`): PDF crops were being re-rendered at 350 DPI from scratch on every request with no caching, causing 5-10 second delays. Added `serve_image()` helper that checks `.crop_cache/` before rendering; saves result to disk on first render; adds `Cache-Control: public, max-age=86400`. Cache key includes `top_y`/`bottom_y` so fixing crop bounds auto-invalidates. Applied to all three image routes: `question_image`, `question_page_image`, `group_image`.
+  - **2026_district DB grouping migration 2 + neighbor crop fix** (current, not yet pushed as separate commit): `migrations/fix_2026_district_grouping_2.py` — groups Q27/Q28 as `shared_code` (mystery function); groups Q34-Q37 as `shared_code` (HashSet code); groups Q39/Q40 as `shared_code` (same BST element list). Also fixed `needs_neighbor_context` to not trigger on "client code" — this was expanding crop bounds for Q29/Q30/Q31 unnecessarily (they have full code in code_block already; "client code" is a section label, not a reference to a neighboring question). Only `line #N`, `comment #N`, and `<*N>` patterns now trigger neighbor crop expansion. **Migration 2 not yet run on PythonAnywhere.**
+
 - **2026-05-04** — Missed question drill mode + dashboard QoL. Two commits pushed (`7a37ea7`, `0a5a1b5`):
-  - **Drill mode** (`7a37ea7`): Full missed-question drill feature. New `user_drill_queue` table (user_id, question_id, miss_count, last_seen_at). `update_drill_queue()` fires after every regular test — finds missed questions matching the user's top-8 weak tags, upserts with group expansion, evicts lowest-miss_count when over 100. `update_drill_queue_from_drill()` fires after drill completions — correct answers decrement/remove from queue, wrong answers increment. New `/drill` route assembles questions from queue using same group-cohesion logic as regular tests. `test_mode.html` gains `is_drill` flag (adjusts header, uses `question.id` as JS state key to avoid cross-exam question_number collisions). `drill_empty.html` for users with no queue. Dashboard shows "Missed Question Drill" section with count, top topic tags, and "Start Drill" button. All 80 tests pass.
-  - **Attempts collapse** (`0a5a1b5`): Dashboard "Recent Test Attempts" now shows 3 by default with a "See N more" toggle that expands the rest inline. Pure frontend — no backend change.
+  - **Drill mode** (`7a37ea7`): Full missed-question drill feature. New `user_drill_queue` table. `update_drill_queue()` fires after every regular test. New `/drill` route. `test_mode.html` gains `is_drill` flag. `drill_empty.html` for users with no queue. Dashboard shows "Missed Question Drill" section.
+  - **Attempts collapse** (`0a5a1b5`): Dashboard "Recent Test Attempts" shows 3 by default with inline expand toggle.
 
-- **2026-05-04** — Parse audit skill design + Pass 1 run. No code commits:
-  - Collaborated with a web-based LLM to draft a two-pass parse audit skill (`parse_audit_skill/SKILL.md`). Reviewed the draft and fixed 6 bugs before activating: wrong model name (`claude-opus-4-5` → `claude-sonnet-4-6`), wrong JSON report key (`issues` → `report["findings"]`), off-by-one page number indexing, incorrect issue type names that wouldn't match real audit output, missing Pass 1→2 ID bridge, and a broken `write_final_report` key structure.
-  - Ran Pass 1 (heuristic audit) against all 4,064 questions — 724 findings, same profile as last session (HIGH 43, MEDIUM 486, LOW 195). No regressions.
-  - Attempted Pass 2 vision audit on 43 `garbled_text` questions — blocked because `ANTHROPIC_API_KEY` is not set in the local venv environment. The 43 question IDs are saved in `reports/pass2_garbled_results.json` (as errors) for future runs.
-  - Installed `anthropic` SDK into the project venv for when Pass 2 is ready to run.
+- **2026-05-04** — Parse audit skill design + Pass 1 run. No code commits.
 
-- **2026-05-04** — Clean academic UI redesign. One local commit created (`cdec25f`, not pushed yet):
-  - Replaced the flashy matrix/theme-heavy look with a compact academic practice-tool interface: neutral light background, white cards, subtle borders, restrained shadows, and a navy accent.
-  - Removed novelty theme selector behavior. Added a simple Light/Dark toggle in the top nav for users who want lower brightness; dark mode is an inverse high-contrast version of the same UI, not a separate visual theme.
-  - Kept **Start Full Test** as the primary home-page action and **Topic Practice Search** as the secondary workflow.
-  - Simplified marketing/prototype copy in `auth.html`, `dashboard.html`, and `test_mode.html`.
-  - Reworked shared component styling in `static/style.css`: buttons, pills, result cards, answer keycaps, status/result boxes, forms, dashboard stats, image/code frames, and fullscreen modal.
-  - `static/theme.js` now injects the light/dark toggle and persists dark mode with `localStorage`.
-  - Verification: `PYTHONPATH=.; pytest` passed with **80 tests**.
+- **2026-05-04** — Clean academic UI redesign + shared context fixes + UI features. Several commits pushed (`cdec25f`, `a76c9b0`, `53d1ea9`, `5f6722b`).
 
-- **2026-05-04** — Shared context fixes + UI features. Several commits pushed:
-  - **Fullscreen expand** (`a76c9b0`): Added expand button (⛶) to exam question image bar. Opens a full-screen modal with enlarged PDF crop + interactive answer choices. Works in both practice mode (`question.html`) and test mode (`test_mode.html`). `checkAnswer` scoped via `btn.closest` so page and modal buttons don't interfere.
-  - **Static file cache-busting** (`53d1ea9`): `app.py` now computes git commit hash at startup (`STATIC_VERSION`) and appends `?v=<hash>` to `style.css` and `theme.js` URLs. Fixes browser serving stale CSS after deploy.
-  - **Shared context recompute** (`5f6722b`): Reran `merge_code_blocks` across all 349 `shared_code` groups; 197 had stale/malformed `shared_context` from before the merge deduplication fix. Key improvements:
-    - `2025_invitationala` Q35-38 DataStruct class now merges cleanly (no extra braces)
-    - `2018_invitationalb` Q23-27 restored with full class definition (extracted directly from PDF page text) + client code
-    - `prepare_question` now supports `shared_context` in `question_overrides.json` for future patches without DB changes
-  - All 80 tests pass. Pushed to origin.
+- **2026-05-03** — DB duplicate purge, OCR fix, UI overhaul, major parse quality session. Multiple commits.
 
-- **2026-05-03** (evening 3) — DB duplicate purge + OCR fix session. One commit pushed (`b31f40b`):
-  - **Deleted 270 duplicate DB rows** across 7 exams (2017/2023a/2023b/2024a/2025a/2026_district/2026_invitationalb) that were double-ingested from the archive cache. HIGH severity findings: 313 → 43.
-  - **OCR artifact normalization** in `normalize_answer_value`: strips leading non-alphanum chars (£, &) so garbled single-letter answers normalize correctly.
-  - **College Station answer overrides**: confirmed Q1=E, Q7=B, Q11=C, Q15=E, Q23=E from visual PDF key inspection; added to `question_overrides.json`.
-  - **Sanity queue fully cleared** — all 9 entries resolved (6 stale extended-choice flags, 1 stale fallback flag, 2 fixed by overrides).
-  - **Discovered**: `2026_college_station` is a fully image-only scan (0 chars extractable on all 12 pages). All 40 questions have zero crop bounds — these will show invalid_crop_bounds in audit permanently unless OCR re-ingestion is done. New exam `2026_invitationalc` was found in the archive and now in DB.
-  - Audit final state: **4064 questions, 721 findings (HIGH 43, MEDIUM 483, LOW 195)**. Remaining HIGHs: 40 invalid_crop_bounds (college_station image-only scan) + 3 answer_not_in_choices (Sample Test 2 Q39 across 3 exam versions).
-
-- **2026-05-03** (evening 2) — UI overhaul session. Used the `ui-ux-pro-max` skill to redesign question content presentation. One commit pushed (`ad1967f`):
-  - **Terminal-frame PDF images**: exam question crops now sit inside a styled window frame (traffic-light dots + "EXAM QUESTION" label) so they feel part of the UI rather than dropped in raw. Applied to both `question.html` and `test_mode.html` (with JS fallback handling).
-  - **IDE-style code panels**: code blocks get a terminal title bar (dots + "Java" label). Long collapsible code uses the panel bar itself as the toggle. Shared context panels in test mode get same treatment.
-  - **Keycap choice buttons**: A/B/C/D buttons styled as keyboard keys with 3D bottom shadow, lift-on-hover, press-on-active.
-  - **Result box icons**: ✓/✗ prefix via CSS `::before`.
-  - **`prefers-reduced-motion`** support added for all new animations.
-  - Also fixed the desktop `.bat` launcher (was crashing on open due to `exec` replacing bash; now uses `-l` login shell + `; exec bash` to keep terminal open).
-
-- **2026-05-03** — Major parse quality session. Worked through the `answer_sanity_queue.jsonl`
-  starting with the largest category. Three commits pushed:
-  1. **Shared code group detection** (`merge_code_blocks` overlap merging + `code_block_calls_declared_method`): improves grouping for questions whose code block calls a method defined in the shared context. All 80 tests pass.
-  2. **`parse_choices` period-delimiter bug + sanity checker alignment**: `b.push()` was being split as a B-choice label. Fixed by requiring whitespace/end after `.` delimiter. Also aligned `evaluate_answer_sanity` with `should_use_visual_choice_fallback` — no longer flags questions the visual fallback handles gracefully. Cleared all 33 `answer_not_in_parsed_choices` entries.
-  3. **`open_response_letter_answer` cleanup**: Added `question_overrides` for `college_station#17` and `college_station#25` (choices were OCR'd into question_text). Cleared all 13 entries (4 stale, 2 genuine open-response, 7 unrecoverable without PDFs).
-
-- **2026-05-03** (earlier) — Setup session on secondary machine. Configured GitHub token (30-day expiry), stored
-  credentials locally, and pushed `CLAUDE.md` + `SESSION_NOTES.md` to GitHub. No code changes — DB not
-  present on this machine.
-
-- **2026-05-02** — Initial project setup with Claude Code. Created `CLAUDE.md` and `SESSION_NOTES.md`
-  to establish a cross-machine save-game system. No code changes made yet.
+- **2026-05-02** — Initial project setup with Claude Code.
 
 ## Current Status
 
 - App is **live on PythonAnywhere** — used by a UIL CS competition team for practice before state competition.
 - DB has **4064 questions** across ~100 exams. Sanity queue is empty.
-- Audit: 721 findings (HIGH 43, MEDIUM 483, LOW 195).
-- Branch is ahead of `origin/main` with local UI/session-note commits not pushed yet. Deploy to PythonAnywhere pending after push.
+- **Migration 2 still needs to be run on PythonAnywhere** — see Next Steps.
+- Image disk cache is live; site should be dramatically faster after first pass through questions.
+- `parse_feedback.jsonl` is now synced from the server (52 reports total).
 
 ## Active Blockers
 
-- Pass 2 vision audit requires `ANTHROPIC_API_KEY` set in the local environment — not currently available
-- Drill queue will be empty for all users until they complete a test post-deploy (expected, not a bug)
+- **Migration 2 not yet run on PythonAnywhere**: run `UIL_CS_DB_FILE=.../instance/uil_cs_questions_v2.db python migrations/fix_2026_district_grouping_2.py` to group Q27/Q28, Q34-Q37, Q39/Q40 as shared_code.
+- Pass 2 vision audit requires `ANTHROPIC_API_KEY` — not currently available locally.
 
 ## Next Steps
 
-- **Feature 2 (Leaderboard)**: Global leaderboard accessible from homepage. Columns: questions answered correctly (all-time), tests taken, average test score. Decisions needed: opt-in vs. automatic, how many rows to show, whether to filter out drill attempts from stats.
-- **Feature 3 (Coach/Student accounts)**: Coach accounts can build a team and assign questions/tests to students. Students see everything. Guests are just unauthenticated users (no separate account type needed). Open questions: what "assign" looks like for students (required drill on dashboard? notification?), whether coaches see per-question student results or just high-level stats, one team per coach or multiple groups.
-- When API key is available: run Pass 2 on the 43 `garbled_text` questions — IDs already in `reports/pass2_garbled_results.json`. Script will need `ANTHROPIC_API_KEY` exported in the shell before running (`! export ANTHROPIC_API_KEY=...` in Claude Code prompt).
-- Deploy latest commits to PythonAnywhere if not already done (`git pull` + reload)
-- Fix `answer_not_in_choices` × 3 for Sample Test 2 Q39 (Roman numeral Big-O question; choices parsed as empty — "I." at start gets parsed as choice label; needs PDF investigation)
-- Address remaining `parse_feedback.jsonl` items:
-  - `2025_district` Q17/19/20/21: graph/expression images missing — visual-only, not fixable without OCR
-  - `2025_stacey_tests_test_07` Q16 / `2019_invitationala` Q27: crop shows partial code but text shared_context panel has full code — likely acceptable; users may just not notice the shared context panel
-  - `2017_invitationalc` Q39: open-response with garbled choices — low priority
-  - `2018_district` Q9: answer dispute already overridden as B
-- Continue MEDIUM audit findings: `choice_labels_out_of_order` (187), `duplicate_choice_labels` (119), `footer_or_header_leakage` (53)
+- **Run migration 2 on PythonAnywhere** (`fix_2026_district_grouping_2.py`) then reload — fixes Q27/Q28, Q34-Q37, Q39/Q40 grouping issues in 2026_district.
+- **Remaining parse feedback items** (from the 52-report sync):
+  - `2025_invitationala` Q31/32/33: BST element list missing from image — visual-only, needs PDF investigation. Q35/37/38: shared_context incomplete (DataStruct class).
+  - `2025_invitationalb` Q24: missing shared context. Q19: references prior questions (graph).
+  - `2025_stacey_tests_test_02` Q22: crop cuts off code.
+  - `2023_invitationala` Q3 / `2024_state` Q3: first 1-2 questions missing from exam — likely ingestion issue.
+  - `2024_stacey_armstrong_written_tests_sample_test_1` Q25: shared context missing code.
+  - `2026_stacey_tests_test_01` Q22/23/25: graph images missing.
+- **Feature 2 (Leaderboard)**: Global leaderboard from homepage. Columns: correct answers all-time, tests taken, avg score. Decisions: opt-in vs. automatic, drill attempts filtered or not.
+- **Feature 3 (Coach/Student accounts)**: Coach builds team, assigns questions/tests to students.
+- When API key available: run Pass 2 on 43 `garbled_text` questions — IDs in `reports/pass2_garbled_results.json`.
+- Fix `answer_not_in_choices` × 3 for Sample Test 2 Q39 (Roman numeral Big-O; "I." parsed as choice label).
+- Continue MEDIUM audit findings: `choice_labels_out_of_order` (187), `duplicate_choice_labels` (119), `footer_or_header_leakage` (53).
 
 ## Decisions Made
 
 | Date | Decision | Reason |
 |------|----------|--------|
-| 2026-05-04 | Use one traditional Light/Dark toggle instead of multiple novelty themes | Keeps the interface practical and academic while still supporting users who prefer lower brightness |
+| 2026-05-04 | Remove "client code" from `needs_neighbor_context` trigger pattern | "client code" is a section label in UIL exams, not a reference to a neighboring question — was causing crop expansion for Q29/Q30/Q31 which already had full code extracted |
+| 2026-05-04 | Use disk cache (.crop_cache/) for rendered PDF images | PDF rendering at 350 DPI on every request was the primary cause of 5-10s page load times; disk cache eliminates re-renders after first load |
+| 2026-05-04 | Use `UIL_CS_ADMIN_USER` env var to gate `/admin/feedback` | No admin flag on users table; env var is simpler than a DB migration and sufficient for single-admin use |
+| 2026-05-04 | Use one traditional Light/Dark toggle instead of multiple novelty themes | Keeps the interface practical and academic |
 | 2026-05-04 | shared_context recompute: only update DB directly when anchor code_block is empty | question_overrides.json now supports shared_context field for future patches without DB changes |
-| 2026-05-04 | Leave 2026_college_station crop bounds unfixed for now | PDF is fully image-only (0 text chars); fixing requires full OCR re-ingestion; not worth it unless team specifically needs those Qs |
-| 2026-05-03 | Align `evaluate_answer_sanity` with `should_use_visual_choice_fallback` | Sanity checker was flagging questions the UI handles fine via visual fallback — false positives |
-| 2026-05-03 | Clear unrecoverable MCQ entries from sanity queue without fixing | Choices were never in the PDF text; visual fallback handles display; re-ingestion won't help |
+| 2026-05-04 | Leave 2026_college_station crop bounds unfixed for now | PDF is fully image-only; fixing requires full OCR re-ingestion |
+| 2026-05-03 | Align `evaluate_answer_sanity` with `should_use_visual_choice_fallback` | Sanity checker was flagging questions the UI handles fine via visual fallback |
+| 2026-05-03 | Clear unrecoverable MCQ entries from sanity queue without fixing | Choices were never in the PDF text; visual fallback handles display |
 | 2026-05-02 | Use `CLAUDE.md` + `SESSION_NOTES.md` committed to git for cross-machine context | Working across 3 machines; git sync is the simplest shared state |
 
 ## Parking Lot (ideas/todos not yet prioritized)
 
-- Deploy updated code to PythonAnywhere after queue work is complete
 - Consider adding a `skip_sanity` field to `question_overrides.json` to suppress specific questions from future sanity re-flags
+- Clear `.crop_cache/` on PythonAnywhere if crop bounds are ever fixed for a batch of questions (stale cache won't auto-invalidate for those specific files)
 
 ---
 
