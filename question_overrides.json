@@ -94,5 +94,64 @@
   "2026_college_station#25": {
     "question_text": "Assuming that <1*> and <2*> are filled correctly, what is output by the line marked //q25?",
     "choices": "A) 9\nB) 10\nC) 8\nD) 6\nE) There is no output due to an error."
+  },
+  "2026_district#4": {
+    "code_block": "String text = \" Hello World \";\nString result = text.trim().toLowerCase()\n.substring(0, 5).replace('l', 'x');\nout.println(result + \" \" +\nresult.length());"
+  },
+  "2026_district#10": {
+    "code_block": "int[] arr = {2, 4, 6, 8, 10};\narr[1] = arr[0] + arr[3];\narr[4] = arr[1] - arr[2];\nint result = arr[1] + arr[4] + arr.length;\nout.println(arr[1] + \" \" + arr[4] + \" \" +\nresult);"
+  },
+  "2026_district#11": {
+    "code_block": "Scanner file = new Scanner(\nnew File(\"data.txt\"));\nString word = file.next();\nfile.nextLine();\nint num = file.nextInt();\ndouble dec = file.nextDouble();\nfile.close();\nout.println(word + \" \" + num + \" \" +\n(num + (int)dec));"
+  },
+  "2026_district#15": {
+    "question_text": "What is output by the code to the right?",
+    "code_block": "ArrayList<Integer> list = new ArrayList<>();\nlist.add(10);\nlist.add(20);\nlist.add(30);\nlist.add(1, 15);\nlist.remove(2);\nlist.set(0, 5);\nout.println(list.get(1) + \" \" +\nlist.size());"
+  },
+  "2026_district#16": {
+    "code_block": "try {\nString i = \"a.txt\";\nFile f = new File(i);\nScanner s = new Scanner(i);\ns.nextLine();\nout.print(1);\nout.print(2);\nout.print(3);\n} catch (IOException e) {\n} finally {\n}"
+  },
+  "2026_district#17": {
+    "shared_context": "LinkedHashSet<Integer> struct;\nstruct = new LinkedHashSet<>();\nstruct.add(1);\nstruct.add(2);\nstruct.add(1);\nstruct.add(189);\nstruct.add(3);\nstruct.<1*>(2);\nstruct.<1*>(1);\nout.println(struct); //q18\nout.println(struct.remove(0)); //q19"
+  },
+  "2026_district#18": {
+    "shared_context": "LinkedHashSet<Integer> struct;\nstruct = new LinkedHashSet<>();\nstruct.add(1);\nstruct.add(2);\nstruct.add(1);\nstruct.add(189);\nstruct.add(3);\nstruct.<1*>(2);\nstruct.<1*>(1);\nout.println(struct); //q18\nout.println(struct.remove(0)); //q19"
+  },
+  "2026_district#19": {
+    "shared_context": "LinkedHashSet<Integer> struct;\nstruct = new LinkedHashSet<>();\nstruct.add(1);\nstruct.add(2);\nstruct.add(1);\nstruct.add(189);\nstruct.add(3);\nstruct.<1*>(2);\nstruct.<1*>(1);\nout.println(struct); //q18\nout.println(struct.remove(0)); //q19"
+  },
+  "2026_district#27": {
+    "question_text": "What is output if the following call is made to the function to the right?\nmystery(\"AHs2\");",
+    "code_block": "",
+    "shared_context": "int mystery(String s) {\nif (s.isEmpty())\nreturn 0;\nchar c = s.charAt(0);\ns = s.substring(1);\nif (Character.isUpperCase(c))\nreturn 3 * mystery(s);\nif (Character.isDigit(c))\nreturn 5 + mystery(s);\nif (c < 'l')\nreturn -1 * mystery(s);\nreturn 1 + 2 * mystery(s);\n}"
+  },
+  "2026_district#28": {
+    "question_text": "What is output if the following call is made to the function to the right?\nmystery(\"K38knd38kOP1\");",
+    "code_block": "",
+    "shared_context": "int mystery(String s) {\nif (s.isEmpty())\nreturn 0;\nchar c = s.charAt(0);\ns = s.substring(1);\nif (Character.isUpperCase(c))\nreturn 3 * mystery(s);\nif (Character.isDigit(c))\nreturn 5 + mystery(s);\nif (c < 'l')\nreturn -1 * mystery(s);\nreturn 1 + 2 * mystery(s);\n}"
+  },
+  "2026_district#29": {
+    "question_text": "What is the intended purpose of the method goodtime(int i, int j) to the right?"
+  },
+  "2026_district#34": {
+    "shared_context": "HashSet<byte[]> uniques = new HashSet<byte[]>();\nuniques.add(new byte[] {'a', 'b', 'c', 'd'});\nuniques.add(new byte[] {'b', 'c', 'd', 'a'});\nuniques.add(new byte[] {'c', 'd', 'a', 'b'});\nuniques.add(new byte[] {'d', 'a', 'b', 'c'});\nuniques.add(new byte[] {'a', 'b', 'c', 'd'});\nout.println(uniques.size()); //Q34\nfor (byte[] unique : uniques) {\nout.println(unique);\n}"
+  },
+  "2026_district#35": {
+    "question_text": "Disregarding the output produced by the line marked //Q34 in the code to the right, what is output by the code to the right?",
+    "code_block": "",
+    "shared_context": "HashSet<byte[]> uniques = new HashSet<byte[]>();\nuniques.add(new byte[] {'a', 'b', 'c', 'd'});\nuniques.add(new byte[] {'b', 'c', 'd', 'a'});\nuniques.add(new byte[] {'c', 'd', 'a', 'b'});\nuniques.add(new byte[] {'d', 'a', 'b', 'c'});\nuniques.add(new byte[] {'a', 'b', 'c', 'd'});\nout.println(uniques.size()); //Q34\nfor (byte[] unique : uniques) {\nout.println(unique);\n}"
+  },
+  "2026_district#36": {
+    "shared_context": "HashSet<byte[]> uniques = new HashSet<byte[]>();\nuniques.add(new byte[] {'a', 'b', 'c', 'd'});\nuniques.add(new byte[] {'b', 'c', 'd', 'a'});\nuniques.add(new byte[] {'c', 'd', 'a', 'b'});\nuniques.add(new byte[] {'d', 'a', 'b', 'c'});\nuniques.add(new byte[] {'a', 'b', 'c', 'd'});\nout.println(uniques.size()); //Q34\nfor (byte[] unique : uniques) {\nout.println(unique);\n}"
+  },
+  "2026_district#37": {
+    "shared_context": "HashSet<byte[]> uniques = new HashSet<byte[]>();\nuniques.add(new byte[] {'a', 'b', 'c', 'd'});\nuniques.add(new byte[] {'b', 'c', 'd', 'a'});\nuniques.add(new byte[] {'c', 'd', 'a', 'b'});\nuniques.add(new byte[] {'d', 'a', 'b', 'c'});\nuniques.add(new byte[] {'a', 'b', 'c', 'd'});\nout.println(uniques.size()); //Q34\nfor (byte[] unique : uniques) {\nout.println(unique);\n}"
+  },
+  "2026_district#38": {
+    "question_text": "What is output by the code to the right?",
+    "code_block": "final Lock lock = new ReentrantLock();\nStringBuilder sb = new StringBuilder();\nThread t1 = new Thread(() -> {\nfor (int i = 0; i < 10; i++) {\nlock.lock();\nsb.append(\"T1\");\nlock.unlock();\n}\n});\nThread t2 = new Thread(() -> {\nfor (int i = 0; i < 10; i++) {\nlock.lock();\nsb.append(\"T2\");\nlock.unlock();\n}\n});\nt1.start();\nt2.start();\ntry {\nt1.join();\nt2.join();\n} catch (InterruptedException e) {\ne.printStackTrace();\n}\nout.println(sb);"
+  },
+  "2026_district#40": {
+    "question_text": "What is the maximum width of the Binary Search Tree (BST) of integers resulting from inserting the elements to the right in order? Write your answer in the blank provided on your answer sheet for this question.\nFirst: 59\n| 56\n| 42\n| 16\n| 72\n| 83\nof | 77\nin | 58\nv 32\nLast: 73"
   }
 }
